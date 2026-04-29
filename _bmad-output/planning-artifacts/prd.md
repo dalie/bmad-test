@@ -10,6 +10,10 @@ stepsCompleted:
   - step-06-innovation
   - step-07-project-type
   - step-08-scoping
+  - step-09-functional
+  - step-10-nonfunctional
+  - step-11-polish
+  - step-12-complete
 inputDocuments:
   - product-brief-bmad.md
   - product-brief-bmad-distillate.md
@@ -84,35 +88,6 @@ This is now viable because modern browsers (Chrome, Firefox) play MKV containers
 | Import failure rate | < 1% of titles (with clear error reporting for failures) |
 | UI task completion (elderly user) | Browse → Play without assistance |
 | Source file modification | Zero — verified by checksum |
-
-## Product Scope
-
-### MVP — Minimum Viable Product
-
-- Folder watching and video file detection
-- TMDB metadata matching (movies and TV shows)
-- Smart transcode pipeline: serve originals (Tier 1), audio-only AAC sidecar (Tier 2), full transcode (Tier 3)
-- Synced dual-element playback (muted `<video>` + `<audio>` sidecar) in browser
-- Subtitle extraction (embedded + sidecar) served as WebVTT
-- Web UI: browse library by movies/shows, play video, select subtitle/audio tracks
-- Watch progress via localStorage (per-device, per-browser)
-- Backend API: scan, metadata, transcode orchestration, media serving via HTTP range requests
-- No authentication, no accounts, no server-side state
-
-### Growth Features (Post-MVP)
-
-- YouTube search integration with yt-dlp for on-demand video downloading
-- TorrentDay RSS feed integration — download .torrent files to a pickup folder for the host's torrent client
-- Server-side profiles (unsecured — pick a name, switch freely, no passwords)
-- Smart collections / auto-categorization
-- Richer metadata (cast pages, recommendations, related titles)
-
-### Vision (Future)
-
-- Adaptive multi-rendition support for bandwidth-constrained remote viewers
-- Community-contributed UI themes
-- Additional content acquisition sources beyond YouTube and TorrentDay
-- The go-to media server for people who value performance and simplicity over features
 
 ## User Journeys
 
@@ -189,15 +164,6 @@ Using `<video muted>` + `<audio>` with JavaScript sync is an unconventional brow
 1. **Dual-element audio sync** — Needs early prototyping to validate drift tolerance. Key question: does seek/pause/resume introduce sync gaps beyond the ~50ms correction threshold?
 2. **H.265 browser support matrix** — Partial browser support means some files may not play as-is. Needs testing across Chrome, Firefox, Edge, Safari on actual target devices.
 3. **Filename parsing robustness** — Torrent naming conventions vary widely. The TMDB matching pipeline needs validation against a real library to measure match rate.
-
-### Risk Mitigation
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Dual-element sync drift exceeds tolerance | Playback audio/video mismatch | Fall back to remuxed MP4 for problematic files; prototype sync early |
-| H.265 not supported on target browser | Black screen or error on some files | Detect codec support client-side; flag unsupported files for full transcode |
-| TMDB matching fails on ambiguous filenames | Titles appear without metadata | Manual matching UI in admin panel; support NFO file parsing as fallback |
-| Browser MKV support regresses | Core architecture breaks | Monitor browser changelogs; have full-transcode fallback path |
 
 ## Web Application Specific Requirements
 
@@ -333,3 +299,101 @@ Not applicable — private self-hosted server, no public indexing needed. No SSR
 
 **Resource Risks:**
 - Solo developer — if energy/time drops, the MVP is scoped tightly enough to be usable even if post-MVP features never ship. A working library browser with instant playback is valuable on its own.
+
+## Functional Requirements
+
+### Library Management
+
+- **FR1:** Admin can configure one or more media source folders for the system to monitor
+- **FR2:** System can detect new, modified, and removed video files in monitored folders
+- **FR3:** System can parse video filenames to extract title, year, season, and episode information
+- **FR4:** System can match detected files against TMDB for metadata (title, description, poster, ratings, episode info)
+- **FR5:** Admin can manually search TMDB and assign a match when automatic matching fails
+- **FR6:** Admin can view a list of files that failed automatic TMDB matching ("Needs Attention" queue)
+- **FR7:** System can detect and catalog embedded subtitle tracks and sidecar subtitle files (.srt, .ass, etc.)
+- **FR8:** System can probe video files to determine video codec, audio codec, and container format
+
+### Transcode Pipeline
+
+- **FR9:** System can classify each file into the appropriate transcode tier (Tier 1: serve original, Tier 2: audio sidecar, Tier 3: full transcode)
+- **FR10:** System can extract and transcode incompatible audio tracks to AAC sidecar files without modifying the source file
+- **FR11:** System can perform full video transcode to MP4 with faststart for files with non-web-compatible video codecs
+- **FR12:** System can convert embedded and sidecar subtitles to WebVTT format
+- **FR13:** System can process the transcode queue unattended in the background
+- **FR14:** Admin can view transcode pipeline status (queued, processing, completed, failed)
+
+### Media Browsing
+
+- **FR15:** Viewer can browse the library as a poster grid of movies
+- **FR16:** Viewer can browse the library as a poster grid of TV shows
+- **FR17:** Viewer can view detail information for a movie (title, description, poster, year, rating, runtime)
+- **FR18:** Viewer can view detail information for a TV show including season and episode listings
+- **FR19:** Viewer can see watch progress indicators on titles they've partially watched
+- **FR20:** Viewer can see watched status on titles they've completed
+- **FR21:** Viewer can search the library by title
+
+### Video Playback
+
+- **FR22:** Viewer can play any video file in the library with sub-1000ms time to first frame
+- **FR23:** Viewer can seek to any point in a video with instant response
+- **FR24:** System can serve video content via HTTP range requests with no server-side processing at play time
+- **FR25:** System can synchronize playback of a muted video element with a separate audio sidecar element (dual-element sync)
+- **FR26:** Viewer can select from available subtitle tracks during playback
+- **FR27:** Viewer can select from available audio tracks during playback (when multiple exist)
+- **FR28:** Viewer can pause, resume, and control playback volume
+- **FR29:** Viewer can enter and exit fullscreen playback
+
+### Watch Progress
+
+- **FR30:** System can persist watch progress per-title in the browser's localStorage
+- **FR31:** Viewer can resume playback from their last watched position
+- **FR32:** System can mark a title as "watched" when playback reaches near the end
+
+### Admin Panel
+
+- **FR33:** System can detect whether the client is on the same local network as the server
+- **FR34:** Admin can access the admin panel only when viewing from the server's LAN
+- **FR35:** Admin can view library statistics (total titles, movies, TV shows, transcode status breakdown)
+- **FR36:** Admin can trigger a manual library rescan
+- **FR37:** Admin can view import and transcode error details for failed files
+
+### Deployment
+
+- **FR38:** Admin can deploy the application as a single Docker container
+- **FR39:** Admin can configure media source folders via Docker volume mounts
+- **FR40:** System can serve the frontend SPA and backend API from the same container
+
+## Non-Functional Requirements
+
+### Performance
+
+- **NFR1:** Time to first frame must be < 1000ms for any title in the library
+- **NFR2:** Seeking must complete within the browser's native range-request response time (no server-side delay)
+- **NFR3:** Server CPU usage during playback must be < 5% per concurrent viewer (static file serving only)
+- **NFR4:** Library browsing page load must feel instant (< 1s perceived) using skeleton screens and lazy loading
+- **NFR5:** API metadata responses must return within 200ms
+- **NFR6:** SPA page-to-page navigation must complete in < 100ms (client-side routing)
+- **NFR7:** Poster grid must scroll smoothly with virtualized rendering and lazy image loading
+- **NFR8:** Dual-element audio sync drift must stay within 50ms correction threshold during normal playback, seek, pause, and resume
+
+### Security
+
+- **NFR9:** Source media files must never be modified — read-only filesystem access only
+- **NFR10:** Admin panel routes must only be accessible from the server's local network subnet
+- **NFR11:** No user credentials, tokens, or sensitive data stored anywhere in the system
+- **NFR12:** TMDB API key must not be exposed to the frontend client
+
+### Reliability
+
+- **NFR13:** Import pipeline must recover gracefully from individual file failures without halting the entire scan
+- **NFR14:** Failed TMDB matches must be queued for manual resolution, not silently dropped
+- **NFR15:** Failed transcodes must be logged with error details and retryable
+- **NFR16:** Folder watcher must handle partially written files (in-progress downloads) without crashing or producing corrupt output
+- **NFR17:** Playback must work independently of import pipeline status — watching is never blocked by processing
+
+### Integration
+
+- **NFR18:** System must handle TMDB API rate limits gracefully (backoff/retry, not crash)
+- **NFR19:** System must handle TMDB API unavailability gracefully — library browsing and playback work without TMDB connectivity
+- **NFR20:** FFmpeg must be bundled in the Docker image — no external dependency installation required
+- **NFR21:** TMDB image base URL must be cached and refreshed periodically per API documentation
