@@ -5,3 +5,7 @@
 * Empty Angular route table: Routing is enabled in Angular, but the route table is empty without a fallback or home route.
 * Placeholder uses "Cineplex Rigaud" instead of correct title: The user-facing placeholder says "Cineplex Rigaud" while document title says "Frontend".
 * Frontend package contains app-local .vscode noise: The diff adds app-local .vscode files and `.vscode/mcp.json` into the frontend package.
+## Deferred from: code review (2026-05-01) of 1-2-docker-deployment-with-media-volume-mounts
+* No Container Resource Limits [docker-compose.yml] - deferred, pre-existing
+* No Container Healthchecks [docker-compose.yml] - deferred, pre-existing
+* Missing Log Rotation [docker-compose.yml] - deferred, pre-existing

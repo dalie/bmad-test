@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.vscode
+.env
+media
+data
+_bmad-output
+_bmad

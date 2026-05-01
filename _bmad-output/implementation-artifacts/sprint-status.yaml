@@ -45,7 +45,7 @@ development_status:
   # Epic 1: Project Foundation & Docker Deployment
   epic-1: in-progress
   1-1-scaffold-monorepo-with-nestjs-backend-and-angular-frontend: done
-  1-2-docker-deployment-with-media-volume-mounts: backlog
+  1-2-docker-deployment-with-media-volume-mounts: done
   epic-1-retrospective: optional
 
   # Epic 2: Library Scanning & Metadata Matching

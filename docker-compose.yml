@@ -1,0 +1,16 @@
+services:
+  cineplex-rigaud:
+    build: .
+    container_name: cineplex-rigaud
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # Note: Ensure these directories exist on the host before running,
+      # otherwise Docker daemon will create them owned by root.
+      - ./media/movies:/mnt/media/movies:ro
+      - ./media/tv:/mnt/media/tv:ro
+      - ./data:/mnt/cache
+    restart: unless-stopped
