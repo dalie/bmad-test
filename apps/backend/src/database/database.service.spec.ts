@@ -77,6 +77,18 @@ describe("DatabaseService", () => {
       expect(table!.name).toBe("media_files");
     });
 
+    it("should create scan_errors table", () => {
+      service.onModuleInit();
+      const db = service.getDatabase();
+      const table = db
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='scan_errors'",
+        )
+        .get() as { name: string } | undefined;
+      expect(table).toBeDefined();
+      expect(table!.name).toBe("scan_errors");
+    });
+
     it("should create indexes on media_files", () => {
       service.onModuleInit();
       const db = service.getDatabase();

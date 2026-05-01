@@ -2,7 +2,7 @@
 
 **Epic:** 2. Library Scanning & Metadata Matching
 **Story Key:** 2-2-folder-scanning-and-file-detection
-**Status:** ready-for-dev
+**Status:** review
 
 ## Story Requirements
 
@@ -98,3 +98,97 @@ And source files are accessed read-only — never modified (NFR9)
 ## Status Update
 
 Ultimate context engine analysis completed - comprehensive developer guide created.
+
+## Tasks/Subtasks
+
+- [x] 1. Initialize `scan_errors` table and ensure `media_files` schema in `DatabaseService`.
+- [x] 2. Create `ScannerService` for async file system traversal.
+  - [x] 2.1 Implement recursive file path discovery for video file extensions (`.mkv`, `.mp4`, `.avi`).
+  - [x] 2.2 Enforce read-only file access and handle file permission errors gracefully (log to `scan_errors`).
+  - [x] 2.3 Implement file stability checks to skip actively downloading files.
+- [x] 3. Sync discovered files to `media_files` table.
+  - [x] 3.1 Insert new files as "discovered".
+  - [x] 3.2 Flag modified files for re-processing.
+  - [x] 3.3 Mark removed files as "missing" (do not delete).
+- [x] 4. Update or create `LibraryController` with required API endpoints.
+  - [x] 4.1 Implement `POST /api/library/scan` to trigger async scan.
+  - [x] 4.2 Implement `GET /api/library/scan/:scanId`.
+  - [x] 4.3 Implement `GET /api/library/files` with pagination.
+- [x] 5. Trigger automatic full scan on application startup in the module lifecycle.
+
+### Review Findings
+
+- [x] [Review][Patch] Controller endpoints are hardcoded stubs — wire to real service logic (scan orchestration, status tracking, DB queries)
+- [x] [Review][Patch] `flagModifiedStmt` prepared but never executed — implement size/mtime comparison and call flagModifiedStmt
+- [x] [Review][Patch] `size`/`mtime` not persisted on insert — add columns and store on insert for modification baseline
+- [x] [Review][Patch] No startup scan trigger — add lifecycle hook to auto-scan on startup
+- [x] [Review][Patch] LibraryController not registered in module `controllers` array [library.module.ts]
+- [x] [Review][Patch] Response status should be 202 Accepted, not 201 [library.controller.ts:9]
+- [x] [Review][Patch] Type literal `false` should be `boolean` in body type [library.controller.ts:9]
+- [x] [Review][Patch] Query params offset/limit not parsed as integers — arrive as strings [library.controller.ts:30-33]
+- [x] [Review][Patch] Stability check uses 200ms instead of spec-required ~2 seconds [scanner.service.ts:82]
+- [x] [Review][Patch] No recursion depth limit — symlink loops can crash process [scanner.service.ts:41]
+- [x] [Review][Patch] `results.push(...subResults)` exceeds V8 spread limit for large dirs [scanner.service.ts:48]
+- [x] [Review][Patch] syncFiles test doesn't verify transaction body executes [library.service.spec.ts:45]
+- [x] [Review][Patch] INSERT can hit UNIQUE constraint and roll back entire transaction — use INSERT OR IGNORE [library.service.ts:25]
+- [x] [Review][Defer] No concurrency guard on scan initiation — deferred, pre-existing architectural concern
+- [x] [Review][Defer] scan_errors table has no index or retention policy — deferred, pre-existing
+
+## Dev Notes
+
+_(See Developer Context above)_
+
+## Dev Agent Record
+
+### Debug Log
+
+- Wrote scan_errors table to DatabaseService
+- Mocked fs operations in unit tests
+- Fixed database service tests
+- Applied 13 code review patches in single session
+
+### Completion Notes
+
+All tasks related to folder scanning, file detection, and storage in the media_files table are completed. API endpoints created.
+
+**Review Patches Applied (2026-05-01):**
+
+- Wired LibraryController to real LibraryService methods (startScan, getScanStatus, getFiles)
+- Added scan orchestration: async executeScan iterates media_sources and calls ScannerService
+- Added size/mtime columns to media_files schema for modification detection
+- Implemented flagModifiedStmt execution with size/mtime comparison
+- Used INSERT OR IGNORE to handle UNIQUE constraint gracefully
+- Registered LibraryController in LibraryModule controllers array
+- Added OnModuleInit startup scan trigger in LibraryModule
+- Fixed response status to 202 Accepted with @HttpCode decorator
+- Fixed body type from `false` literal to `boolean`
+- Used ParseIntPipe + DefaultValuePipe for query param parsing
+- Changed stability check from 200ms to 2000ms per NFR16 spec
+- Added MAX_RECURSION_DEPTH (50) to prevent symlink loop crashes
+- Replaced `results.push(...subResults)` with iterative push loop
+- Updated syncFiles test to verify transaction body executes and verify modification detection
+
+## File List
+
+- `apps/backend/src/database/database.service.ts`
+- `apps/backend/src/database/database.service.spec.ts`
+- `apps/backend/src/library/scanner.service.ts`
+- `apps/backend/src/library/scanner.service.spec.ts`
+- `apps/backend/src/library/library.service.ts`
+- `apps/backend/src/library/library.service.spec.ts`
+- `apps/backend/src/library/library.controller.ts`
+- `apps/backend/src/library/library.module.ts`
+- `apps/backend/src/app.module.ts`
+
+## Change Log
+
+- Added `scan_errors` table.
+- Added `ScannerService` for recursive file scanning and stability checking.
+- Added `LibraryService` to handle syncing scanned files to the database.
+- Added `LibraryController` for API endpoints.
+- Connected `LibraryModule`.
+- Addressed code review findings — 13 patch items resolved (Date: 2026-05-01)
+
+## Status
+
+done

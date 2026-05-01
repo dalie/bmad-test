@@ -34,6 +34,9 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
 COPY --from=build /app/apps/frontend/dist/frontend/browser ./apps/frontend/dist/frontend/browser
 
+# Create cache directory owned by node before switching user
+RUN mkdir -p /mnt/cache && chown node:node /mnt/cache
+
 # Run as non-root user
 USER node
 

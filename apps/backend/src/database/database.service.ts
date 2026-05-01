@@ -60,6 +60,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         filename TEXT NOT NULL,
         source_id INTEGER NOT NULL REFERENCES media_sources(id) ON DELETE CASCADE,
         status TEXT NOT NULL DEFAULT 'discovered',
+        size INTEGER,
+        mtime REAL,
         probe_data TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -67,6 +69,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       CREATE INDEX IF NOT EXISTS idx_media_files_source_id ON media_files(source_id);
       CREATE INDEX IF NOT EXISTS idx_media_files_status ON media_files(status);
+
+      CREATE TABLE IF NOT EXISTS scan_errors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_path TEXT NOT NULL,
+        error_type TEXT NOT NULL,
+        error_message TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
     `);
   }
 }
