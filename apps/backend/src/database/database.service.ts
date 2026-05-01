@@ -17,7 +17,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     const cachePath = this.config.get<string>("CACHE_PATH") || "/mnt/cache";
-    const dbPath = cachePath === ":memory:" ? ":memory:" : path.join(cachePath, "cineplex.db");
+    const dbPath =
+      cachePath === ":memory:"
+        ? ":memory:"
+        : path.join(cachePath, "cineplex.db");
 
     this.logger.log(`Opening database at ${dbPath}`);
     this.db = new Database(dbPath);
