@@ -123,7 +123,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 ### Chosen Stack & Structure
 
 - **Backend:** Node.js/NestJS/TypeScript (Nest CLI, monorepo mode)
-- **Database:** SQLite (via TypeORM/Prisma)
+- **Database:** SQLite (via better-sqlite3, raw SQL)
 - **Frontend:** Latest Angular (with Signals)
 - **Monorepo:** npm workspaces for unified dependency management
 
@@ -142,5 +142,5 @@ This approach ensures rapid development, maintainability, and alignment with you
 1. Scaffold the monorepo using Nest CLI (`nest new my-monorepo --monorepo`)
 2. Add Angular frontend as a workspace package (`ng new frontend --directory=apps/frontend --no-git`)
 3. Configure npm workspaces in root `package.json`
-4. Add SQLite support to backend (TypeORM/Prisma)
+4. Add SQLite support to backend (better-sqlite3, raw SQL with umzug migrations)
 5. Dockerize the full stack for single-container deployment

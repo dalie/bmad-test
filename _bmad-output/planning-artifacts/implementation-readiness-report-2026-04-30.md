@@ -9,9 +9,9 @@ stepsCompleted:
 filesIncluded:
   - prd.md
   - architecture.md
+  - epics.md
   - ux-design-specification.md
-missingDocuments:
-  - epics-stories
+missingDocuments: []
 ---
 
 # Implementation Readiness Assessment Report
@@ -28,7 +28,7 @@ missingDocuments:
 - **architecture.md** (whole document)
 
 ### Epics & Stories
-- ⚠️ Not found
+- **epics.md** (whole document)
 
 ### UX Design
 - **ux-design-specification.md** (whole document)
@@ -155,29 +155,66 @@ The PRD is **well-structured and comprehensive**. It clearly defines:
 
 ## Epic Coverage Validation
 
-### ⛔ BLOCKER: No Epics & Stories Document Found
+### Coverage Matrix
 
-No epics or stories document was found in the planning artifacts directory. This is a **critical gap** — without an epics document, there is no traceable implementation path for any requirement.
+| FR | PRD Requirement | Epic Coverage | Status |
+|---|---|---|---|
+| FR1 | Admin can configure media source folders | Epic 2 (Story 2.1) | ✓ Covered |
+| FR2 | Detect new/modified/removed video files | Epic 2 (Story 2.2) | ✓ Covered |
+| FR3 | Parse video filenames for title/year/season/episode | Epic 2 (Story 2.4) | ✓ Covered |
+| FR4 | Match files against TMDB for metadata | Epic 2 (Story 2.4) | ✓ Covered |
+| FR5 | Admin manually search TMDB and assign match | Epic 2 (Story 2.5) | ✓ Covered |
+| FR6 | Admin view "Needs Attention" queue | Epic 2 (Story 2.5) | ✓ Covered |
+| FR7 | Detect/catalog subtitle tracks and sidecar files | Epic 2 (Story 2.3) | ✓ Covered |
+| FR8 | Probe video files for codec/format info | Epic 2 (Story 2.3) | ✓ Covered |
+| FR9 | Classify files into transcode tiers | Epic 3 (Story 3.1) | ✓ Covered |
+| FR10 | Extract/transcode incompatible audio to AAC sidecar | Epic 3 (Story 3.2) | ✓ Covered |
+| FR11 | Full video transcode to MP4 with faststart | Epic 3 (Story 3.3) | ✓ Covered |
+| FR12 | Convert subtitles to WebVTT | Epic 3 (Story 3.4) | ✓ Covered |
+| FR13 | Process transcode queue unattended | Epic 3 (Story 3.5) | ✓ Covered |
+| FR14 | Admin view transcode pipeline status | Epic 3 (Story 3.5) | ✓ Covered |
+| FR15 | Browse library as poster grid (movies) | Epic 4 (Story 4.2) | ✓ Covered |
+| FR16 | Browse library as poster grid (TV shows) | Epic 4 (Story 4.2) | ✓ Covered |
+| FR17 | View movie detail info | Epic 4 (Story 4.3) | ✓ Covered |
+| FR18 | View TV show detail with season/episode listings | Epic 4 (Story 4.4) | ✓ Covered |
+| FR19 | Watch progress indicators on partially watched | Epic 4 (Story 4.5) | ✓ Covered |
+| FR20 | Watched status on completed titles | Epic 4 (Story 4.5) | ✓ Covered |
+| FR21 | Search library by title | Epic 4 (Story 4.6) | ✓ Covered |
+| FR22 | Play any video with sub-1000ms time to first frame | Epic 5 (Story 5.2) | ✓ Covered |
+| FR23 | Seek to any point with instant response | Epic 5 (Story 5.2) | ✓ Covered |
+| FR24 | Serve video via HTTP range requests | Epic 5 (Story 5.1) | ✓ Covered |
+| FR25 | Dual-element audio sync for sidecars | Epic 5 (Story 5.3) | ✓ Covered |
+| FR26 | Select subtitle tracks during playback | Epic 5 (Story 5.4) | ✓ Covered |
+| FR27 | Select audio tracks during playback | Epic 5 (Story 5.5) | ✓ Covered |
+| FR28 | Pause, resume, control volume | Epic 5 (Story 5.2) | ✓ Covered |
+| FR29 | Enter/exit fullscreen | Epic 5 (Story 5.2) | ✓ Covered |
+| FR30 | Persist watch progress in localStorage | Epic 6 (Story 6.1) | ✓ Covered |
+| FR31 | Resume from last watched position | Epic 6 (Story 6.2) | ✓ Covered |
+| FR32 | Auto-mark as watched near end | Epic 6 (Story 6.3) | ✓ Covered |
+| FR33 | Detect client on same LAN | Epic 7 (Story 7.1) | ✓ Covered |
+| FR34 | Admin panel LAN-only access | Epic 7 (Story 7.1) | ✓ Covered |
+| FR35 | Library statistics in admin | Epic 7 (Story 7.2) | ✓ Covered |
+| FR36 | Manual library rescan | Epic 7 (Story 7.4) | ✓ Covered |
+| FR37 | Import/transcode error details | Epic 7 (Story 7.3) | ✓ Covered |
+| FR38 | Single Docker container deployment | Epic 1 (Story 1.2) | ✓ Covered |
+| FR39 | Configure media folders via Docker volumes | Epic 1 (Story 1.2) | ✓ Covered |
+| FR40 | Serve SPA and API from same container | Epic 1 (Story 1.1) | ✓ Covered |
+
+### Missing Requirements
+
+No FRs are missing from epic coverage. All 40 FRs have traceable implementation paths.
 
 ### Coverage Statistics
 
 - Total PRD FRs: 40
-- FRs covered in epics: 0
-- Coverage percentage: **0%**
-
-### Missing Requirements
-
-All 40 FRs (FR1–FR40) and all 21 NFRs (NFR1–NFR21) lack epic coverage.
-
-### Recommendation
-
-**Epics and stories must be created before implementation can begin.** The PRD is complete and well-structured — it provides a solid foundation for epic decomposition. Recommended next step: run the "Create Epics and Stories" workflow to generate the epics document from this PRD.
+- FRs covered in epics: 40
+- Coverage percentage: **100%**
 
 ## UX Alignment Assessment
 
 ### UX Document Status
 
-**Found:** ux-design-specification.md — comprehensive, 750+ lines covering design philosophy, visual design system, interaction patterns, component specifications, and responsive approach.
+**Found:** ux-design-specification.md — comprehensive, 600+ lines covering design philosophy, visual design system, interaction patterns, component specifications, and responsive approach.
 
 ### UX ↔ PRD Alignment
 
@@ -195,11 +232,7 @@ All 40 FRs (FR1–FR40) and all 21 NFRs (NFR1–NFR21) lack epic coverage.
 | FR28-29: Playback controls, fullscreen | Standard HTML5 video controls pattern | ✓ Aligned |
 | FR30-32: localStorage watch progress | Fully designed — progress bars, Continue Watching row, resume flow | ✓ Aligned |
 | FR33-34: LAN-only admin | Separate admin route, not visible to viewers | ✓ Aligned |
-| FR35-37: Admin panel features | Admin as contextual overlay/route — pipeline visibility | ⚠️ Partial — admin UI design is lightweight |
-
-**Minor gaps:**
-- Admin panel UI is described conceptually but lacks the detailed component specs that the viewer UI has (expected — admin polish is deprioritized per PRD)
-- TV show season→episode drill-down navigation is mentioned but UX wireframe detail is thin
+| FR35-37: Admin panel features | Admin as separate route — pipeline visibility | ⚠️ Partial — admin UI design is lightweight |
 
 ### UX ↔ Architecture Alignment
 
@@ -215,65 +248,157 @@ All 40 FRs (FR1–FR40) and all 21 NFRs (NFR1–NFR21) lack epic coverage.
 | Responsive poster grid (CSS Grid auto-fill) | Frontend-only concern, architecture doesn't conflict | ✓ Aligned |
 | LAN-only admin visibility | Architecture specifies LAN detection for admin routes | ✓ Aligned |
 
-**One notable discrepancy:**
-- PRD mentions "skeleton screens" in NFR4 and performance targets, but UX spec explicitly **rejects** skeleton screens as dishonest ("Speed is honesty" principle). The UX spec's position is architecturally valid — if the page truly loads in <100ms, skeleton screens are unnecessary. **Recommendation:** Remove skeleton screen references from PRD NFR4 to align with UX philosophy, or document this as a conscious design override.
+### UX ↔ Epics Alignment
 
-### Architecture Note: ORM Contradiction
+**Strong alignment.** The epics document includes 14 UX Design Requirements (UX-DR1 through UX-DR14), and stories explicitly reference these UX-DRs in their acceptance criteria. Key mappings:
 
-The architecture document contains an internal contradiction:
+| UX Design Requirement | Epic Coverage | Status |
+|---|---|---|
+| UX-DR1: Hand-written CSS design system | Epic 1, Story 1.1 (global CSS foundation) | ✓ Covered |
+| UX-DR2: CSS custom property design tokens | Epic 1, Story 1.1 | ✓ Covered |
+| UX-DR3: Poster grid layout | Epic 4, Story 4.2 | ✓ Covered |
+| UX-DR4: Movie/show detail page layout | Epic 4, Story 4.3 | ✓ Covered |
+| UX-DR5: Watch progress indicators | Epic 4, Story 4.5 | ✓ Covered |
+| UX-DR6: Responsive layout | Epic 4, Story 4.2 | ✓ Covered |
+| UX-DR7: System font stack | Epic 1, Story 1.1 (typography.css) | ✓ Covered |
+| UX-DR8: Pre-sized image containers | Epic 4, Story 4.2 | ✓ Covered |
+| UX-DR9: BEM-lite naming convention | Epic 4, Story 4.2 | ✓ Covered |
+| UX-DR10: Zero-animation policy | Epic 4, Story 4.2 | ✓ Covered |
+| UX-DR11: Accessibility baseline | Epic 4, Stories 4.3, 4.6 | ✓ Covered |
+| UX-DR12: Standard page navigation | Epic 4, Stories 4.3, 4.4 | ✓ Covered |
+| UX-DR13: Video player page | Epic 5, Stories 5.2, 5.3, 5.4 | ✓ Covered |
+| UX-DR14: Admin page | Epic 7, Stories 7.1-7.4 | ✓ Covered |
+
+### Alignment Issues
+
+**1. PRD ↔ UX Skeleton Screen Conflict (Minor)**
+- PRD NFR4 references "skeleton screens and lazy loading" for perceived performance
+- UX spec explicitly **rejects** skeleton screens as dishonest ("Speed is honesty" principle, UX-DR10 zero-animation policy)
+- The UX spec's position is architecturally valid — if the page truly loads in <100ms, skeleton screens are unnecessary
+- **Recommendation:** Remove "skeleton screens" from PRD NFR4 to align with UX philosophy, or document this as a conscious design override
+- **Note:** The epics document (NFR4 listing) has already been corrected to say "lazy loading" without "skeleton screens" — this discrepancy exists only in the PRD source
+
+**2. Architecture ORM Contradiction (Major)**
 - The "Data Architecture Decision" section explicitly chooses **Raw SQLite (No ORM)** with `better-sqlite3`
-- The "Starter Template Decision" section references "SQLite (via TypeORM/Prisma)"
-- These are mutually exclusive approaches. **Recommendation:** Resolve in architecture doc before implementation.
+- The "Starter Template Decision" section references "SQLite (via TypeORM/Prisma)" and step 4 says "Add SQLite support to backend (TypeORM/Prisma)"
+- These are mutually exclusive approaches
+- **Recommendation:** Resolve in architecture doc before implementation — the Raw SQLite decision appears to be the intended one since it was made later and more deliberately
 
 ### Warnings
 
-- No wireframes or mockups exist — the UX spec is text-based with HTML/CSS code examples. This is acceptable given the solo developer context but means visual design decisions will be made during implementation.
-- Admin panel UX is intentionally under-specified (per PRD: "rough edges in admin UX" are acceptable). This is fine for MVP but should be noted.
+- Admin panel UX is intentionally under-specified (per PRD: "rough edges in admin UX" are acceptable). This is fine for MVP but noted.
+- TV show season → episode drill-down navigation is mentioned in UX spec but wireframe detail is thin — implementation will need to make UI decisions.
+- No wireframes or mockups exist — the UX spec is text-based with HTML/CSS code examples. Acceptable given the solo developer context.
 
 ## Epic Quality Review
 
-### ⛔ BLOCKER: No Epics & Stories Document
+### User Value Focus
 
-Epic quality review cannot be performed — no epics or stories document exists. All quality checks (user value focus, epic independence, story sizing, dependency analysis, acceptance criteria review) are **not applicable** until the epics document is created.
+| Epic | Title | User Value? | Assessment |
+|---|---|---|---|
+| Epic 1 | Project Foundation & Docker Deployment | ⚠️ Borderline | "The admin can deploy..." delivers admin value, but "Project Foundation" in the title is technical framing |
+| Epic 2 | Library Scanning & Metadata Matching | ✓ Yes | Clear admin value — build a browseable library |
+| Epic 3 | Smart Transcode Pipeline | ⚠️ Borderline | System-centric language ("The system processes..."), but includes admin monitoring value |
+| Epic 4 | Media Browsing & Library UI | ✓ Yes | Clear viewer value — browse movies and TV shows |
+| Epic 5 | Video Playback & Dual-Element Sync | ✓ Yes | Clear viewer value — play any title |
+| Epic 6 | Watch Progress & Resume | ✓ Yes | Clear viewer value — resume where you left off |
+| Epic 7 | Admin Panel & LAN-Only Access | ✓ Yes | Clear admin value — monitor and manage |
 
-### Findings Summary
+### Epic Independence
 
-- 🔴 **Critical:** Zero epics and stories to validate
-- 🔴 **Critical:** No starter template story exists (Architecture specifies Angular + NestJS scaffold)
-- 🔴 **Critical:** No dependency chain can be verified
-- 🔴 **Critical:** No acceptance criteria exist for any requirement
+Dependency chain is strictly linear: E1 → E2 → E3 → E4/E5 → E6, with E7 branching from E2. No forward dependencies detected. No circular dependencies. Each epic builds on the outputs of prior epics, which is acceptable for a sequential build.
+
+### Story Quality Assessment
+
+**29 stories across 7 epics** — all validated:
+
+- All stories use Given/When/Then acceptance criteria format
+- All stories reference relevant FR and NFR numbers
+- Stories create database tables only when needed (no "create all tables upfront" anti-pattern)
+- UX Design Requirements (UX-DR1–UX-DR14) are properly referenced in story ACs
+- Error handling and edge cases are addressed in acceptance criteria
+- No forward dependencies within epics — stories build on prior story outputs only
+
+### Dependency Analysis
+
+**Within-Epic Dependencies:**
+- All epics follow proper sequential story ordering — no story references a later story
+- Database tables are created in the story that first needs them (Story 2.1: media_sources/files, Story 2.3: subtitles, Story 2.4: metadata, Story 3.1: transcode_jobs)
+
+**Cross-Epic Dependencies:**
+- Epic 4 (Story 4.5: watch progress indicators) depends on Epic 6's localStorage schema for display — but it degrades gracefully if no progress exists. This is an acceptable soft dependency.
+- Epic 5 depends on Epic 3 outputs for Tier 2/3 file serving. Linear and reasonable.
+
+### Best Practices Compliance
+
+| Check | Status | Notes |
+|---|---|---|
+| Epics deliver user value | ✓ Pass (with minor naming concerns) | Epics 1 and 3 titles could be more user-centric |
+| Epic independence | ✓ Pass | Strictly linear chain, no forward deps |
+| Story sizing | ✓ Pass | All stories are independently completable units |
+| No forward dependencies | ✓ Pass | No story references future work |
+| Database tables created when needed | ✓ Pass | Tables created in first-use stories |
+| Clear acceptance criteria | ✓ Pass | All stories use Given/When/Then format |
+| FR traceability | ✓ Pass | 100% FR coverage with explicit mapping |
+| Starter template story | ✓ Pass | Story 1.1 scaffolds the monorepo |
+
+### Quality Findings
+
+#### 🟡 Minor Concerns
+
+**1. Epic naming — Epics 1 and 3 have technical titles**
+- Epic 1: "Project Foundation & Docker Deployment" — "Foundation" is technical. Could be "Application Deployment & Configuration"
+- Epic 3: "Smart Transcode Pipeline" — system-centric. Could be "Media Processing & Playback Readiness"
+- **Impact:** Low — the epic descriptions use user-centric language, so this is a title-level concern only
+
+**2. Story 4.5 has a soft cross-epic dependency on Epic 6**
+- Watch progress indicators on the poster grid read from localStorage, which Epic 6 writes to
+- The story handles this gracefully (Continue Watching section only appears if progress exists)
+- **Impact:** None for implementation — the dependency is one-way and degrades gracefully
+
+**3. Epic 4 Story 4.1 (Library API) filters to "ready" titles only**
+- This means Epic 4 cannot fully demonstrate value until Epic 3 has processed at least some files
+- During development, Tier 1 files (no transcode needed) would be marked "ready" immediately, so basic browsing works after Epic 2+3 classification
+- **Impact:** Low — the natural build order handles this
+
+### Epic Quality Summary
+
+**Overall Quality: High.** The epics and stories are well-structured, properly sized, traceable to requirements, and follow best practices. The dependency chain is clean and linear. Acceptance criteria are thorough with proper Given/When/Then format and NFR/UX-DR references. No critical or major violations found.
 
 ## Summary and Recommendations
 
 ### Overall Readiness Status
 
-## ⛔ NOT READY
+## ✅ READY (with minor fixes recommended)
 
-Implementation cannot begin. The project has strong foundational artifacts (PRD, Architecture, UX Design) but is missing the critical bridge between planning and implementation: **Epics & Stories**.
+Implementation can begin. All foundational artifacts are complete, well-aligned, and traceable. The issues identified are non-blocking and can be resolved during early implementation.
 
-### Critical Issues Requiring Immediate Action
+### Issues Summary
 
-| # | Issue | Severity | Impact |
-|---|---|---|---|
-| 1 | **No Epics & Stories document** | 🔴 Blocker | 0% FR coverage — no traceable implementation path exists for any of the 40 FRs |
-| 2 | **Architecture ORM contradiction** | 🟠 Major | "Data Architecture Decision" says Raw SQLite (no ORM), but "Starter Template Decision" says TypeORM/Prisma — must be resolved before Epic 1 |
-| 3 | **PRD ↔ UX skeleton screen conflict** | 🟡 Minor | PRD NFR4 references skeleton screens; UX spec explicitly rejects them. Align the documents. |
+| # | Issue | Severity | Category | Impact |
+|---|---|---|---|---|
+| 1 | Architecture ORM contradiction | 🟠 Major | Architecture | "Data Architecture Decision" says Raw SQLite (no ORM) with `better-sqlite3`, but "Starter Template Decision" says "SQLite (via TypeORM/Prisma)". Must be resolved before Story 2.1. |
+| 2 | PRD ↔ UX skeleton screen conflict | 🟡 Minor | Document alignment | PRD NFR4 references skeleton screens; UX spec and epics doc reject them. PRD source needs updating. |
+| 3 | Epic 1 and 3 titles are technical | 🟡 Minor | Epic quality | Titles use system-centric language; descriptions are properly user-centric. Cosmetic only. |
 
-### What's in Good Shape
+### What's in Excellent Shape
 
-- **PRD:** Comprehensive and well-structured. 40 FRs, 21 NFRs, 4 user journeys, clear phased scoping, measurable success criteria. Ready for epic decomposition.
-- **UX Design Specification:** Thorough, opinionated, and internally consistent. Design philosophy, visual system, interaction patterns, and component specs all align with PRD user journeys.
-- **Architecture:** Core decisions are sound (Angular + NestJS, SQLite, Docker, REST API, LAN-only security). Needs the ORM contradiction fixed.
-- **PRD ↔ UX Alignment:** Strong. All 40 FRs have UX support. Admin panel is intentionally under-specified (acceptable per PRD philosophy).
-- **UX ↔ Architecture Alignment:** Strong. Architecture supports all UX requirements.
+- **PRD:** 40 FRs, 21 NFRs, 4 user journeys, clear phased scoping, measurable success criteria. Comprehensive and well-structured.
+- **UX Design Specification:** 14 UX Design Requirements (UX-DR1–UX-DR14), thorough design system, interaction patterns, and philosophy. Internally consistent and well-aligned with PRD.
+- **Architecture:** Core decisions are sound — Angular + NestJS, Raw SQLite, Docker, REST API, LAN-only security. Needs the ORM contradiction fixed.
+- **Epics & Stories:** 7 epics, 29 stories, 100% FR coverage. All stories have Given/When/Then acceptance criteria. Clean dependency chain. UX-DRs and NFRs referenced in story ACs.
+- **Cross-Document Alignment:** PRD ↔ UX: strong. UX ↔ Architecture: strong. Epics ↔ PRD: 100% FR coverage. Epics ↔ UX: all 14 UX-DRs mapped to stories.
 
-### Recommended Next Steps
+### Recommended Actions Before Starting Epic 1
 
-1. **Fix the architecture ORM contradiction** — Decide definitively between Raw SQLite (`better-sqlite3`) and an ORM (TypeORM/Prisma). Update the architecture doc to be consistent.
-2. **Align PRD NFR4 with UX spec** — Either remove "skeleton screens" from NFR4 or add a note that the UX spec consciously overrides this with "honest speed."
-3. **Create the Epics & Stories document** — Run the "Create Epics and Stories" workflow. The PRD provides an excellent foundation with clearly scoped MVP features across 7 capability areas. Target decomposition into user-value epics (not technical milestones).
-4. **Re-run this readiness check** — After epics are created, re-run implementation readiness to validate FR coverage, story quality, dependency chains, and acceptance criteria.
+1. **Fix the architecture ORM contradiction** — Update the "Starter Template Decision" section to say "SQLite (via better-sqlite3)" and remove TypeORM/Prisma references. The "Data Architecture Decision" section is the authoritative one.
+2. **Align PRD NFR4** — Remove "skeleton screens" from NFR4 wording to match UX spec and epics document. Change to: "Library browsing page load must feel instant (< 1s perceived) using lazy loading."
+
+### Optional Improvements (Non-Blocking)
+
+3. Rename Epic 1 title to "Application Deployment & Configuration" and Epic 3 to "Media Processing & Playback Readiness" for user-centric framing.
+4. Add more specific TV show season/episode drill-down wireframe guidance to UX spec if desired before reaching Epic 4.
 
 ### Final Note
 
-This assessment identified **3 issues** across **3 categories** (1 blocker, 1 major, 1 minor). The blocker — missing epics and stories — is the sole reason for the NOT READY status. The planning artifacts are otherwise solid and well-aligned. Once epics are created and the architecture contradiction is resolved, this project should be ready for implementation.
+This assessment identified **3 issues** across **2 categories** (1 major, 2 minor). The project has strong, well-aligned foundational artifacts with 100% requirements traceability. The single major issue (architecture ORM contradiction) is a quick documentation fix. After resolving it, implementation can proceed confidently starting with Epic 1, Story 1.1.

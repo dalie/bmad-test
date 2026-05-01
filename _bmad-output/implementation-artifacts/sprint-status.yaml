@@ -1,0 +1,102 @@
+# generated: 2026-04-30
+# last_updated: 2026-04-30
+# project: bmad
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-04-30
+last_updated: 2026-04-30
+project: bmad
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Project Foundation & Docker Deployment
+  epic-1: backlog
+  1-1-scaffold-monorepo-with-nestjs-backend-and-angular-frontend: backlog
+  1-2-docker-deployment-with-media-volume-mounts: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Library Scanning & Metadata Matching
+  epic-2: backlog
+  2-1-sqlite-database-setup-and-media-source-configuration: backlog
+  2-2-folder-scanning-and-file-detection: backlog
+  2-3-video-file-probing-with-ffmpeg: backlog
+  2-4-filename-parsing-and-tmdb-metadata-matching: backlog
+  2-5-manual-tmdb-match-and-needs-attention-queue: backlog
+  2-6-folder-watcher-for-new-content-detection: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Smart Transcode Pipeline
+  epic-3: backlog
+  3-1-transcode-tier-classification: backlog
+  3-2-aac-audio-sidecar-generation-tier-2: backlog
+  3-3-full-video-transcode-tier-3: backlog
+  3-4-subtitle-extraction-and-webvtt-conversion: backlog
+  3-5-unattended-queue-processing-and-pipeline-status: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Media Browsing & Library UI
+  epic-4: backlog
+  4-1-library-api-endpoints-for-movies-and-tv-shows: backlog
+  4-2-poster-grid-home-page-with-three-sections: backlog
+  4-3-movie-detail-page: backlog
+  4-4-tv-show-detail-page-with-season-and-episode-listings: backlog
+  4-5-watch-progress-indicators-on-poster-grid: backlog
+  4-6-library-search: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Video Playback & Dual-Element Sync
+  epic-5: backlog
+  5-1-media-file-serving-via-http-range-requests: backlog
+  5-2-video-player-with-standard-playback-controls: backlog
+  5-3-dual-element-audio-sync-for-sidecar-playback: backlog
+  5-4-subtitle-track-selection-during-playback: backlog
+  5-5-audio-track-selection-during-playback: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Watch Progress & Resume
+  epic-6: backlog
+  6-1-persist-watch-progress-in-localstorage: backlog
+  6-2-resume-playback-from-last-position: backlog
+  6-3-auto-mark-titles-as-watched: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Admin Panel & LAN-Only Access
+  epic-7: backlog
+  7-1-lan-detection-and-admin-route-guard: backlog
+  7-2-admin-dashboard-with-library-statistics: backlog
+  7-3-import-and-transcode-monitoring-with-error-details: backlog
+  7-4-manual-library-rescan-trigger: backlog
+  epic-7-retrospective: optional

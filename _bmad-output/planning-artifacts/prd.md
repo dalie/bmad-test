@@ -191,7 +191,7 @@ Cineplex Rigaud is a single-page application (SPA) with a backend API. The front
 
 | Metric | Target | Technique |
 |---|---|---|
-| Initial page load (library) | < 1s perceived | Route-based code splitting, lazy loading, skeleton screens |
+| Initial page load (library) | < 1s perceived | Route-based code splitting, lazy loading |
 | Page-to-page navigation | Instant (< 100ms) | SPA client-side routing, prefetching |
 | Poster grid rendering | Instant scroll | Virtualized list/grid, lazy image loading, thumbnail CDN-style caching |
 | Image loading | Progressive | Serve low-res blurred placeholders, swap to full poster on load |
@@ -199,7 +199,6 @@ Cineplex Rigaud is a single-page application (SPA) with a backend API. The front
 | API responses (metadata) | < 200ms | Server-side caching, pre-computed library indexes |
 
 **Snappiness techniques to employ:**
-- Skeleton screens during data fetching — never show a blank page
 - Optimistic UI updates where applicable
 - Prefetch next-likely content (e.g., when hovering a poster, prefetch metadata)
 - Image sprite sheets or pre-sized thumbnails to avoid layout shift
@@ -370,7 +369,7 @@ Not applicable — private self-hosted server, no public indexing needed. No SSR
 - **NFR1:** Time to first frame must be < 1000ms for any title in the library
 - **NFR2:** Seeking must complete within the browser's native range-request response time (no server-side delay)
 - **NFR3:** Server CPU usage during playback must be < 5% per concurrent viewer (static file serving only)
-- **NFR4:** Library browsing page load must feel instant (< 1s perceived) using skeleton screens and lazy loading
+- **NFR4:** Library browsing page load must feel instant (< 1s perceived) using lazy loading
 - **NFR5:** API metadata responses must return within 200ms
 - **NFR6:** SPA page-to-page navigation must complete in < 100ms (client-side routing)
 - **NFR7:** Poster grid must scroll smoothly with virtualized rendering and lazy image loading
