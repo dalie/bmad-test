@@ -50,7 +50,7 @@ development_status:
 
   # Epic 2: Library Scanning & Metadata Matching
   epic-2: in-progress
-  2-1-sqlite-database-setup-and-media-source-configuration: ready-for-dev
+  2-1-sqlite-database-setup-and-media-source-configuration: done
   2-2-folder-scanning-and-file-detection: backlog
   2-3-video-file-probing-with-ffmpeg: backlog
   2-4-filename-parsing-and-tmdb-metadata-matching: backlog

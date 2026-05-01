@@ -1,6 +1,6 @@
 # Story 2.1: SQLite Database Setup and Media Source Configuration
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,33 +18,33 @@ so that the system knows where to find my files and can persist library state.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Install dependencies (AC: #1)
-  - [ ] 1.1 Add `better-sqlite3` and `@types/better-sqlite3` to backend dependencies
-- [ ] Task 2: Create database module and service (AC: #1, #2, #5)
-  - [ ] 2.1 Create `apps/backend/src/database/database.module.ts` — NestJS module exporting the database service
-  - [ ] 2.2 Create `apps/backend/src/database/database.service.ts` — singleton service that opens/manages the SQLite connection
-  - [ ] 2.3 Database file location: use `CACHE_PATH` env var (defaults to `/mnt/cache`), store as `{CACHE_PATH}/cineplex.db`
-  - [ ] 2.4 Enable WAL mode (`PRAGMA journal_mode=WAL`) on connection open for concurrency
-  - [ ] 2.5 Enable foreign keys (`PRAGMA foreign_keys=ON`)
-  - [ ] 2.6 Run `CREATE TABLE IF NOT EXISTS` statements on initialization (idempotent schema setup)
-- [ ] Task 3: Define schema (AC: #2)
-  - [ ] 3.1 `media_sources` table: id (INTEGER PRIMARY KEY), path (TEXT NOT NULL UNIQUE), type (TEXT NOT NULL CHECK IN ('movies', 'tv')), created_at (TEXT NOT NULL DEFAULT current_timestamp)
-  - [ ] 3.2 `media_files` table: id (INTEGER PRIMARY KEY), path (TEXT NOT NULL UNIQUE), filename (TEXT NOT NULL), source_id (INTEGER NOT NULL REFERENCES media_sources(id)), status (TEXT NOT NULL DEFAULT 'discovered'), probe_data (TEXT), created_at (TEXT NOT NULL DEFAULT current_timestamp), updated_at (TEXT NOT NULL DEFAULT current_timestamp)
-  - [ ] 3.3 Add index on `media_files(source_id)` and `media_files(status)`
-- [ ] Task 5: Create configuration module (AC: #3, #4)
-  - [ ] 5.1 Create `apps/backend/src/config/config.module.ts` — NestJS module for app configuration
-  - [ ] 5.2 Create `apps/backend/src/config/config.service.ts` — reads environment variables, provides typed access to media paths
-  - [ ] 5.3 Create `apps/backend/src/config/config.controller.ts` — exposes `GET /config/sources` endpoint (note: /api prefix applied globally)
-  - [ ] 5.4 Endpoint returns JSON array of configured sources: `[{ path: string, type: 'movies' | 'tv' }]`
-- [ ] Task 6: Seed media sources on startup (AC: #3)
-  - [ ] 6.1 On startup, read `MEDIA_MOVIES_PATH` and `MEDIA_TV_PATH` from environment
-  - [ ] 6.2 Insert/update media_sources table with configured paths (upsert on path)
-  - [ ] 6.3 Handle missing env vars gracefully — log warning, don't crash
-- [ ] Task 7: Update .env.example and verify (AC: #3, #5)
-  - [ ] 7.1 Ensure `.env.example` includes `CACHE_PATH`, `MEDIA_MOVIES_PATH`, `MEDIA_TV_PATH` (already present from 1.2)
-  - [ ] 7.2 Write unit tests for database service initialization
-  - [ ] 7.3 Write unit tests for config controller response shape
-  - [ ] 7.4 Verify database is created in CACHE_PATH, not in media source folders
+- [x] Task 1: Install dependencies (AC: #1)
+  - [x] 1.1 Add `better-sqlite3` and `@types/better-sqlite3` to backend dependencies
+- [x] Task 2: Create database module and service (AC: #1, #2, #5)
+  - [x] 2.1 Create `apps/backend/src/database/database.module.ts` — NestJS module exporting the database service
+  - [x] 2.2 Create `apps/backend/src/database/database.service.ts` — singleton service that opens/manages the SQLite connection
+  - [x] 2.3 Database file location: use `CACHE_PATH` env var (defaults to `/mnt/cache`), store as `{CACHE_PATH}/cineplex.db`
+  - [x] 2.4 Enable WAL mode (`PRAGMA journal_mode=WAL`) on connection open for concurrency
+  - [x] 2.5 Enable foreign keys (`PRAGMA foreign_keys=ON`)
+  - [x] 2.6 Run `CREATE TABLE IF NOT EXISTS` statements on initialization (idempotent schema setup)
+- [x] Task 3: Define schema (AC: #2)
+  - [x] 3.1 `media_sources` table: id (INTEGER PRIMARY KEY), path (TEXT NOT NULL UNIQUE), type (TEXT NOT NULL CHECK IN ('movies', 'tv')), created_at (TEXT NOT NULL DEFAULT current_timestamp)
+  - [x] 3.2 `media_files` table: id (INTEGER PRIMARY KEY), path (TEXT NOT NULL UNIQUE), filename (TEXT NOT NULL), source_id (INTEGER NOT NULL REFERENCES media_sources(id)), status (TEXT NOT NULL DEFAULT 'discovered'), probe_data (TEXT), created_at (TEXT NOT NULL DEFAULT current_timestamp), updated_at (TEXT NOT NULL DEFAULT current_timestamp)
+  - [x] 3.3 Add index on `media_files(source_id)` and `media_files(status)`
+- [x] Task 5: Create configuration module (AC: #3, #4)
+  - [x] 5.1 Create `apps/backend/src/config/config.module.ts` — NestJS module for app configuration
+  - [x] 5.2 Create `apps/backend/src/config/config.service.ts` — reads environment variables, provides typed access to media paths
+  - [x] 5.3 Create `apps/backend/src/config/config.controller.ts` — exposes `GET /config/sources` endpoint (note: /api prefix applied globally)
+  - [x] 5.4 Endpoint returns JSON array of configured sources: `[{ path: string, type: 'movies' | 'tv' }]`
+- [x] Task 6: Seed media sources on startup (AC: #3)
+  - [x] 6.1 On startup, read `MEDIA_MOVIES_PATH` and `MEDIA_TV_PATH` from environment
+  - [x] 6.2 Insert/update media_sources table with configured paths (upsert on path)
+  - [x] 6.3 Handle missing env vars gracefully — log warning, don't crash
+- [x] Task 7: Update .env.example and verify (AC: #3, #5)
+  - [x] 7.1 Ensure `.env.example` includes `CACHE_PATH`, `MEDIA_MOVIES_PATH`, `MEDIA_TV_PATH` (already present from 1.2)
+  - [x] 7.2 Write unit tests for database service initialization
+  - [x] 7.3 Write unit tests for config controller response shape
+  - [x] 7.4 Verify database is created in CACHE_PATH, not in media source folders
 
 ## Dev Notes
 
@@ -259,8 +259,45 @@ apps/backend/src/
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Debug Log References
+
+No issues encountered during implementation.
 
 ### Completion Notes List
 
+- Installed better-sqlite3 + @types/better-sqlite3 in backend workspace
+- Created DatabaseModule/DatabaseService with WAL mode, foreign keys, idempotent schema
+- Created ConfigModule/ConfigService/ConfigController with GET /api/config/sources endpoint
+- ConfigService seeds media_sources from env vars on startup (upsert, graceful on missing vars)
+- Schema: media_sources (id, path, type, created_at), media_files (id, path, filename, source_id, status, probe_data, created_at, updated_at) with indexes
+- All 12 unit tests pass (health controller, database service, config controller)
+- Build compiles cleanly
+- .env.example already has CACHE_PATH, MEDIA_MOVIES_PATH, MEDIA_TV_PATH (from Story 1.2)
+
 ### File List
+
+- apps/backend/package.json (MODIFIED — added better-sqlite3, @types/better-sqlite3)
+- apps/backend/src/app.module.ts (MODIFIED — imports DatabaseModule, ConfigModule)
+- apps/backend/src/database/database.module.ts (NEW)
+- apps/backend/src/database/database.service.ts (NEW)
+- apps/backend/src/database/database.service.spec.ts (NEW)
+- apps/backend/src/config/config.module.ts (NEW)
+- apps/backend/src/config/config.service.ts (NEW)
+- apps/backend/src/config/config.controller.ts (NEW)
+- apps/backend/src/config/config.controller.spec.ts (NEW)
+
+## Change Log
+
+- 2026-05-01: Implemented Story 2.1 — SQLite database with better-sqlite3, media source configuration, REST endpoint, unit tests
+
+### Review Findings
+- [x] [Review][Patch] Tests use physical database file instead of `:memory:` and have race conditions
+- [x] [Review][Patch] Unhandled exception during database seed on module init
+- [x] [Review][Patch] Config loading doesn't use ConfigModule/dotenv
+- [x] [Review][Patch] Path concatenation for database file uses string interpolation
+- [x] [Review][Patch] Database close lacks error handling
+- [x] [Review][Patch] Incorrect test assertion on .pragma result
+- [x] [Review][Patch] Environment variables for media sources lack whitespace handling
+- [x] [Review][Patch] Unhandled DB exception in getSources API
