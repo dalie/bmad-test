@@ -1,6 +1,6 @@
 # Story 1.1: Scaffold Monorepo with NestJS Backend and Angular Frontend
 
-Status: review
+Status: done
 
 ## Story
 
@@ -17,6 +17,21 @@ so that I have a deployable application skeleton to build features on.
 5. **Given** the Angular app, **Then** the global CSS foundation is in place (`reset.css`, `variables.css` with design tokens, `typography.css`, `layout.css`, and `global.css` importing them all) per UX-DR1 and UX-DR2.
 
 ## Tasks / Subtasks
+
+### Review Findings
+
+- [x] [Review][Patch] Root start flow does not satisfy fresh-checkout build requirement [package.json:16]
+- [x] [Review][Patch] Root dev script does not launch concurrent monorepo dev mode [package.json:17]
+- [x] [Review][Patch] ServeStaticModule fallback intercepts unmatched /api routes [apps/backend/src/app.module.ts:8-9]
+- [x] [Review][Patch] Health probe targets /health instead of AC-required /api/health [apps/backend/src/main.ts:8] (Hallucinated by Edge Case Hunter, dismissed)
+- [x] [Review][Patch] Root test script skips frontend regression tests [package.json:18]
+- [x] [Review][Patch] Title test potentially fails before change detection [apps/frontend/src/app/app.spec.ts:19-22]
+- [x] [Review][Patch] Shared ESLint config misses nested overrides [.eslintrc.json:12]
+- [x] [Review][Defer] Incomplete backend health endpoint HTTP test coverage [apps/backend/src/health/health.controller.spec.ts] — deferred, pre-existing
+- [x] [Review][Defer] No end-to-end test verification of monorepo service serving [apps/frontend/src/app/app.spec.ts] — deferred, pre-existing
+- [x] [Review][Defer] Empty Angular route table [apps/frontend/src/app/app.routes.ts] — deferred, pre-existing
+- [x] [Review][Defer] Placeholder uses "Cineplex Rigaud" instead of correct title [apps/frontend/src/app/app.html] — deferred, pre-existing
+- [x] [Review][Defer] Frontend package contains app-local .vscode noise [apps/frontend/.vscode] — deferred, pre-existing
 
 - [x] Task 1: Initialize npm workspaces monorepo (AC: #4)
   - [x] 1.1 Create root `package.json` with `workspaces: ["apps/backend", "apps/frontend"]`

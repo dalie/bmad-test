@@ -7,6 +7,7 @@ import { HealthController } from './health/health.controller';
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'frontend', 'dist', 'frontend', 'browser'),
+      exclude: ['/api/(.*)'],
     }),
   ],
   controllers: [HealthController],

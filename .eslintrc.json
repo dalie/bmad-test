@@ -3,7 +3,7 @@
   "ignorePatterns": ["dist/", "node_modules/"],
   "overrides": [
     {
-      "files": ["*.ts"],
+      "files": ["**/*.ts"],
       "parserOptions": {
         "project": true
       },
