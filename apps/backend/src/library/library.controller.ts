@@ -8,6 +8,7 @@ import {
   HttpCode,
   ParseIntPipe,
   DefaultValuePipe,
+  NotFoundException,
 } from "@nestjs/common";
 import { LibraryService } from "./library.service";
 
@@ -37,5 +38,14 @@ export class LibraryController {
     @Query("limit", new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ) {
     return this.libraryService.getFiles(offset, limit);
+  }
+
+  @Get("files/:id")
+  getFile(@Param("id", ParseIntPipe) id: number) {
+    const result = this.libraryService.getFile(id);
+    if (!result) {
+      throw new NotFoundException(`File with id ${id} not found`);
+    }
+    return result;
   }
 }

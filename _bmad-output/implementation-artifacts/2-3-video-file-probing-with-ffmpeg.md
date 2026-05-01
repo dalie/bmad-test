@@ -1,6 +1,6 @@
 # Story 2.3: Video File Probing with FFmpeg
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -22,34 +22,34 @@ And probe failures are logged with error details and the file status is set to "
 
 ## Tasks / Subtasks
 
-- [ ] 1. Database schema additions (AC: all)
-  - [ ] 1.1 Add `subtitles` table to `DatabaseService.runMigrations()`: id, media_file_id (FK), track_index, type (embedded|sidecar), language, codec, webvtt_path, created_at
-  - [ ] 1.2 Verify `probe_data` TEXT column already exists on `media_files` (it does — used for JSON storage)
-- [ ] 2. Create `ProbeService` in library module (AC: 1,2,3)
-  - [ ] 2.1 Implement `probeFile(filePath: string): Promise<ProbeResult>` — executes `ffprobe` via `child_process.execFile` with JSON output
-  - [ ] 2.2 Parse ffprobe JSON output to extract: video codec, audio codec(s), container format, duration, resolution, embedded subtitle tracks
-  - [ ] 2.3 Define `ProbeResult` interface with typed fields
-- [ ] 3. Implement probe orchestration in `LibraryService` or new `ProbeOrchestrationService` (AC: 1,2,3,5)
-  - [ ] 3.1 Query media_files with status "discovered" to find files needing probing (includes newly discovered AND modified files reset to "discovered" by scanner)
-  - [ ] 3.2 Call `ProbeService.probeFile()` for each file
-  - [ ] 3.3 On success: store probe_data JSON in media_files, update status to "probed"
-  - [ ] 3.4 On failure: update status to "probe_failed", log error to `scan_errors` table with details (NFR13)
-  - [ ] 3.5 Process files sequentially to avoid CPU saturation
-- [ ] 4. Sidecar subtitle detection (AC: 4)
-  - [ ] 4.1 After probing, scan the same directory for sidecar subtitle files (.srt, .ass, .sub) matching the video filename
-  - [ ] 4.2 Insert embedded subtitle tracks (from ffprobe output) into `subtitles` table with type "embedded"
-  - [ ] 4.3 Insert discovered sidecar subtitle files into `subtitles` table with type "sidecar"
-- [ ] 5. Integrate probing into scan pipeline (AC: all)
-  - [ ] 5.1 After `executeScan()` completes in `LibraryService`, trigger probing of newly discovered files
-  - [ ] 5.2 Ensure probing runs asynchronously and doesn't block API responses (NFR17)
-- [ ] 6. Add API endpoint for probe status visibility (AC: all)
-  - [ ] 6.1 Extend `GET /api/library/files` response to include probe_data and status
-  - [ ] 6.2 Add `GET /api/library/files/:id` for single file detail with subtitles list
-- [ ] 7. Unit tests (AC: all)
-  - [ ] 7.1 Test `ProbeService` with mocked `child_process.execFile` — success and failure paths
-  - [ ] 7.2 Test probe orchestration — status transitions, error handling
-  - [ ] 7.3 Test sidecar subtitle detection with mocked filesystem
-  - [ ] 7.4 Test subtitles table insertion for both embedded and sidecar types
+- [x] 1. Database schema additions (AC: all)
+  - [x] 1.1 Add `subtitles` table to `DatabaseService.runMigrations()`: id, media_file_id (FK), track_index, type (embedded|sidecar), language, codec, webvtt_path, created_at
+  - [x] 1.2 Verify `probe_data` TEXT column already exists on `media_files` (it does — used for JSON storage)
+- [x] 2. Create `ProbeService` in library module (AC: 1,2,3)
+  - [x] 2.1 Implement `probeFile(filePath: string): Promise<ProbeResult>` — executes `ffprobe` via `child_process.execFile` with JSON output
+  - [x] 2.2 Parse ffprobe JSON output to extract: video codec, audio codec(s), container format, duration, resolution, embedded subtitle tracks
+  - [x] 2.3 Define `ProbeResult` interface with typed fields
+- [x] 3. Implement probe orchestration in `LibraryService` or new `ProbeOrchestrationService` (AC: 1,2,3,5)
+  - [x] 3.1 Query media_files with status "discovered" to find files needing probing (includes newly discovered AND modified files reset to "discovered" by scanner)
+  - [x] 3.2 Call `ProbeService.probeFile()` for each file
+  - [x] 3.3 On success: store probe_data JSON in media_files, update status to "probed"
+  - [x] 3.4 On failure: update status to "probe_failed", log error to `scan_errors` table with details (NFR13)
+  - [x] 3.5 Process files sequentially to avoid CPU saturation
+- [x] 4. Sidecar subtitle detection (AC: 4)
+  - [x] 4.1 After probing, scan the same directory for sidecar subtitle files (.srt, .ass, .sub) matching the video filename
+  - [x] 4.2 Insert embedded subtitle tracks (from ffprobe output) into `subtitles` table with type "embedded"
+  - [x] 4.3 Insert discovered sidecar subtitle files into `subtitles` table with type "sidecar"
+- [x] 5. Integrate probing into scan pipeline (AC: all)
+  - [x] 5.1 After `executeScan()` completes in `LibraryService`, trigger probing of newly discovered files
+  - [x] 5.2 Ensure probing runs asynchronously and doesn't block API responses (NFR17)
+- [x] 6. Add API endpoint for probe status visibility (AC: all)
+  - [x] 6.1 Extend `GET /api/library/files` response to include probe_data and status
+  - [x] 6.2 Add `GET /api/library/files/:id` for single file detail with subtitles list
+- [x] 7. Unit tests (AC: all)
+  - [x] 7.1 Test `ProbeService` with mocked `child_process.execFile` — success and failure paths
+  - [x] 7.2 Test probe orchestration — status transitions, error handling
+  - [x] 7.3 Test sidecar subtitle detection with mocked filesystem
+  - [x] 7.4 Test subtitles table insertion for both embedded and sidecar types
 
 ## Dev Notes
 
@@ -210,15 +210,32 @@ apps/backend/src/database/
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+None — clean implementation with no blockers.
 
 ### Completion Notes List
 
+- Task 1: Added `subtitles` table with FK to `media_files`, CHECK constraint on type, and index. Verified `probe_data` column already exists.
+- Task 2: Created `ProbeService` using `child_process.execFile` (no shell injection risk). Parses ffprobe JSON output into typed `ProbeResult` interface with video, audio tracks, subtitle tracks, and format metadata.
+- Task 3: Added `executeProbing()` to `LibraryService` — queries discovered files, probes sequentially, stores JSON probe_data on success, sets `probe_failed` and logs to `scan_errors` on failure.
+- Task 4: Implemented sidecar subtitle detection — scans directory for .srt/.ass/.sub files matching video basename, extracts language from filename suffix (e.g. `.en.srt`), inserts both embedded and sidecar subtitles into `subtitles` table.
+- Task 5: Probing triggers asynchronously after `executeScan()` completes — doesn't block API responses.
+- Task 6: `GET /api/library/files` already returns probe_data and status. Added `GET /api/library/files/:id` endpoint returning file detail with subtitles list.
+- Task 7: 20 unit tests covering ProbeService (7), probe orchestration (3), sidecar detection (3), getFile (2), and existing tests updated (5). All 37 tests pass.
+
 ### File List
 
-- `apps/backend/src/database/database.service.ts` (UPDATE)
-- `apps/backend/src/library/probe.service.ts` (NEW)
-- `apps/backend/src/library/probe.service.spec.ts` (NEW)
-- `apps/backend/src/library/library.module.ts` (UPDATE)
-- `apps/backend/src/library/library.service.ts` (UPDATE)
-- `apps/backend/src/library/library.service.spec.ts` (UPDATE)
+- `apps/backend/src/database/database.service.ts` (UPDATE) — added subtitles table migration
+- `apps/backend/src/library/probe.service.ts` (NEW) — ffprobe execution and ProbeResult parsing
+- `apps/backend/src/library/probe.service.spec.ts` (NEW) — 7 unit tests for ProbeService
+- `apps/backend/src/library/library.module.ts` (UPDATE) — added ProbeService to providers/exports
+- `apps/backend/src/library/library.service.ts` (UPDATE) — probe orchestration, sidecar detection, getFile method
+- `apps/backend/src/library/library.service.spec.ts` (UPDATE) — added ProbeService mock + 8 new tests
+- `apps/backend/src/library/library.controller.ts` (UPDATE) — added GET /api/library/files/:id endpoint
+
+## Change Log
+
+- 2026-05-01: Story implemented — all 7 tasks completed. ProbeService created, probe orchestration integrated into scan pipeline, sidecar subtitle detection, API endpoints added, 37 tests passing.

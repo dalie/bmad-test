@@ -2,11 +2,13 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { LibraryService } from "./library.service";
 import { DatabaseService } from "../database/database.service";
 import { ScannerService } from "./scanner.service";
+import { ProbeService } from "./probe.service";
 
 describe("LibraryService", () => {
   let service: LibraryService;
   let mockDbService: any;
   let mockScanner: any;
+  let mockProbeService: any;
   let mockTransaction: jest.Mock;
 
   beforeEach(async () => {
@@ -29,12 +31,16 @@ describe("LibraryService", () => {
     mockScanner = {
       scanDirectory: jest.fn(),
     };
+    mockProbeService = {
+      probeFile: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LibraryService,
         { provide: DatabaseService, useValue: mockDbService },
         { provide: ScannerService, useValue: mockScanner },
+        { provide: ProbeService, useValue: mockProbeService },
       ],
     }).compile();
 
@@ -84,18 +90,16 @@ describe("LibraryService", () => {
 
     it("should flag modified files when size or mtime change", () => {
       const mockRunFn = jest.fn();
-      const mockAllFn = jest
-        .fn()
-        .mockReturnValueOnce([
-          {
-            id: 1,
-            path: "/tmp/video.mp4",
-            filename: "video.mp4",
-            size: 50,
-            mtime: 500,
-            status: "discovered",
-          },
-        ]);
+      const mockAllFn = jest.fn().mockReturnValueOnce([
+        {
+          id: 1,
+          path: "/tmp/video.mp4",
+          filename: "video.mp4",
+          size: 50,
+          mtime: 500,
+          status: "discovered",
+        },
+      ]);
       const mockDb = mockDbService.getDatabase();
       mockDb.prepare = jest.fn().mockReturnValue({
         all: mockAllFn,
@@ -136,6 +140,192 @@ describe("LibraryService", () => {
       expect(result).toHaveProperty("total");
       expect(result).toHaveProperty("offset", 0);
       expect(result).toHaveProperty("limit", 10);
+    });
+  });
+
+  describe("executeProbing", () => {
+    it("should probe discovered files and update status to probed on success", async () => {
+      const mockRunFn = jest.fn();
+      const mockAllFn = jest
+        .fn()
+        .mockReturnValue([
+          { id: 1, path: "/media/movie.mkv", filename: "movie.mkv" },
+        ]);
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: mockAllFn,
+        get: jest.fn(),
+        run: mockRunFn,
+      });
+
+      mockProbeService.probeFile.mockResolvedValue({
+        format: {
+          container: "matroska,webm",
+          duration: 7200,
+          bitrate: 5000000,
+        },
+        video: { codec: "h264", width: 1920, height: 1080 },
+        audioTracks: [{ index: 1, codec: "ac3", channels: 6 }],
+        subtitleTracks: [],
+      });
+
+      // Mock readdir for sidecar detection - no sidecars
+      jest.spyOn(require("fs").promises, "readdir").mockResolvedValue([]);
+
+      await service.executeProbing();
+
+      expect(mockProbeService.probeFile).toHaveBeenCalledWith(
+        "/media/movie.mkv",
+      );
+      // Should update status to probed and store probe_data
+      expect(mockRunFn).toHaveBeenCalled();
+    });
+
+    it("should set status to probe_failed and log error on failure", async () => {
+      const mockRunFn = jest.fn();
+      const mockAllFn = jest
+        .fn()
+        .mockReturnValue([
+          { id: 2, path: "/media/corrupt.mkv", filename: "corrupt.mkv" },
+        ]);
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: mockAllFn,
+        get: jest.fn(),
+        run: mockRunFn,
+      });
+
+      mockProbeService.probeFile.mockRejectedValue(new Error("ffprobe failed"));
+
+      await service.executeProbing();
+
+      expect(mockProbeService.probeFile).toHaveBeenCalledWith(
+        "/media/corrupt.mkv",
+      );
+      // Should update status to probe_failed and insert error
+      expect(mockRunFn).toHaveBeenCalled();
+    });
+
+    it("should process files sequentially", async () => {
+      const callOrder: number[] = [];
+      const mockAllFn = jest.fn().mockReturnValue([
+        { id: 1, path: "/media/a.mkv", filename: "a.mkv" },
+        { id: 2, path: "/media/b.mkv", filename: "b.mkv" },
+      ]);
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: mockAllFn,
+        get: jest.fn(),
+        run: jest.fn(),
+      });
+
+      jest.spyOn(require("fs").promises, "readdir").mockResolvedValue([]);
+
+      mockProbeService.probeFile.mockImplementation(
+        async (filePath: string) => {
+          callOrder.push(filePath === "/media/a.mkv" ? 1 : 2);
+          return {
+            format: { container: "mkv", duration: 100, bitrate: 1000 },
+            video: null,
+            audioTracks: [],
+            subtitleTracks: [],
+          };
+        },
+      );
+
+      await service.executeProbing();
+
+      expect(callOrder).toEqual([1, 2]);
+    });
+  });
+
+  describe("detectSidecarSubtitles", () => {
+    it("should detect sidecar subtitle files matching video basename", async () => {
+      const mockRunFn = jest.fn();
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: jest.fn().mockReturnValue([]),
+        get: jest.fn(),
+        run: mockRunFn,
+      });
+
+      jest
+        .spyOn(require("fs").promises, "readdir")
+        .mockResolvedValue([
+          "Movie.Name.2024.mkv",
+          "Movie.Name.2024.srt",
+          "Movie.Name.2024.en.srt",
+          "Movie.Name.2024.fr.ass",
+          "Other.File.srt",
+        ]);
+
+      await service.detectSidecarSubtitles(1, "/media/Movie.Name.2024.mkv");
+
+      // Should insert 3 sidecar entries (not the .mkv itself or the Other file)
+      expect(mockRunFn).toHaveBeenCalledTimes(3);
+    });
+
+    it("should extract language from filename suffix", async () => {
+      const runCalls: any[] = [];
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: jest.fn().mockReturnValue([]),
+        get: jest.fn(),
+        run: (...args: any[]) => runCalls.push(args),
+      });
+
+      jest
+        .spyOn(require("fs").promises, "readdir")
+        .mockResolvedValue(["Movie.en.srt"]);
+
+      await service.detectSidecarSubtitles(5, "/media/Movie.mkv");
+
+      expect(runCalls[0]).toEqual(["en", "srt", "/media/Movie.en.srt"]);
+    });
+
+    it("should handle readdir failure gracefully", async () => {
+      jest
+        .spyOn(require("fs").promises, "readdir")
+        .mockRejectedValue(new Error("ENOENT"));
+
+      // Should not throw
+      await expect(
+        service.detectSidecarSubtitles(1, "/nonexistent/path/movie.mkv"),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe("getFile", () => {
+    it("should return file with subtitles", () => {
+      const mockDb = mockDbService.getDatabase();
+      const mockGet = jest
+        .fn()
+        .mockReturnValue({ id: 1, filename: "movie.mkv" });
+      const mockAll = jest
+        .fn()
+        .mockReturnValue([{ id: 1, type: "embedded", language: "eng" }]);
+      mockDb.prepare = jest.fn().mockReturnValue({
+        get: mockGet,
+        all: mockAll,
+        run: jest.fn(),
+      });
+
+      const result = service.getFile(1);
+      expect(result).not.toBeNull();
+      expect(result!.file.filename).toBe("movie.mkv");
+      expect(result!.subtitles).toHaveLength(1);
+    });
+
+    it("should return null for non-existent file", () => {
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        get: jest.fn().mockReturnValue(undefined),
+        all: jest.fn().mockReturnValue([]),
+        run: jest.fn(),
+      });
+
+      const result = service.getFile(999);
+      expect(result).toBeNull();
     });
   });
 });

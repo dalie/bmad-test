@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-30
-last_updated: 2026-05-01T20:00:00
+last_updated: 2026-05-01
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -52,7 +52,7 @@ development_status:
   epic-2: in-progress
   2-1-sqlite-database-setup-and-media-source-configuration: done
   2-2-folder-scanning-and-file-detection: done
-  2-3-video-file-probing-with-ffmpeg: ready-for-dev
+  2-3-video-file-probing-with-ffmpeg: review
   2-4-filename-parsing-and-tmdb-metadata-matching: backlog
   2-5-manual-tmdb-match-and-needs-attention-queue: backlog
   2-6-folder-watcher-for-new-content-detection: backlog

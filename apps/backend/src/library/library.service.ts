@@ -1,6 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { randomUUID } from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 import { DatabaseService } from "../database/database.service";
+import { ProbeService, ProbeResult } from "./probe.service";
 import { ScannerService, ScannedFile } from "./scanner.service";
 
 export interface ScanRecord {
@@ -22,6 +25,7 @@ export class LibraryService {
   constructor(
     private readonly db: DatabaseService,
     private readonly scanner: ScannerService,
+    private readonly probeService: ProbeService,
   ) {}
 
   startScan(full?: boolean): string {
@@ -91,6 +95,11 @@ export class LibraryService {
 
     record.status = "completed";
     record.completedAt = new Date().toISOString();
+
+    // Trigger probing of discovered files after scan completes
+    this.executeProbing().catch((err) => {
+      this.logger.error(`Probing failed: ${err.message}`);
+    });
   }
 
   syncFiles(sourceId: number, scannedFiles: ScannedFile[]) {
@@ -151,5 +160,134 @@ export class LibraryService {
     });
 
     tx();
+  }
+
+  async executeProbing(): Promise<void> {
+    const db = this.db.getDatabase();
+    const stmt = db.prepare(
+      "SELECT * FROM media_files WHERE status = 'discovered'",
+    );
+    const files = stmt.all() as any[];
+
+    this.logger.log(`Probing ${files.length} discovered files`);
+
+    for (const file of files) {
+      await this.probeAndStore(file);
+    }
+  }
+
+  private async probeAndStore(file: any): Promise<void> {
+    const db = this.db.getDatabase();
+
+    try {
+      const result = await this.probeService.probeFile(file.path);
+
+      const updateStmt = db.prepare(
+        "UPDATE media_files SET probe_data = ?, status = 'probed', updated_at = datetime('now') WHERE id = ?",
+      );
+      updateStmt.run(JSON.stringify(result), file.id);
+
+      // Catalog embedded subtitles
+      this.insertEmbeddedSubtitles(file.id, result.subtitleTracks);
+
+      // Detect and catalog sidecar subtitles
+      await this.detectSidecarSubtitles(file.id, file.path);
+
+      this.logger.log(`Probed successfully: ${file.filename}`);
+    } catch (err: any) {
+      const updateStmt = db.prepare(
+        "UPDATE media_files SET status = 'probe_failed', updated_at = datetime('now') WHERE id = ?",
+      );
+      updateStmt.run(file.id);
+
+      const errorStmt = db.prepare(
+        "INSERT INTO scan_errors (file_path, error_type, error_message) VALUES (?, ?, ?)",
+      );
+      errorStmt.run(file.path, "PROBE_FAILED", err.message);
+
+      this.logger.error(`Probe failed for ${file.filename}: ${err.message}`);
+    }
+  }
+
+  private insertEmbeddedSubtitles(
+    mediaFileId: number,
+    subtitleTracks: ProbeResult["subtitleTracks"],
+  ): void {
+    const db = this.db.getDatabase();
+    const insertStmt = db.prepare(
+      "INSERT INTO subtitles (media_file_id, track_index, type, language, codec) VALUES (?, ?, 'embedded', ?, ?)",
+    );
+
+    for (const track of subtitleTracks) {
+      insertStmt.run(
+        mediaFileId,
+        track.index,
+        track.language || null,
+        track.codec || null,
+      );
+    }
+  }
+
+  async detectSidecarSubtitles(
+    mediaFileId: number,
+    filePath: string,
+  ): Promise<void> {
+    const db = this.db.getDatabase();
+    const dir = path.dirname(filePath);
+    const baseName = path.basename(filePath, path.extname(filePath));
+    const subtitleExtensions = new Set([".srt", ".ass", ".sub"]);
+
+    let entries: string[];
+    try {
+      entries = await fs.promises.readdir(dir);
+    } catch {
+      return;
+    }
+
+    const insertStmt = db.prepare(
+      "INSERT INTO subtitles (media_file_id, track_index, type, language, codec, sidecar_path) VALUES (?, NULL, 'sidecar', ?, ?, ?)",
+    );
+
+    for (const entry of entries) {
+      const ext = path.extname(entry).toLowerCase();
+      if (!subtitleExtensions.has(ext)) continue;
+      if (!entry.startsWith(baseName)) continue;
+      // Skip if it's an exact match without any extension difference
+      if (entry === path.basename(filePath)) continue;
+
+      const fullSubPath = path.join(dir, entry);
+      const language = this.extractLanguageFromFilename(entry, baseName, ext);
+      const codec = ext.slice(1); // "srt", "ass", "sub"
+
+      insertStmt.run(language || null, codec, fullSubPath);
+    }
+  }
+
+  private extractLanguageFromFilename(
+    filename: string,
+    baseName: string,
+    ext: string,
+  ): string | undefined {
+    // Pattern: "Movie.Name.2024.en.srt" → language = "en"
+    const withoutExt = filename.slice(0, -ext.length);
+    const suffix = withoutExt.slice(baseName.length);
+    // suffix would be ".en" or empty
+    if (suffix.startsWith(".") && suffix.length > 1) {
+      return suffix.slice(1);
+    }
+    return undefined;
+  }
+
+  getFile(id: number): { file: any; subtitles: any[] } | null {
+    const db = this.db.getDatabase();
+    const fileStmt = db.prepare("SELECT * FROM media_files WHERE id = ?");
+    const file = fileStmt.get(id) as any;
+    if (!file) return null;
+
+    const subtitlesStmt = db.prepare(
+      "SELECT * FROM subtitles WHERE media_file_id = ?",
+    );
+    const subtitles = subtitlesStmt.all(id) as any[];
+    return { file, subtitles };
   }
 }

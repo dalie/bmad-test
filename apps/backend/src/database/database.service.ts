@@ -78,6 +78,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
 
+      CREATE TABLE IF NOT EXISTS subtitles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        media_file_id INTEGER NOT NULL REFERENCES media_files(id) ON DELETE CASCADE,
+        track_index INTEGER,
+        type TEXT NOT NULL CHECK (type IN ('embedded', 'sidecar')),
+        language TEXT,
+        codec TEXT,
+        sidecar_path TEXT,
+        webvtt_path TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_subtitles_media_file_id ON subtitles(media_file_id);
+
     `);
   }
 }
