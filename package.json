@@ -1,12 +1,21 @@
 {
-  "name": "bmad",
+  "name": "cineplex-rigaud",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Cineplex Rigaud - Home media streaming platform",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
-  "main": "index.js",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "start": "npm run start:prod --workspace=apps/backend",
+    "dev": "npm run start:dev --workspace=apps/backend",
+    "test": "npm run test --workspace=apps/backend",
+    "test:frontend": "npm run test --workspace=apps/frontend"
   }
 }

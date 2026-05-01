@@ -1,0 +1,19 @@
+.content-container {
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--content-padding);
+}
+
+.poster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--poster-width), 1fr));
+  gap: var(--grid-gap);
+}
+
+.section-spacing {
+  margin-block: var(--space-xl);
+}
+
+.section-spacing--large {
+  margin-block: var(--space-2xl);
+}

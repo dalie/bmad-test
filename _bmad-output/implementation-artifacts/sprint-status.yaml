@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-30
-last_updated: 2026-04-30
+last_updated: 2026-05-01
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -43,8 +43,8 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   # Epic 1: Project Foundation & Docker Deployment
-  epic-1: backlog
-  1-1-scaffold-monorepo-with-nestjs-backend-and-angular-frontend: backlog
+  epic-1: in-progress
+  1-1-scaffold-monorepo-with-nestjs-backend-and-angular-frontend: review
   1-2-docker-deployment-with-media-volume-mounts: backlog
   epic-1-retrospective: optional
 
