@@ -3,7 +3,8 @@ import { ConfigService } from "@nestjs/config";
 import Database from "better-sqlite3";
 import { ClassificationService } from "./classification.service";
 import { DatabaseService } from "../database/database.service";
-import { TranscodeService } from "./transcode.service";
+import { TranscodeService } from './transcode.service';
+import { SubtitleService } from './subtitle.service';
 
 describe("ClassificationService", () => {
   let service: ClassificationService;
@@ -29,6 +30,12 @@ describe("ClassificationService", () => {
           useValue: {
             executeAudioSidecarQueue: jest.fn().mockResolvedValue(undefined),
             executeVideoTranscodeQueue: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: SubtitleService,
+          useValue: {
+            executeSubtitleConversionQueue: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

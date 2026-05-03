@@ -37,6 +37,15 @@
 - No observable "probing in progress" state — scan API reports "completed" immediately while probing still runs in background. Future UX story should add a probing status indicator.
 - Case-insensitive filesystem matching — sidecar detection uses case-sensitive `startsWith` which may miss subtitles on Windows/exFAT mounts. Depends on deployment environment.
 
+## Deferred from: code review of 3-4-subtitle-extraction-and-webvtt-conversion (2026-05-03)
+
+- `mkdirSync` called synchronously per-subtitle inside async loop — pre-existing pattern from TranscodeService; directory only needs to be created once per queue run.
+- Tests create real `:memory:` directory on host filesystem; parent dir not cleaned in `afterEach` — follows spec-prescribed transcode.service.spec.ts pattern.
+- `cachePath` resolved from config per subtitle rather than once per queue run — consistent with other services; low severity.
+- `this.classifying = false` fires while fire-and-forget subtitle/transcode queues still running — pre-existing in ClassificationService; a second `executeClassification()` call can start while previous queues are still in-flight.
+- Permanently-failing subtitles retried on every queue run with no failure marking or bound — spec-chosen design (no status column on subtitles table); known limitation, same as other queue strategies in the pipeline.
+- ffmpeg exit-0 with empty/header-only output commits `webvtt_path` permanently without validating output size/contents — out of scope per spec; row will not be retried after false-success commit.
+
 ## Deferred from: code review of 3-3-full-video-transcode-tier-3 (2026-05-03)
 
 - `processVideoTranscode` is public, callers can bypass `videoTranscoding` mutex — same pattern as `processAudioSidecar`; explicitly deferred in story notes to future refactor story.

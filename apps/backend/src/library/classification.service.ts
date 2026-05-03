@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { ProbeResult } from "./probe.service";
-import { TranscodeService } from "./transcode.service";
+import { DatabaseService } from '../database/database.service';
+import { ProbeResult } from './probe.service';
+import { TranscodeService } from './transcode.service';
+import { SubtitleService } from './subtitle.service';
 
 const WEB_COMPATIBLE_VIDEO_CODECS = new Set([
   "h264",
@@ -22,6 +23,7 @@ export class ClassificationService {
   constructor(
     private readonly database: DatabaseService,
     private readonly transcodeService: TranscodeService,
+    private readonly subtitleService: SubtitleService,
   ) {}
 
   async executeClassification(): Promise<void> {
@@ -55,6 +57,11 @@ export class ClassificationService {
       this.transcodeService.executeVideoTranscodeQueue().catch((err: unknown) =>
         this.logger.error(
           `Video transcode queue failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+      this.subtitleService.executeSubtitleConversionQueue().catch((err: unknown) =>
+        this.logger.error(
+          `Subtitle conversion queue failed: ${err instanceof Error ? err.message : String(err)}`,
         ),
       );
     } finally {

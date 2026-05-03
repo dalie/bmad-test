@@ -1,6 +1,6 @@
 # Story 3.4: Subtitle Extraction and WebVTT Conversion
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -24,9 +24,9 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
 
 ## Tasks / Subtasks
 
-- [ ] 1. Create `apps/backend/src/library/subtitle.service.ts` (AC: all)
-  - [ ] 1.1 Define class `SubtitleService` with `@Injectable()`, `Logger`, `converting = false` mutex, constructor injecting `DatabaseService` and `ConfigService`
-  - [ ] 1.2 Implement `async executeSubtitleConversionQueue(): Promise<void>`:
+- [x] 1. Create `apps/backend/src/library/subtitle.service.ts` (AC: all)
+  - [x] 1.1 Define class `SubtitleService` with `@Injectable()`, `Logger`, `converting = false` mutex, constructor injecting `DatabaseService` and `ConfigService`
+  - [x] 1.2 Implement `async executeSubtitleConversionQueue(): Promise<void>`:
     - Guard with `this.converting` boolean (same mutex pattern as `executeAudioSidecarQueue()`)
     - Log skip: `'Subtitle conversion already in progress, skipping'` when mutex is held
     - Query all subtitle rows where `webvtt_path IS NULL` (implicit crash recovery — no status column needed):
@@ -41,7 +41,7 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
     - Log: `Processing ${subtitles.length} subtitles pending WebVTT conversion`
     - Iterate rows, call `await this.processSubtitleConversion(subtitle)` for each in try-catch (log error, continue — per NFR13)
     - Set `this.converting = false` in `finally` block
-  - [ ] 1.3 Implement `async processSubtitleConversion(subtitle: SubtitleRow): Promise<void>`:
+  - [x] 1.3 Implement `async processSubtitleConversion(subtitle: SubtitleRow): Promise<void>`:
     - Read `cachePath` from `this.config.get<string>('CACHE_PATH') || '/mnt/cache'`
     - Compute `outputDir = path.join(cachePath, 'subtitles')` — new subdirectory, distinct from `sidecars/` and `transcodes/`
     - Compute `outputPath = path.join(outputDir, '${subtitle.id}.vtt')` — subtitle DB row ID is stable, unique, no escaping needed
@@ -51,7 +51,7 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
     - Log success: `WebVTT conversion completed for subtitle_id ${subtitle.id} (${subtitle.type}, media_file_id=${subtitle.media_file_id}): ${outputPath}`
     - **On failure**: log `WebVTT conversion failed for subtitle_id ${subtitle.id}: ${errorMessage}` then rethrow so outer loop can catch and continue
     - **Do NOT** update media_files.status — subtitle conversion failure should not mark the file as failed
-  - [ ] 1.4 Implement `private async runFfmpegSubtitleConvert(filePath: string, outputPath: string, type: string, trackIndex: number | null): Promise<void>`:
+  - [x] 1.4 Implement `private async runFfmpegSubtitleConvert(filePath: string, outputPath: string, type: string, trackIndex: number | null): Promise<void>`:
     - **For embedded** (`type === 'embedded'` and `trackIndex` is not null):
       ```typescript
       await execFileAsync('ffmpeg', ['-v', 'warning', '-i', filePath, '-map', `0:${trackIndex}`, '-c:s', 'webvtt', '-y', outputPath])
@@ -62,7 +62,7 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
       ```
       Note: Pass `subtitle.sidecar_path` (not `filePath`) as input for sidecar conversions — sidecar input is the subtitle file itself, not the video file. The `filePath` (video path) is irrelevant for sidecars.
     - **IMPORTANT**: `filePath` in the method signature should be renamed to `videoPath` to avoid confusion. For embedded it is the video file; for sidecar, the `sidecar_path` from the subtitle row is used instead — do NOT use the video path as input for sidecar conversions
-  - [ ] 1.5 Define the `SubtitleRow` interface locally in `subtitle.service.ts`:
+  - [x] 1.5 Define the `SubtitleRow` interface locally in `subtitle.service.ts`:
     ```typescript
     interface SubtitleRow {
       id: number;
@@ -75,17 +75,17 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
       file_path: string;  // from JOIN with media_files
     }
     ```
-  - [ ] 1.6 Add required imports: `Injectable`, `Logger` from `@nestjs/common`; `ConfigService` from `@nestjs/config`; `execFile` from `child_process`; `fs`, `path` from node; `promisify` from `util`; `DatabaseService`
+  - [x] 1.6 Add required imports: `Injectable`, `Logger` from `@nestjs/common`; `ConfigService` from `@nestjs/config`; `execFile` from `child_process`; `fs`, `path` from node; `promisify` from `util`; `DatabaseService`
 
-- [ ] 2. Register `SubtitleService` in `apps/backend/src/library/library.module.ts`
-  - [ ] 2.1 Add `SubtitleService` to `providers` array
-  - [ ] 2.2 Add `SubtitleService` to `exports` array
-  - [ ] 2.3 Add the import at the top of the file
+- [x] 2. Register `SubtitleService` in `apps/backend/src/library/library.module.ts`
+  - [x] 2.1 Add `SubtitleService` to `providers` array
+  - [x] 2.2 Add `SubtitleService` to `exports` array
+  - [x] 2.3 Add the import at the top of the file
 
-- [ ] 3. Wire `SubtitleService` into `ClassificationService` (AC: subtitle queue fires after classification)
-  - [ ] 3.1 Import `SubtitleService` in `classification.service.ts`
-  - [ ] 3.2 Add `SubtitleService` to `ClassificationService` constructor
-  - [ ] 3.3 In `executeClassification()` try block, add fire-and-forget call after the two existing transcode queue calls:
+- [x] 3. Wire `SubtitleService` into `ClassificationService` (AC: subtitle queue fires after classification)
+  - [x] 3.1 Import `SubtitleService` in `classification.service.ts`
+  - [x] 3.2 Add `SubtitleService` to `ClassificationService` constructor
+  - [x] 3.3 In `executeClassification()` try block, add fire-and-forget call after the two existing transcode queue calls:
     ```typescript
     this.subtitleService.executeSubtitleConversionQueue().catch((err: unknown) =>
       this.logger.error(
@@ -94,8 +94,8 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
     );
     ```
 
-- [ ] 4. Update `classification.service.spec.ts` to add `SubtitleService` mock
-  - [ ] 4.1 Add `SubtitleService` to the mock providers `useValue` object:
+- [x] 4. Update `classification.service.spec.ts` to add `SubtitleService` mock
+  - [x] 4.1 Add `SubtitleService` to the mock providers `useValue` object:
     ```typescript
     {
       provide: SubtitleService,
@@ -108,57 +108,64 @@ And subtitle queue runs are idempotent — rows with webvtt_path already set are
     ```
     **Wait** — the `SubtitleService` is a new separate mock; `TranscodeService` mock stays as-is. The SubtitleService mock only needs `executeSubtitleConversionQueue`.
     - Correct: add a **new** `{ provide: SubtitleService, useValue: { executeSubtitleConversionQueue: jest.fn().mockResolvedValue(undefined) } }` to providers — do NOT touch the TranscodeService mock
-  - [ ] 4.2 Add `import { SubtitleService } from './subtitle.service';` to spec imports
+  - [x] 4.2 Add `import { SubtitleService } from './subtitle.service';` to spec imports
 
-- [ ] 5. Create `apps/backend/src/library/subtitle.service.spec.ts` (AC: all)
-  - [ ] 5.1 Set up test module following `transcode.service.spec.ts` pattern:
+- [x] 5. Create `apps/backend/src/library/subtitle.service.spec.ts` (AC: all)
+  - [x] 5.1 Set up test module following `transcode.service.spec.ts` pattern:
     - Mock `child_process.execFile` with `jest.mock('child_process', ...)`
     - Use `:memory:` as `CACHE_PATH` — subtitle dir becomes `:memory:/subtitles`
     - Clean up subtitle dir in `afterEach` (same `fs.rmSync` pattern as transcode spec)
     - Helpers: `insertSource()`, `insertMediaFile(sourceId, filename, status?)`, `insertSubtitle(mediaFileId, type, trackIndex?, sidecarcPath?, language?, codec?)`, `getSubtitle(id)`, `mockFfmpegSuccess()`, `mockFfmpegFailure()`
-  - [ ] 5.2 Test successful embedded subtitle conversion:
+  - [x] 5.2 Test successful embedded subtitle conversion:
     - Insert media file with embedded subtitle (`track_index = 2`, `type = 'embedded'`)
     - Call `executeSubtitleConversionQueue()`
     - Assert `webvtt_path` = `path.join(':memory:/subtitles', '${subtitleId}.vtt')`
     - Assert `execFile` called with `-map 0:2` and output path ending in `.vtt`
     - Assert `-i` arg is the video file path (not sidecar path)
-  - [ ] 5.3 Test successful sidecar subtitle conversion:
+  - [x] 5.3 Test successful sidecar subtitle conversion:
     - Insert media file with sidecar subtitle (`track_index = NULL`, `type = 'sidecar'`, `sidecar_path = '/media/Movie.en.srt'`)
     - Call `executeSubtitleConversionQueue()`
     - Assert `webvtt_path` set to expected `.vtt` path
     - Assert `-i` arg is `/media/Movie.en.srt` (the sidecar file), NOT the video file path
     - Assert no `-map` flag in FFmpeg args
-  - [ ] 5.4 Test FFmpeg failure for one subtitle (error isolation, NFR13):
+  - [x] 5.4 Test FFmpeg failure for one subtitle (error isolation, NFR13):
     - Insert two subtitle rows for the same file
     - Mock: first FFmpeg call fails, second succeeds
     - Call `executeSubtitleConversionQueue()`
     - Assert first subtitle's `webvtt_path` remains NULL (not updated on failure)
     - Assert second subtitle's `webvtt_path` is set (processing continued)
-  - [ ] 5.5 Test mutex guard:
+  - [x] 5.5 Test mutex guard:
     - Set `(service as any).converting = true`
     - Call `executeSubtitleConversionQueue()`
     - Assert log message contains `'already in progress'`
     - Assert `execFile` not called
-  - [ ] 5.6 Test idempotency — rows with `webvtt_path` already set are skipped:
+  - [x] 5.6 Test idempotency — rows with `webvtt_path` already set are skipped:
     - Insert subtitle with `webvtt_path = '/some/path.vtt'` already populated
     - Call `executeSubtitleConversionQueue()`
     - Assert `execFile` NOT called (row already converted)
-  - [ ] 5.7 Test empty queue:
+  - [x] 5.7 Test empty queue:
     - No subtitle rows in DB
     - Call `executeSubtitleConversionQueue()`
     - Assert `execFile` not called
-  - [ ] 5.8 Test output path construction:
+  - [x] 5.8 Test output path construction:
     - Verify output path is `path.join(':memory:/subtitles', '${subtitleId}.vtt')`
-  - [ ] 5.9 Test no media_files.status change on FFmpeg failure:
+  - [x] 5.9 Test no media_files.status change on FFmpeg failure:
     - Insert file with `status = 'ready'`, subtitle row for it
     - Mock FFmpeg failure
     - Call queue
     - Assert `media_files.status` still `'ready'` (not changed to 'failed' or anything else)
-  - [ ] 5.10 Run full backend test suite — target: all currently-passing tests still pass; 2 pre-existing failures in `classification.service.spec.ts` (hevc description mismatch) are expected and unrelated
+  - [x] 5.10 Run full backend test suite — target: all currently-passing tests still pass; 2 pre-existing failures in `classification.service.spec.ts` (hevc description mismatch) are expected and unrelated
 
 ### Review Findings
 
-(None yet — story not yet implemented)
+- [x] [Review][Patch] Sidecar `sidecar_path!` non-null assertion passes `null` to ffmpeg at runtime [subtitle.service.ts:108] — `subtitle.sidecar_path` is nullable in the schema; the TypeScript `!` is erased at runtime. A DB row with `type='sidecar'` and `sidecar_path=NULL` calls `execFileAsync` with `null` as the `-i` arg, producing an invalid invocation.
+- [x] [Review][Patch] Embedded `track_index=null` produces invalid `-map 0:null` ffmpeg arg [subtitle.service.ts:100] — `track_index` is `number | null`; when null and type is `'embedded'`, the template literal produces `"0:null"`, which ffmpeg rejects. The row will fail permanently on every queue run until manually corrected.
+- [x] [Review][Defer] `mkdirSync` called synchronously per-subtitle inside async loop [subtitle.service.ts:73] — deferred, pre-existing pattern from TranscodeService
+- [x] [Review][Defer] Tests create real `:memory:` directory on host filesystem; parent dir not cleaned in `afterEach` [subtitle.service.spec.ts] — deferred, pre-existing pattern from transcode.service.spec.ts
+- [x] [Review][Defer] `cachePath` resolved from config per subtitle rather than once per queue run [subtitle.service.ts:64] — deferred, pre-existing
+- [x] [Review][Defer] `this.classifying = false` fires while fire-and-forget subtitle/transcode queues still running [classification.service.ts] — deferred, pre-existing in ClassificationService
+- [x] [Review][Defer] Permanently-failing subtitles retried on every queue run with no failure marking or bound [subtitle.service.ts:43] — deferred, spec-chosen design (no status column); known limitation
+- [x] [Review][Defer] ffmpeg exit-0 with empty/header-only output commits `webvtt_path` permanently without validating output [subtitle.service.ts:73-79] — deferred, out of scope per spec
 
 ## Dev Notes
 
@@ -474,3 +481,32 @@ The backend suite currently has ~142 passing tests with 2 pre-existing failures 
 - Subtitle conversion runs concurrently with Tier 2/3 transcodes. Story 3-5 owns the scheduler to enforce subtitle-after-transcode ordering.
 - `processSubtitleConversion` is public (same pattern as processAudioSidecar and processVideoTranscode); callers can bypass mutex. Deferred to future refactor story.
 - No FFmpeg timeout — a hung subtitle conversion permanently holds `this.converting = true`. Pre-existing pattern from other transcode methods.
+
+## Dev Agent Record
+
+### Implementation Plan
+
+Followed TranscodeService pattern exactly: `SubtitleService` with `executing mutex`, `execFileAsync`, per-subtitle try/catch, `finally` mutex reset. Dispatches embedded via `-map 0:trackIndex` on the video file; sidecar via the `sidecar_path` itself (not the video file). No `updated_at` on subtitles UPDATE (column does not exist). `SubtitleService` wired into `ClassificationService` as fire-and-forget after existing two transcode queue calls. Registered in `LibraryModule` providers + exports.
+
+### Completion Notes
+
+- ✅ `apps/backend/src/library/subtitle.service.ts` created — full implementation with mutex, queue, embedded/sidecar FFmpeg dispatch, error isolation
+- ✅ `apps/backend/src/library/library.module.ts` updated — `SubtitleService` in providers and exports
+- ✅ `apps/backend/src/library/classification.service.ts` updated — `SubtitleService` injected, fire-and-forget call added after video transcode queue
+- ✅ `apps/backend/src/library/classification.service.spec.ts` updated — `SubtitleService` mock provider added
+- ✅ `apps/backend/src/library/subtitle.service.spec.ts` created — 10 tests covering embedded, sidecar, error isolation, mutex, idempotency, empty queue, path construction, no status mutation, mutex reset
+- ✅ All 10 new tests pass; 161 previously-passing tests continue to pass; 2 pre-existing failures (hevc tier-3) unchanged
+- ✅ TypeScript compiles cleanly (`tsc --noEmit` produces no output)
+
+## File List
+
+- apps/backend/src/library/subtitle.service.ts (created)
+- apps/backend/src/library/subtitle.service.spec.ts (created)
+- apps/backend/src/library/library.module.ts (modified)
+- apps/backend/src/library/classification.service.ts (modified)
+- apps/backend/src/library/classification.service.spec.ts (modified)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
+
+## Change Log
+
+- 2026-05-03: Story 3-4 implemented — SubtitleService created, wired into ClassificationService, 10 tests added (all pass)

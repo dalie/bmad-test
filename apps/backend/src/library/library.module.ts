@@ -11,6 +11,7 @@ import { TmdbService } from "./tmdb.service";
 import { WatcherService } from "./watcher.service";
 import { ClassificationService } from "./classification.service";
 import { TranscodeService } from "./transcode.service";
+import { SubtitleService } from "./subtitle.service";
 
 @Module({
   imports: [DatabaseModule],
@@ -25,6 +26,7 @@ import { TranscodeService } from "./transcode.service";
     WatcherService,
     ClassificationService,
     TranscodeService,
+    SubtitleService,
   ],
   exports: [
     ScannerService,
@@ -36,6 +38,7 @@ import { TranscodeService } from "./transcode.service";
     WatcherService,
     ClassificationService,
     TranscodeService,
+    SubtitleService,
   ],
 })
 export class LibraryModule implements OnModuleInit {
