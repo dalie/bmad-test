@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService as NestConfigService } from "@nestjs/config";
 import Database from "better-sqlite3";
+import * as fs from "fs";
 import * as path from "path";
 
 @Injectable()
@@ -17,10 +18,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     const cachePath = this.config.get<string>("CACHE_PATH") || "/mnt/cache";
-    const dbPath =
-      cachePath === ":memory:"
-        ? ":memory:"
-        : path.join(cachePath, "cineplex.db");
+    let dbPath: string;
+    if (cachePath === ":memory:") {
+      dbPath = ":memory:";
+    } else {
+      const resolved = path.isAbsolute(cachePath)
+        ? cachePath
+        : path.resolve(__dirname, "..", "..", "..", "..", cachePath);
+      dbPath = path.join(resolved, "cineplex.db");
+    }
+
+    if (dbPath !== ":memory:") {
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    }
 
     this.logger.log(`Opening database at ${dbPath}`);
     this.db = new Database(dbPath);

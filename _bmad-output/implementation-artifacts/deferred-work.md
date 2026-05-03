@@ -16,3 +16,10 @@
 
 - No concurrency guard on scan initiation — parallel POST requests can race on same media_files rows causing SQLITE_BUSY or duplicates. Requires architectural decision on scan mutex/queue.
 - scan_errors table has no index on file_path/created_at and no retention/cleanup mechanism — will grow unbounded on noisy filesystems.
+
+## Deferred from: code review of 2-3-video-file-probing-with-ffmpeg (2026-05-02)
+
+- No atomicity across `probeAndStore` operations — if crash occurs between status update to 'probed' and subtitle inserts completing, file is permanently marked probed with incomplete subtitle data. Would need wrapping in a transaction.
+- `execFileAsync` default maxBuffer (1MB) may be exceeded for files with hundreds of streams/chapters producing large JSON output. Unlikely in practice but could cause valid files to be marked probe_failed.
+- No observable "probing in progress" state — scan API reports "completed" immediately while probing still runs in background. Future UX story should add a probing status indicator.
+- Case-insensitive filesystem matching — sidecar detection uses case-sensitive `startsWith` which may miss subtitles on Windows/exFAT mounts. Depends on deployment environment.

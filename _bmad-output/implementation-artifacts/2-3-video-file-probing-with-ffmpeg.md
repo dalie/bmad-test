@@ -1,6 +1,6 @@
 # Story 2.3: Video File Probing with FFmpeg
 
-Status: review
+Status: done
 
 ## Story
 
@@ -239,3 +239,17 @@ None — clean implementation with no blockers.
 ## Change Log
 
 - 2026-05-01: Story implemented — all 7 tasks completed. ProbeService created, probe orchestration integrated into scan pipeline, sidecar subtitle detection, API endpoints added, 37 tests passing.
+- 2026-05-02: Code review completed (Claude Opus 4.6). 5 patch findings, 4 deferred.
+- 2026-05-02: All 5 patch findings fixed — missing mediaFileId bind, concurrency guard, greedy startsWith, catch-block safety, language extraction.
+
+## Review Findings
+
+- [x] [Review][Patch] HIGH: `detectSidecarSubtitles` INSERT missing `mediaFileId` — `insertStmt.run()` passes 3 args but SQL has 4 placeholders; `mediaFileId` never bound [library.service.ts:detectSidecarSubtitles]
+- [x] [Review][Patch] MED: No concurrency guard on `executeProbing()` — multiple scan completions can spawn parallel probing loops, racing on same files and inserting duplicate subtitles [library.service.ts:executeScan]
+- [x] [Review][Patch] MED: Greedy `startsWith` match in sidecar detection — `"Movie 2.srt".startsWith("Movie")` passes, associating wrong file [library.service.ts:detectSidecarSubtitles]
+- [x] [Review][Patch] MED: Uncaught throw in catch block aborts remaining files — if `err.message` is undefined, the error INSERT throws and all remaining files stay `discovered` [library.service.ts:probeAndStore]
+- [x] [Review][Patch] LOW: `extractLanguageFromFilename` returns multi-segment suffix — `Movie.en.forced.srt` yields `"en.forced"` instead of `"en"` [library.service.ts:extractLanguageFromFilename]
+- [x] [Review][Defer] MED: No atomicity — partial state if crash between status update and subtitle inserts — deferred, pre-existing pattern
+- [x] [Review][Defer] LOW: `execFileAsync` default maxBuffer (1MB) may be exceeded for files with hundreds of streams — deferred, unlikely edge case
+- [x] [Review][Defer] LOW: No observable "probing in progress" state for scan API — deferred, UX concern for future story
+- [x] [Review][Defer] LOW: Case-insensitive filesystem matching not handled — deferred, depends on deployment environment

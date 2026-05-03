@@ -280,7 +280,7 @@ describe("LibraryService", () => {
 
       await service.detectSidecarSubtitles(5, "/media/Movie.mkv");
 
-      expect(runCalls[0]).toEqual(["en", "srt", "/media/Movie.en.srt"]);
+      expect(runCalls[0]).toEqual([5, "en", "srt", "/media/Movie.en.srt"]);
     });
 
     it("should handle readdir failure gracefully", async () => {

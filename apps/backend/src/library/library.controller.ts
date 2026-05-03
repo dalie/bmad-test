@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { LibraryService } from "./library.service";
 
-@Controller("api/library")
+@Controller("library")
 export class LibraryController {
   constructor(private readonly libraryService: LibraryService) {}
 

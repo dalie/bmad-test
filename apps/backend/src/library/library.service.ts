@@ -21,6 +21,7 @@ export interface ScanRecord {
 export class LibraryService {
   private readonly logger = new Logger(LibraryService.name);
   private readonly scans = new Map<string, ScanRecord>();
+  private probing = false;
 
   constructor(
     private readonly db: DatabaseService,
@@ -129,6 +130,12 @@ export class LibraryService {
                 WHERE id = ? AND status != 'missing'
             `);
 
+      const resetFailedStmt = db.prepare(`
+                UPDATE media_files
+                SET status = 'discovered', updated_at = datetime('now')
+                WHERE id = ? AND status = 'probe_failed'
+            `);
+
       for (const scanned of scannedFiles) {
         const existing = existingFileMap.get(scanned.path);
         if (existing) {
@@ -139,6 +146,9 @@ export class LibraryService {
           const newMtime = scanned.stats.mtimeMs;
           if (existing.size !== newSize || existing.mtime !== newMtime) {
             flagModifiedStmt.run(newSize, newMtime, existing.id);
+          } else if (existing.status === "probe_failed") {
+            // Reset probe_failed files so they get re-probed
+            resetFailedStmt.run(existing.id);
           }
         } else {
           insertStmt.run(
@@ -163,16 +173,25 @@ export class LibraryService {
   }
 
   async executeProbing(): Promise<void> {
-    const db = this.db.getDatabase();
-    const stmt = db.prepare(
-      "SELECT * FROM media_files WHERE status = 'discovered'",
-    );
-    const files = stmt.all() as any[];
+    if (this.probing) {
+      this.logger.log("Probing already in progress, skipping");
+      return;
+    }
+    this.probing = true;
+    try {
+      const db = this.db.getDatabase();
+      const stmt = db.prepare(
+        "SELECT * FROM media_files WHERE status IN ('discovered', 'probe_failed')",
+      );
+      const files = stmt.all() as any[];
 
-    this.logger.log(`Probing ${files.length} discovered files`);
+      this.logger.log(`Probing ${files.length} discovered files`);
 
-    for (const file of files) {
-      await this.probeAndStore(file);
+      for (const file of files) {
+        await this.probeAndStore(file);
+      }
+    } finally {
+      this.probing = false;
     }
   }
 
@@ -195,17 +214,24 @@ export class LibraryService {
 
       this.logger.log(`Probed successfully: ${file.filename}`);
     } catch (err: any) {
-      const updateStmt = db.prepare(
-        "UPDATE media_files SET status = 'probe_failed', updated_at = datetime('now') WHERE id = ?",
-      );
-      updateStmt.run(file.id);
+      try {
+        const updateStmt = db.prepare(
+          "UPDATE media_files SET status = 'probe_failed', updated_at = datetime('now') WHERE id = ?",
+        );
+        updateStmt.run(file.id);
 
-      const errorStmt = db.prepare(
-        "INSERT INTO scan_errors (file_path, error_type, error_message) VALUES (?, ?, ?)",
-      );
-      errorStmt.run(file.path, "PROBE_FAILED", err.message);
+        const errorMessage = err?.message || String(err);
+        const errorStmt = db.prepare(
+          "INSERT INTO scan_errors (file_path, error_type, error_message) VALUES (?, ?, ?)",
+        );
+        errorStmt.run(file.path, "PROBE_FAILED", errorMessage);
 
-      this.logger.error(`Probe failed for ${file.filename}: ${err.message}`);
+        this.logger.error(`Probe failed for ${file.filename}: ${errorMessage}`);
+      } catch (innerErr: any) {
+        this.logger.error(
+          `Failed to record probe error for ${file.path}: ${innerErr?.message}`,
+        );
+      }
     }
   }
 
@@ -252,6 +278,9 @@ export class LibraryService {
       const ext = path.extname(entry).toLowerCase();
       if (!subtitleExtensions.has(ext)) continue;
       if (!entry.startsWith(baseName)) continue;
+      // After baseName, next char must be '.' or end (prevents "Movie 2.srt" matching "Movie")
+      const charAfterBase = entry[baseName.length];
+      if (charAfterBase !== undefined && charAfterBase !== ".") continue;
       // Skip if it's an exact match without any extension difference
       if (entry === path.basename(filePath)) continue;
 
@@ -259,7 +288,7 @@ export class LibraryService {
       const language = this.extractLanguageFromFilename(entry, baseName, ext);
       const codec = ext.slice(1); // "srt", "ass", "sub"
 
-      insertStmt.run(language || null, codec, fullSubPath);
+      insertStmt.run(mediaFileId, language || null, codec, fullSubPath);
     }
   }
 
@@ -269,11 +298,13 @@ export class LibraryService {
     ext: string,
   ): string | undefined {
     // Pattern: "Movie.Name.2024.en.srt" → language = "en"
+    // Pattern: "Movie.Name.2024.en.forced.srt" → language = "en"
     const withoutExt = filename.slice(0, -ext.length);
     const suffix = withoutExt.slice(baseName.length);
-    // suffix would be ".en" or empty
+    // suffix would be ".en" or ".en.forced" or empty
     if (suffix.startsWith(".") && suffix.length > 1) {
-      return suffix.slice(1);
+      const parts = suffix.slice(1).split(".");
+      return parts[0];
     }
     return undefined;
   }

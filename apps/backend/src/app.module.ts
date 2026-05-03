@@ -1,4 +1,4 @@
-import { LibraryModule } from './library/library.module';
+import { LibraryModule } from "./library/library.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule as NestConfigModule } from "@nestjs/config";
 import { ServeStaticModule } from "@nestjs/serve-static";
@@ -9,7 +9,10 @@ import { HealthController } from "./health/health.controller";
 
 @Module({
   imports: [
-    NestConfigModule.forRoot({ isGlobal: true }),
+    NestConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: join(__dirname, "..", "..", "..", ".env"),
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(
         __dirname,
@@ -20,7 +23,7 @@ import { HealthController } from "./health/health.controller";
         "frontend",
         "browser",
       ),
-      exclude: ["/api/(.*)"],
+      exclude: ["/api/{*path}"],
     }),
     DatabaseModule,
     ConfigModule,
