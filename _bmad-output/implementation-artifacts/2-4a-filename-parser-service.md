@@ -1,6 +1,6 @@
 # Story 2.4a: Filename Parser Service
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -23,25 +23,25 @@ And edge cases (no year, multiple years in title, year-like numbers) are handled
 
 ## Tasks / Subtasks
 
-- [ ] 1. Create `FilenameParserService` in library module (AC: all)
-  - [ ] 1.1 Define `ParsedFilename` interface: `{ title: string; year?: number; season?: number; episode?: number; }`
-  - [ ] 1.2 Implement `parseFilename(filename: string, sourceType: 'movies'|'tv'): ParsedFilename`
-  - [ ] 1.3 Implement TV pattern detection: S##E##, s##e##, #x##, Season.#.Episode.#
-  - [ ] 1.4 Implement year extraction: regex `[.\s(]?(19|20)\d{2}[.\s)]?` — prefer last occurrence before quality tags
-  - [ ] 1.5 Implement quality/codec/group stripping: remove everything after year (movies) or episode pattern (TV)
-  - [ ] 1.6 Implement title cleanup: replace dots/underscores with spaces, trim whitespace, handle parenthesized years
-- [ ] 2. Register in LibraryModule (AC: all)
-  - [ ] 2.1 Add `FilenameParserService` to providers in `library.module.ts`
-  - [ ] 2.2 Export `FilenameParserService` from `LibraryModule` for use by matching service in 2-4c
-- [ ] 3. Unit tests (AC: all)
-  - [ ] 3.1 Test movie filenames: `Dust.Bunny.2025.REPACK.720p.WEB.H264-SLOT.mkv` → title "Dust Bunny", year 2025
-  - [ ] 3.2 Test movie with parenthesized year: `Movie Name (2023).mkv` → title "Movie Name", year 2023
-  - [ ] 3.3 Test movie with complex codecs: `Movie.Name.2023.2160p.WEB-DL.DDP5.1.H.265-GROUP.mkv` → title "Movie Name", year 2023
-  - [ ] 3.4 Test TV S##E## pattern: `Show.Name.S03E05.Episode.Title.720p.WEB.H264-GROUP.mkv` → title "Show Name", season 3, episode 5
-  - [ ] 3.5 Test TV #x## pattern: `Show Name - 1x05 - Episode Title.mkv` → title "Show Name", season 1, episode 5
-  - [ ] 3.6 Test TV Season.#.Episode.# pattern: `Show.Name.Season.2.Episode.10.mkv` → title "Show Name", season 2, episode 10
-  - [ ] 3.7 Test edge case: filename with no year → title extracted, year undefined
-  - [ ] 3.8 Test edge case: year-like number in title (e.g., `2012.2009.720p.mkv`) → title "2012", year 2009
+- [x] 1. Create `FilenameParserService` in library module (AC: all)
+  - [x] 1.1 Define `ParsedFilename` interface: `{ title: string; year?: number; season?: number; episode?: number; }`
+  - [x] 1.2 Implement `parseFilename(filename: string, sourceType: 'movies'|'tv'): ParsedFilename`
+  - [x] 1.3 Implement TV pattern detection: S##E##, s##e##, #x##, Season.#.Episode.#
+  - [x] 1.4 Implement year extraction: regex `[.\s(]?(19|20)\d{2}[.\s)]?` — prefer last occurrence before quality tags
+  - [x] 1.5 Implement quality/codec/group stripping: remove everything after year (movies) or episode pattern (TV)
+  - [x] 1.6 Implement title cleanup: replace dots/underscores with spaces, trim whitespace, handle parenthesized years
+- [x] 2. Register in LibraryModule (AC: all)
+  - [x] 2.1 Add `FilenameParserService` to providers in `library.module.ts`
+  - [x] 2.2 Export `FilenameParserService` from `LibraryModule` for use by matching service in 2-4c
+- [x] 3. Unit tests (AC: all)
+  - [x] 3.1 Test movie filenames: `Dust.Bunny.2025.REPACK.720p.WEB.H264-SLOT.mkv` → title "Dust Bunny", year 2025
+  - [x] 3.2 Test movie with parenthesized year: `Movie Name (2023).mkv` → title "Movie Name", year 2023
+  - [x] 3.3 Test movie with complex codecs: `Movie.Name.2023.2160p.WEB-DL.DDP5.1.H.265-GROUP.mkv` → title "Movie Name", year 2023
+  - [x] 3.4 Test TV S##E## pattern: `Show.Name.S03E05.Episode.Title.720p.WEB.H264-GROUP.mkv` → title "Show Name", season 3, episode 5
+  - [x] 3.5 Test TV #x## pattern: `Show Name - 1x05 - Episode Title.mkv` → title "Show Name", season 1, episode 5
+  - [x] 3.6 Test TV Season.#.Episode.# pattern: `Show.Name.Season.2.Episode.10.mkv` → title "Show Name", season 2, episode 10
+  - [x] 3.7 Test edge case: filename with no year → title extracted, year undefined
+  - [x] 3.8 Test edge case: year-like number in title (e.g., `2012.2009.720p.mkv`) → title "2012", year 2009
 
 ## Dev Notes
 
@@ -106,8 +106,27 @@ apps/backend/src/library/
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Debug Log References
+
+None — clean implementation, all tests passed on first run.
 
 ### Completion Notes List
 
+- Implemented `FilenameParserService` as a pure-logic `@Injectable()` NestJS service with no external dependencies
+- Custom regex-based parser handles: torrent-style dot-separated names, parenthesized years, S##E##/s##e##/#x##/Season.#.Episode.# TV patterns
+- Parsing strategy: remove extension → detect TV patterns → extract year (last occurrence before quality tags) → strip quality/codec tags → clean title (dots/underscores → spaces)
+- Registered and exported from `LibraryModule` for use by future matching orchestration (story 2-4c)
+- 9 unit tests covering all specified cases including edge cases (no year, year-like title numbers)
+- Full regression suite: 46 tests across 7 suites — all passing, zero regressions
+
 ### File List
+
+- apps/backend/src/library/filename-parser.service.ts (NEW)
+- apps/backend/src/library/filename-parser.service.spec.ts (NEW)
+- apps/backend/src/library/library.module.ts (MODIFIED)
+
+## Change Log
+
+- 2026-05-02: Implemented FilenameParserService — regex-based torrent filename parser with full unit test coverage

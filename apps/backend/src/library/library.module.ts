@@ -4,12 +4,13 @@ import { ScannerService } from "./scanner.service";
 import { ProbeService } from "./probe.service";
 import { LibraryService } from "./library.service";
 import { LibraryController } from "./library.controller";
+import { FilenameParserService } from "./filename-parser.service";
 
 @Module({
   imports: [DatabaseModule],
   controllers: [LibraryController],
-  providers: [ScannerService, ProbeService, LibraryService],
-  exports: [ScannerService, ProbeService, LibraryService],
+  providers: [ScannerService, ProbeService, LibraryService, FilenameParserService],
+  exports: [ScannerService, ProbeService, LibraryService, FilenameParserService],
 })
 export class LibraryModule implements OnModuleInit {
   private readonly logger = new Logger(LibraryModule.name);
