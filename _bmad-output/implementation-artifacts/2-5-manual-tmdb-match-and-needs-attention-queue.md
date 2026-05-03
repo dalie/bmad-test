@@ -1,6 +1,6 @@
 # Story 2.5: Manual TMDB Match and Needs Attention Queue
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -23,38 +23,38 @@ And failed matches are never silently dropped — they remain in the queue until
 
 ## Tasks / Subtasks
 
-- [ ] 1. Add `GET /api/library/unmatched` endpoint (AC: 1, 5)
-  - [ ] 1.1 Add `getUnmatchedFiles()` method to `LibraryService` — queries `media_files` WHERE `status = 'match_failed'`, JOINs `media_sources` to include source type and path context
-  - [ ] 1.2 Add `@Get('unmatched')` route to `LibraryController` — returns list of unmatched files with pagination (offset/limit, same pattern as existing `getFiles`)
-  - [ ] 1.3 Return shape: `{ items: UnmatchedFile[], total: number, offset: number, limit: number }` where `UnmatchedFile` includes: `id, filename, path, source_type ('movies'|'tv'), error_message (from scan_errors), created_at`
-- [ ] 2. Add `GET /api/tmdb/search` endpoint (AC: 2)
-  - [ ] 2.1 Create `TmdbController` in the library module — `@Controller('tmdb')`
-  - [ ] 2.2 Add `@Get('search')` route with query params: `query` (required string), `type` (required, `'movie'|'tv'`)
-  - [ ] 2.3 Validate: `query` must be non-empty string; `type` must be `'movie'` or `'tv'`; return 400 on invalid input
-  - [ ] 2.4 Delegate to existing `TmdbService.searchMovie(query)` or `TmdbService.searchTv(query)` based on `type`
-  - [ ] 2.5 Return the search results array directly (same shape as TMDB API: id, title/name, overview, poster_path, release_date/first_air_date, vote_average, popularity)
-  - [ ] 2.6 Handle `TmdbUnavailableError` → return 503; `TmdbClientError` → return 502
-- [ ] 3. Add `POST /api/library/files/:id/match` endpoint (AC: 3, 4)
-  - [ ] 3.1 Add `@Post('files/:id/match')` route to `LibraryController`
-  - [ ] 3.2 Accept body: `{ tmdbId: number }` — validate tmdbId is a positive integer
-  - [ ] 3.3 Verify file exists and has status `'match_failed'` — return 404 if not found, 409 if already matched
-  - [ ] 3.4 Add `manualMatch(fileId: number, tmdbId: number)` method to `LibraryService` that delegates to `MatchingService`
-  - [ ] 3.5 Add `applyManualMatch(file, tmdbId, mediaType)` method to `MatchingService` — fetches details from TMDB using the provided tmdbId, stores metadata (reuse existing `persistMovieMatch`/`persistTvMatch` transaction patterns), updates status to `'matched'`
-  - [ ] 3.6 For TV manual match: fetch show details, then use `FilenameParserService.parseFilename()` to extract season/episode from the file's filename. Fetch the specific season via `getTvSeasonDetails()`, find the matching episode, and store both show-level metadata AND the episode row in `tv_episodes`
-  - [ ] 3.7 On success: return `{ status: 'matched', metadata: { title, tmdb_id, poster_path } }`
-  - [ ] 3.8 Handle TMDB errors: `TmdbUnavailableError` → 503; `TmdbClientError` → 502; invalid tmdbId (404 from TMDB) → 400
-- [ ] 4. Register TmdbController in LibraryModule (AC: all)
-  - [ ] 4.1 Add `TmdbController` to `controllers` array in `library.module.ts`
-- [ ] 5. Unit tests (AC: all)
-  - [ ] 5.1 Test `GET /api/library/unmatched` — returns files with status 'match_failed', correct pagination, includes error context
-  - [ ] 5.2 Test `GET /api/tmdb/search` — delegates to TmdbService, returns results, handles errors
-  - [ ] 5.3 Test `POST /api/library/files/:id/match` — happy path movie: file status changes to matched, metadata stored
-  - [ ] 5.4 Test `POST /api/library/files/:id/match` — happy path TV: file status changes to matched, show metadata stored, episode row created with correct season/episode numbers
-  - [ ] 5.5 Test `POST /api/library/files/:id/match` — file not found → 404
-  - [ ] 5.6 Test `POST /api/library/files/:id/match` — file already matched → 409
-  - [ ] 5.7 Test `POST /api/library/files/:id/match` — TMDB unavailable → 503
-  - [ ] 5.8 Test `POST /api/library/files/:id/match` — invalid tmdbId → 400
-  - [ ] 5.9 Use `:memory:` database for all DB tests
+- [x] 1. Add `GET /api/library/unmatched` endpoint (AC: 1, 5)
+  - [x] 1.1 Add `getUnmatchedFiles()` method to `LibraryService` — queries `media_files` WHERE `status = 'match_failed'`, JOINs `media_sources` to include source type and path context
+  - [x] 1.2 Add `@Get('unmatched')` route to `LibraryController` — returns list of unmatched files with pagination (offset/limit, same pattern as existing `getFiles`)
+  - [x] 1.3 Return shape: `{ items: UnmatchedFile[], total: number, offset: number, limit: number }` where `UnmatchedFile` includes: `id, filename, path, source_type ('movies'|'tv'), error_message (from scan_errors), created_at`
+- [x] 2. Add `GET /api/tmdb/search` endpoint (AC: 2)
+  - [x] 2.1 Create `TmdbController` in the library module — `@Controller('tmdb')`
+  - [x] 2.2 Add `@Get('search')` route with query params: `query` (required string), `type` (required, `'movie'|'tv'`)
+  - [x] 2.3 Validate: `query` must be non-empty string; `type` must be `'movie'` or `'tv'`; return 400 on invalid input
+  - [x] 2.4 Delegate to existing `TmdbService.searchMovie(query)` or `TmdbService.searchTv(query)` based on `type`
+  - [x] 2.5 Return the search results array directly (same shape as TMDB API: id, title/name, overview, poster_path, release_date/first_air_date, vote_average, popularity)
+  - [x] 2.6 Handle `TmdbUnavailableError` → return 503; `TmdbClientError` → return 502
+- [x] 3. Add `POST /api/library/files/:id/match` endpoint (AC: 3, 4)
+  - [x] 3.1 Add `@Post('files/:id/match')` route to `LibraryController`
+  - [x] 3.2 Accept body: `{ tmdbId: number }` — validate tmdbId is a positive integer
+  - [x] 3.3 Verify file exists and has status `'match_failed'` — return 404 if not found, 409 if already matched
+  - [x] 3.4 Add `manualMatch(fileId: number, tmdbId: number)` method to `LibraryService` that delegates to `MatchingService`
+  - [x] 3.5 Add `applyManualMatch(file, tmdbId, mediaType)` method to `MatchingService` — fetches details from TMDB using the provided tmdbId, stores metadata (reuse existing `persistMovieMatch`/`persistTvMatch` transaction patterns), updates status to `'matched'`
+  - [x] 3.6 For TV manual match: fetch show details, then use `FilenameParserService.parseFilename()` to extract season/episode from the file's filename. Fetch the specific season via `getTvSeasonDetails()`, find the matching episode, and store both show-level metadata AND the episode row in `tv_episodes`
+  - [x] 3.7 On success: return `{ status: 'matched', metadata: { title, tmdb_id, poster_path } }`
+  - [x] 3.8 Handle TMDB errors: `TmdbUnavailableError` → 503; `TmdbClientError` → 502; invalid tmdbId (404 from TMDB) → 400
+- [x] 4. Register TmdbController in LibraryModule (AC: all)
+  - [x] 4.1 Add `TmdbController` to `controllers` array in `library.module.ts`
+- [x] 5. Unit tests (AC: all)
+  - [x] 5.1 Test `GET /api/library/unmatched` — returns files with status 'match_failed', correct pagination, includes error context
+  - [x] 5.2 Test `GET /api/tmdb/search` — delegates to TmdbService, returns results, handles errors
+  - [x] 5.3 Test `POST /api/library/files/:id/match` — happy path movie: file status changes to matched, metadata stored
+  - [x] 5.4 Test `POST /api/library/files/:id/match` — happy path TV: file status changes to matched, show metadata stored, episode row created with correct season/episode numbers
+  - [x] 5.5 Test `POST /api/library/files/:id/match` — file not found → 404
+  - [x] 5.6 Test `POST /api/library/files/:id/match` — file already matched → 409
+  - [x] 5.7 Test `POST /api/library/files/:id/match` — TMDB unavailable → 503
+  - [x] 5.8 Test `POST /api/library/files/:id/match` — invalid tmdbId → 400
+  - [x] 5.9 Use `:memory:` database for all DB tests
 
 ## Dev Notes
 
@@ -267,6 +267,43 @@ Claude Opus 4.6 (GitHub Copilot)
 
 ### Debug Log References
 
+No issues encountered during implementation.
+
 ### Completion Notes List
 
+- Implemented `GET /api/library/unmatched` endpoint with pagination — queries `media_files` with `match_failed` status, joins `media_sources` for source type, left joins `scan_errors` for error context
+- Created `TmdbController` with `GET /api/tmdb/search` — validates query/type params, delegates to TmdbService, maps errors to appropriate HTTP status codes (503/502)
+- Implemented `POST /api/library/files/:id/match` — validates tmdbId, checks file state (404 if missing, 409 if already matched), delegates to MatchingService.applyManualMatch
+- Added `applyManualMatch()` to MatchingService — handles both movie and TV flows using transaction-based metadata persistence (reusing existing patterns)
+- TV manual match: parses season/episode from filename, fetches season details from TMDB, stores episode in `tv_episodes`. Gracefully handles unparseable filenames or missing episodes (logs warning, still matches at show level)
+- Registered TmdbController in LibraryModule controllers array
+- All 97 tests pass (33 new tests added across 3 spec files), zero regressions
+- TypeScript compiles cleanly with no errors
+
 ### File List
+
+- apps/backend/src/library/tmdb.controller.ts (NEW)
+- apps/backend/src/library/tmdb.controller.spec.ts (NEW)
+- apps/backend/src/library/library.controller.spec.ts (NEW)
+- apps/backend/src/library/library.controller.ts (MODIFIED)
+- apps/backend/src/library/library.service.ts (MODIFIED)
+- apps/backend/src/library/matching.service.ts (MODIFIED)
+- apps/backend/src/library/matching.service.spec.ts (MODIFIED)
+- apps/backend/src/library/library.module.ts (MODIFIED)
+
+### Review Findings
+
+- [x] [Review][Decision] TV episode insertion is best-effort outside the transaction — resolved: made mandatory; episode fetch failure rolls back match
+- [x] [Review][Decision] FILE_ALREADY_MATCHED conflates "already matched" with any non-match_failed status — resolved: differentiated 409 (matched) vs 422 (other states)
+- [x] [Review][Patch] TMDB 404 for invalid tmdbId returns 502 instead of spec'd 400 [library.controller.ts:79-82]
+- [x] [Review][Patch] body can be null/undefined causing TypeError before validation [library.controller.ts:68]
+- [x] [Review][Patch] Negative offset/limit not validated — ParseIntPipe accepts negatives [library.controller.ts:48-50]
+- [x] [Review][Patch] Search query not trimmed before passing to TMDB service [tmdb.controller.ts:21]
+- [x] [Review][Patch] Source row undefined silently defaults to 'movie' instead of erroring [library.service.ts:404]
+- [x] [Review][Defer] No rate limiting on TMDB proxy endpoints — deferred, architectural concern
+- [x] [Review][Defer] String-based error discrimination (err.message === "FILE_NOT_FOUND") is fragile — deferred, pre-existing pattern
+- [x] [Review][Defer] Duplicate scan_errors rows can inflate unmatched pagination — deferred, pre-existing data concern
+
+### Change Log
+
+- 2026-05-02: Implemented Story 2-5 — Manual TMDB Match and Needs Attention Queue. Added 3 new API endpoints (GET /api/library/unmatched, GET /api/tmdb/search, POST /api/library/files/:id/match), created TmdbController, extended LibraryService and MatchingService with manual match capabilities. 33 new unit tests added.

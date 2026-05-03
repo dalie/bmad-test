@@ -525,4 +525,300 @@ describe("MatchingService", () => {
       expect(errors[0].error_message).toBe("TMDB_API_KEY not configured");
     });
   });
+
+  describe("applyManualMatch", () => {
+    function insertMatchFailedFile(
+      sourceId: number,
+      filename: string,
+      filePath?: string,
+    ): number {
+      const p = filePath || `/media/movies/${filename}`;
+      return db
+        .prepare(
+          "INSERT INTO media_files (path, filename, source_id, status) VALUES (?, ?, ?, 'match_failed')",
+        )
+        .run(p, filename, sourceId).lastInsertRowid as number;
+    }
+
+    it("should manually match a movie file and store metadata", async () => {
+      const sourceId = insertSource("movies");
+      const fileId = insertMatchFailedFile(
+        sourceId,
+        "Some.Movie.2024.1080p.mkv",
+      );
+
+      jest.spyOn(tmdbService, "getMovieDetails").mockResolvedValue({
+        id: 999,
+        title: "Some Movie",
+        overview: "A great film",
+        poster_path: "/poster.jpg",
+        backdrop_path: "/backdrop.jpg",
+        vote_average: 8.0,
+        runtime: 110,
+        release_date: "2024-06-01",
+        genres: [{ id: 1, name: "Action" }],
+        production_countries: [],
+      });
+
+      const result = await service.applyManualMatch(
+        {
+          id: fileId,
+          filename: "Some.Movie.2024.1080p.mkv",
+          path: `/media/movies/Some.Movie.2024.1080p.mkv`,
+          source_id: sourceId,
+        },
+        999,
+        "movie",
+      );
+
+      expect(result.status).toBe("matched");
+      expect(result.metadata.title).toBe("Some Movie");
+      expect(result.metadata.tmdb_id).toBe(999);
+      expect(result.metadata.poster_path).toBe("/poster.jpg");
+
+      // Verify status updated
+      const file = db
+        .prepare("SELECT status FROM media_files WHERE id = ?")
+        .get(fileId) as any;
+      expect(file.status).toBe("matched");
+
+      // Verify metadata stored
+      const metadata = db
+        .prepare("SELECT * FROM metadata WHERE media_file_id = ?")
+        .get(fileId) as any;
+      expect(metadata).toBeDefined();
+      expect(metadata.tmdb_id).toBe(999);
+      expect(metadata.media_type).toBe("movie");
+      expect(metadata.title).toBe("Some Movie");
+    });
+
+    it("should manually match a TV file and store show metadata + episode", async () => {
+      const sourceId = insertSource("tv");
+      const fileId = insertMatchFailedFile(
+        sourceId,
+        "Taskmaster.S21E03.1080p.mkv",
+        "/media/tv/Taskmaster.S21E03.1080p.mkv",
+      );
+
+      jest.spyOn(tmdbService, "getTvDetails").mockResolvedValue({
+        id: 555,
+        name: "Taskmaster",
+        overview: "Comedy panel show",
+        poster_path: "/tv-poster.jpg",
+        backdrop_path: "/tv-backdrop.jpg",
+        vote_average: 8.5,
+        first_air_date: "2015-07-28",
+        genres: [{ id: 35, name: "Comedy" }],
+        number_of_seasons: 21,
+      });
+
+      jest.spyOn(tmdbService, "getTvSeasonDetails").mockResolvedValue({
+        season_number: 21,
+        episodes: [
+          {
+            episode_number: 1,
+            name: "Ep 1",
+            overview: "First",
+            air_date: "2025-01-01",
+            still_path: null,
+          },
+          {
+            episode_number: 2,
+            name: "Ep 2",
+            overview: "Second",
+            air_date: "2025-01-08",
+            still_path: null,
+          },
+          {
+            episode_number: 3,
+            name: "Ep 3",
+            overview: "Third",
+            air_date: "2025-01-15",
+            still_path: "/still3.jpg",
+          },
+        ],
+      });
+
+      const result = await service.applyManualMatch(
+        {
+          id: fileId,
+          filename: "Taskmaster.S21E03.1080p.mkv",
+          path: "/media/tv/Taskmaster.S21E03.1080p.mkv",
+          source_id: sourceId,
+        },
+        555,
+        "tv",
+      );
+
+      expect(result.status).toBe("matched");
+      expect(result.metadata.title).toBe("Taskmaster");
+      expect(result.metadata.tmdb_id).toBe(555);
+
+      // Verify metadata stored
+      const metadata = db
+        .prepare("SELECT * FROM metadata WHERE media_file_id = ?")
+        .get(fileId) as any;
+      expect(metadata).toBeDefined();
+      expect(metadata.tmdb_id).toBe(555);
+      expect(metadata.media_type).toBe("tv");
+      expect(metadata.title).toBe("Taskmaster");
+
+      // Verify episode stored
+      const episode = db
+        .prepare("SELECT * FROM tv_episodes WHERE metadata_id = ?")
+        .get(metadata.id) as any;
+      expect(episode).toBeDefined();
+      expect(episode.season_number).toBe(21);
+      expect(episode.episode_number).toBe(3);
+      expect(episode.name).toBe("Ep 3");
+      expect(episode.still_path).toBe("/still3.jpg");
+    });
+
+    it("should still succeed for TV when season/episode cannot be parsed from filename", async () => {
+      const sourceId = insertSource("tv");
+      const fileId = insertMatchFailedFile(
+        sourceId,
+        "some-weird-filename.mkv",
+        "/media/tv/some-weird-filename.mkv",
+      );
+
+      jest.spyOn(tmdbService, "getTvDetails").mockResolvedValue({
+        id: 777,
+        name: "Some Show",
+        overview: "A show",
+        poster_path: "/show.jpg",
+        backdrop_path: null,
+        vote_average: 7.0,
+        first_air_date: "2020-01-01",
+        genres: [],
+        number_of_seasons: 5,
+      });
+
+      const result = await service.applyManualMatch(
+        {
+          id: fileId,
+          filename: "some-weird-filename.mkv",
+          path: "/media/tv/some-weird-filename.mkv",
+          source_id: sourceId,
+        },
+        777,
+        "tv",
+      );
+
+      expect(result.status).toBe("matched");
+      expect(result.metadata.title).toBe("Some Show");
+
+      // Verify file is matched even without episode data
+      const file = db
+        .prepare("SELECT status FROM media_files WHERE id = ?")
+        .get(fileId) as any;
+      expect(file.status).toBe("matched");
+
+      // Verify no episode row created
+      const metadata = db
+        .prepare("SELECT * FROM metadata WHERE media_file_id = ?")
+        .get(fileId) as any;
+      const episodes = db
+        .prepare("SELECT * FROM tv_episodes WHERE metadata_id = ?")
+        .all(metadata.id) as any[];
+      expect(episodes).toHaveLength(0);
+    });
+
+    it("should propagate TmdbUnavailableError for manual match", async () => {
+      const sourceId = insertSource("movies");
+      const fileId = insertMatchFailedFile(sourceId, "Test.Movie.mkv");
+
+      jest
+        .spyOn(tmdbService, "getMovieDetails")
+        .mockRejectedValue(new TmdbUnavailableError("rate limited"));
+
+      await expect(
+        service.applyManualMatch(
+          {
+            id: fileId,
+            filename: "Test.Movie.mkv",
+            path: "/media/movies/Test.Movie.mkv",
+            source_id: sourceId,
+          },
+          123,
+          "movie",
+        ),
+      ).rejects.toThrow(TmdbUnavailableError);
+    });
+
+    it("should propagate TmdbClientError for manual match", async () => {
+      const sourceId = insertSource("movies");
+      const fileId = insertMatchFailedFile(sourceId, "Test.Movie.mkv");
+
+      jest
+        .spyOn(tmdbService, "getMovieDetails")
+        .mockRejectedValue(new TmdbClientError("invalid key"));
+
+      await expect(
+        service.applyManualMatch(
+          {
+            id: fileId,
+            filename: "Test.Movie.mkv",
+            path: "/media/movies/Test.Movie.mkv",
+            source_id: sourceId,
+          },
+          123,
+          "movie",
+        ),
+      ).rejects.toThrow(TmdbClientError);
+    });
+
+    it("should throw when episode is parseable but not found in TMDB season data", async () => {
+      const sourceId = insertSource("tv");
+      const fileId = insertMatchFailedFile(
+        sourceId,
+        "Show.S01E99.1080p.mkv",
+        "/media/tv/Show.S01E99.1080p.mkv",
+      );
+
+      jest.spyOn(tmdbService, "getTvDetails").mockResolvedValue({
+        id: 888,
+        name: "Show",
+        overview: "A show",
+        poster_path: "/show.jpg",
+        backdrop_path: null,
+        vote_average: 7.0,
+        first_air_date: "2020-01-01",
+        genres: [],
+        number_of_seasons: 1,
+      });
+
+      jest.spyOn(tmdbService, "getTvSeasonDetails").mockResolvedValue({
+        season_number: 1,
+        episodes: [
+          {
+            episode_number: 1,
+            name: "Pilot",
+            overview: "First",
+            air_date: "2020-01-01",
+            still_path: null,
+          },
+        ],
+      });
+
+      await expect(
+        service.applyManualMatch(
+          {
+            id: fileId,
+            filename: "Show.S01E99.1080p.mkv",
+            path: "/media/tv/Show.S01E99.1080p.mkv",
+            source_id: sourceId,
+          },
+          888,
+          "tv",
+        ),
+      ).rejects.toThrow("EPISODE_NOT_FOUND");
+
+      // Verify file status was NOT changed (rolled back)
+      const file = db
+        .prepare("SELECT status FROM media_files WHERE id = ?")
+        .get(fileId) as any;
+      expect(file.status).toBe("match_failed");
+    });
+  });
 });

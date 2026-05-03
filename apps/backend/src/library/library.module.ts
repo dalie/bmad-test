@@ -4,13 +4,14 @@ import { ScannerService } from "./scanner.service";
 import { ProbeService } from "./probe.service";
 import { LibraryService } from "./library.service";
 import { LibraryController } from "./library.controller";
+import { TmdbController } from "./tmdb.controller";
 import { FilenameParserService } from "./filename-parser.service";
 import { MatchingService } from "./matching.service";
 import { TmdbService } from "./tmdb.service";
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [LibraryController],
+  controllers: [LibraryController, TmdbController],
   providers: [
     ScannerService,
     ProbeService,

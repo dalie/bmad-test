@@ -364,4 +364,68 @@ export class LibraryService {
     const subtitles = subtitlesStmt.all(id) as any[];
     return { file, subtitles };
   }
+
+  getUnmatchedFiles(
+    offset: number,
+    limit: number,
+  ): { items: any[]; total: number; offset: number; limit: number } {
+    const db = this.db.getDatabase();
+
+    const countStmt = db.prepare(
+      "SELECT COUNT(*) as total FROM media_files WHERE status = 'match_failed'",
+    );
+    const { total } = countStmt.get() as { total: number };
+
+    const filesStmt = db.prepare(`
+      SELECT mf.id, mf.filename, mf.path, ms.type as source_type,
+             se.error_message, mf.created_at
+      FROM media_files mf
+      JOIN media_sources ms ON mf.source_id = ms.id
+      LEFT JOIN scan_errors se ON se.file_path = mf.path AND se.error_type = 'MATCH_FAILED'
+      WHERE mf.status = 'match_failed'
+      ORDER BY mf.created_at DESC
+      LIMIT ? OFFSET ?
+    `);
+    const items = filesStmt.all(limit, offset);
+
+    return { items, total, offset, limit };
+  }
+
+  async manualMatch(
+    fileId: number,
+    tmdbId: number,
+  ): Promise<{
+    status: string;
+    metadata: { title: string; tmdb_id: number; poster_path: string | null };
+  }> {
+    const db = this.db.getDatabase();
+
+    const file = db
+      .prepare("SELECT * FROM media_files WHERE id = ?")
+      .get(fileId) as any;
+
+    if (!file) {
+      throw new Error("FILE_NOT_FOUND");
+    }
+
+    if (file.status === "matched") {
+      throw new Error("FILE_ALREADY_MATCHED");
+    }
+
+    if (file.status !== "match_failed") {
+      throw new Error("FILE_NOT_ELIGIBLE");
+    }
+
+    const source = db
+      .prepare("SELECT type FROM media_sources WHERE id = ?")
+      .get(file.source_id) as { type: "movies" | "tv" } | undefined;
+
+    if (!source) {
+      throw new Error("SOURCE_NOT_FOUND");
+    }
+
+    const mediaType = source.type === "tv" ? "tv" : "movie";
+
+    return this.matchingService.applyManualMatch(file, tmdbId, mediaType);
+  }
 }
