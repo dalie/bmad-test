@@ -73,7 +73,7 @@ development_status:
   # Epic 4: Media Browsing & Library UI
   epic-4: in-progress
   4-1-library-api-endpoints-for-movies-and-tv-shows: done
-  4-2-poster-grid-home-page-with-three-sections: backlog
+  4-2-poster-grid-home-page-with-three-sections: ready-for-dev
   4-3-movie-detail-page: backlog
   4-4-tv-show-detail-page-with-season-and-episode-listings: backlog
   4-5-watch-progress-indicators-on-poster-grid: backlog
