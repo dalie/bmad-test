@@ -62,10 +62,7 @@ describe("FilenameParserService", () => {
     });
 
     it("should parse lowercase s##e## pattern", () => {
-      const result = service.parseFilename(
-        "Show.Name.s01e01.720p.mkv",
-        "tv",
-      );
+      const result = service.parseFilename("Show.Name.s01e01.720p.mkv", "tv");
       expect(result.title).toBe("Show Name");
       expect(result.season).toBe(1);
       expect(result.episode).toBe(1);

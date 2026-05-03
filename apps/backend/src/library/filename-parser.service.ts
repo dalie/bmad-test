@@ -9,10 +9,7 @@ export interface ParsedFilename {
 
 @Injectable()
 export class FilenameParserService {
-  parseFilename(
-    filename: string,
-    sourceType: "movies" | "tv",
-  ): ParsedFilename {
+  parseFilename(filename: string, sourceType: "movies" | "tv"): ParsedFilename {
     // Remove file extension
     const withoutExt = filename.replace(/\.[a-z0-9]{2,4}$/i, "");
 
