@@ -67,7 +67,7 @@ development_status:
   3-2-aac-audio-sidecar-generation-tier-2: done
   3-3-full-video-transcode-tier-3: done
   3-4-subtitle-extraction-and-webvtt-conversion: done
-  3-5-unattended-queue-processing-and-pipeline-status: ready-for-dev
+  3-5-unattended-queue-processing-and-pipeline-status: done
   epic-3-retrospective: optional
 
   # Epic 4: Media Browsing & Library UI

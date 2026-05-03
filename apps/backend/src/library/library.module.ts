@@ -12,10 +12,12 @@ import { WatcherService } from "./watcher.service";
 import { ClassificationService } from "./classification.service";
 import { TranscodeService } from "./transcode.service";
 import { SubtitleService } from "./subtitle.service";
+import { PipelineService } from "./pipeline.service";
+import { PipelineController } from "./pipeline.controller";
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [LibraryController, TmdbController],
+  controllers: [LibraryController, TmdbController, PipelineController],
   providers: [
     ScannerService,
     ProbeService,
@@ -27,6 +29,7 @@ import { SubtitleService } from "./subtitle.service";
     ClassificationService,
     TranscodeService,
     SubtitleService,
+    PipelineService,
   ],
   exports: [
     ScannerService,
@@ -39,6 +42,7 @@ import { SubtitleService } from "./subtitle.service";
     ClassificationService,
     TranscodeService,
     SubtitleService,
+    PipelineService,
   ],
 })
 export class LibraryModule implements OnModuleInit {

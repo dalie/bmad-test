@@ -1,3 +1,13 @@
+## Deferred from: code review of 3-5-unattended-queue-processing-and-pipeline-status (2026-05-03)
+
+- Pre-existing `media_files` rows with `tier=1, status='classified'` (classified before story 3-5) will not be reflected in any status counter — deferred: dev fresh-install only, no persistent data to migrate. A future migration story should handle all schema/data backfills.
+- `PipelineJob.status` typed as `string` not a union — pre-existing convention across services.
+- No auth guards on `/api/pipeline/status` or `/api/pipeline/jobs` — pre-existing: no other endpoints in codebase have auth.
+- `error_details` returned raw to HTTP client from `getJobs` — pre-existing design, consistent with other error surfaces.
+- `lastInsertRowid as number` cast in test helpers — pre-existing pattern in all spec files; should use `Number(...)` to be explicit.
+- Orphaned `transcode_jobs` rows silently excluded from `getJobs` when referenced `media_files` row is deleted — pre-existing schema design; consider `LEFT JOIN` or cascade-delete.
+- Unknown `status` values in `transcode_jobs` silently excluded from `getStatus` aggregation — pre-existing design.
+
 ## Deferred from: code review of 3-2-aac-audio-sidecar-generation-tier-2 (2026-05-03)
 
 - `output_path` column not migrated on existing DBs — `CREATE TABLE IF NOT EXISTS` is a no-op when the table exists; `output_path TEXT` column is absent on DBs created before story 3-2. Fresh install or manual `DROP TABLE transcode_jobs` required. Accepted as known limitation (dev/fresh-install only). A future schema migration story should address all pending column additions across the codebase.

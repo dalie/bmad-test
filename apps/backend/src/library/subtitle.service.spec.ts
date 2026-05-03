@@ -267,4 +267,27 @@ describe('SubtitleService', () => {
 
     expect((service as any).converting).toBe(false);
   });
+
+  // Tier 1 completion
+  it('should mark Tier 1 files with status=ready as completed after queue runs', async () => {
+    const sourceId = insertSource();
+    const fileId = insertMediaFile(sourceId, 'tier1.mp4', 'ready');
+    db.prepare('UPDATE media_files SET tier = 1 WHERE id = ?').run(fileId);
+
+    await service.executeSubtitleConversionQueue();
+
+    const file = getMediaFile(fileId);
+    expect(file.status).toBe('completed');
+  });
+
+  it('should not change status of non-Tier-1 files', async () => {
+    const sourceId = insertSource();
+    const fileId = insertMediaFile(sourceId, 'tier2.mkv', 'classified');
+    db.prepare('UPDATE media_files SET tier = 2 WHERE id = ?').run(fileId);
+
+    await service.executeSubtitleConversionQueue();
+
+    const file = getMediaFile(fileId);
+    expect(file.status).toBe('classified');
+  });
 });

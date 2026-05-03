@@ -111,7 +111,7 @@ describe("ClassificationService", () => {
 
       const file = getFile(fileId);
       expect(file.tier).toBe(1);
-      expect(file.status).toBe("classified");
+      expect(file.status).toBe("ready");
 
       const jobs = getTranscodeJobs(fileId);
       expect(jobs).toHaveLength(0);
@@ -240,7 +240,7 @@ describe("ClassificationService", () => {
 
       const file = getFile(fileId);
       expect(file.tier).toBe(1);
-      expect(file.status).toBe("classified");
+      expect(file.status).toBe("ready");
 
       const jobs = getTranscodeJobs(fileId);
       expect(jobs).toHaveLength(0);
@@ -346,7 +346,7 @@ describe("ClassificationService", () => {
 
       // file1 and file3 should be classified
       const f1 = getFile(file1Id);
-      expect(f1.status).toBe("classified");
+      expect(f1.status).toBe("ready");
       expect(f1.tier).toBe(1);
 
       // file2 should remain unclassified (parse error)
@@ -355,7 +355,7 @@ describe("ClassificationService", () => {
       expect(f2.tier).toBeNull();
 
       const f3 = getFile(file3Id);
-      expect(f3.status).toBe("classified");
+      expect(f3.status).toBe("ready");
       expect(f3.tier).toBe(1);
     });
   });
@@ -390,7 +390,7 @@ describe("ClassificationService", () => {
 
       const f1 = getFile(tier1Id);
       expect(f1.tier).toBe(1);
-      expect(f1.status).toBe("classified");
+      expect(f1.status).toBe("ready");
       expect(getTranscodeJobs(tier1Id)).toHaveLength(0);
 
       const f2 = getFile(tier2Id);
@@ -449,7 +449,7 @@ describe("ClassificationService", () => {
 
       const file = getFile(fileId);
       expect(file.tier).toBe(1);
-      expect(file.status).toBe("classified");
+      expect(file.status).toBe("ready");
     });
   });
 });

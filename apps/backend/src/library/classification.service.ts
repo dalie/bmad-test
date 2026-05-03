@@ -49,21 +49,27 @@ export class ClassificationService {
           );
         }
       }
-      this.transcodeService.executeAudioSidecarQueue().catch((err: unknown) =>
+      try {
+        await this.transcodeService.executeAudioSidecarQueue();
+      } catch (err: unknown) {
         this.logger.error(
-          `Transcode queue failed: ${err instanceof Error ? err.message : String(err)}`,
-        ),
-      );
-      this.transcodeService.executeVideoTranscodeQueue().catch((err: unknown) =>
+          `Audio sidecar queue failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      try {
+        await this.transcodeService.executeVideoTranscodeQueue();
+      } catch (err: unknown) {
         this.logger.error(
           `Video transcode queue failed: ${err instanceof Error ? err.message : String(err)}`,
-        ),
-      );
-      this.subtitleService.executeSubtitleConversionQueue().catch((err: unknown) =>
+        );
+      }
+      try {
+        await this.subtitleService.executeSubtitleConversionQueue();
+      } catch (err: unknown) {
         this.logger.error(
           `Subtitle conversion queue failed: ${err instanceof Error ? err.message : String(err)}`,
-        ),
-      );
+        );
+      }
     } finally {
       this.classifying = false;
     }
@@ -95,11 +101,14 @@ export class ClassificationService {
     const db = this.database.getDatabase();
 
     const classifyTx = db.transaction(() => {
-      db.prepare(
-        "UPDATE media_files SET tier = ?, status = 'classified', updated_at = datetime('now') WHERE id = ?",
-      ).run(tier, file.id);
-
-      if (tier === 2 || tier === 3) {
+      if (tier === 1) {
+        db.prepare(
+          "UPDATE media_files SET tier = 1, status = 'ready', updated_at = datetime('now') WHERE id = ?",
+        ).run(file.id);
+      } else {
+        db.prepare(
+          "UPDATE media_files SET tier = ?, status = 'classified', updated_at = datetime('now') WHERE id = ?",
+        ).run(tier, file.id);
         db.prepare(
           "INSERT OR IGNORE INTO transcode_jobs (file_id, tier, status) VALUES (?, ?, 'queued')",
         ).run(file.id, tier);
@@ -107,7 +116,11 @@ export class ClassificationService {
     });
 
     classifyTx();
-    this.logger.log(`Classified ${file.filename} → Tier ${tier}`);
+    if (tier === 1) {
+      this.logger.log(`Classified ${file.filename} → Tier 1 (ready, no transcode needed)`);
+    } else {
+      this.logger.log(`Classified ${file.filename} → Tier ${tier}`);
+    }
   }
 
   private determineTier(probe: ProbeResult): 1 | 2 | 3 {

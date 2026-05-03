@@ -59,6 +59,15 @@ export class SubtitleService {
           );
         }
       }
+
+      const changed = db
+        .prepare(
+          "UPDATE media_files SET status = 'completed', updated_at = datetime('now') WHERE tier = 1 AND status = 'ready'",
+        )
+        .run();
+      if (changed.changes > 0) {
+        this.logger.log(`Marked ${changed.changes} Tier 1 file(s) as completed`);
+      }
     } finally {
       this.converting = false;
     }
