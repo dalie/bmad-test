@@ -102,6 +102,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       CREATE INDEX IF NOT EXISTS idx_subtitles_media_file_id ON subtitles(media_file_id);
 
+      CREATE TABLE IF NOT EXISTS tmdb_config (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_base_url TEXT NOT NULL,
+        last_fetched TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
     `);
   }
 }

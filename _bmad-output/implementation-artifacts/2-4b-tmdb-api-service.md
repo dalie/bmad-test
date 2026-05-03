@@ -1,6 +1,6 @@
 # Story 2.4b: TMDB API Service
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -25,40 +25,40 @@ And the API key is never exposed to the frontend (NFR12)
 
 ## Tasks / Subtasks
 
-- [ ] 1. Database schema for TMDB config caching (AC: 4, 5)
-  - [ ] 1.1 Add `tmdb_config` table to `DatabaseService.runMigrations()`: id, image_base_url, last_fetched
-- [ ] 2. Create `TmdbService` in library module (AC: all)
-  - [ ] 2.1 Inject NestJS `ConfigService` to read `TMDB_API_KEY` env var (NFR12)
-  - [ ] 2.2 Inject `DatabaseService` for tmdb_config cache reads/writes
-  - [ ] 2.3 Implement private `fetchWithRetry(url: string): Promise<Response>` — wraps native `fetch` with rate limit and error handling
-  - [ ] 2.4 Implement rate limit handling: on HTTP 429, read `Retry-After` header, wait, retry up to 3 times with exponential backoff (1s → 2s → 4s) (NFR18)
-  - [ ] 2.5 Implement error classification: network error / 5xx → throw `TmdbUnavailableError`; 4xx (not 429) → throw `TmdbClientError`
-  - [ ] 2.6 Implement `searchMovie(title: string, year?: number): Promise<TmdbSearchResult[]>` — calls `GET /3/search/movie?query=...&year=...&language=en-US`
-  - [ ] 2.7 Implement `searchTv(title: string, year?: number): Promise<TmdbSearchResult[]>` — calls `GET /3/search/tv?query=...&first_air_date_year=...&language=en-US`
-  - [ ] 2.8 Implement `getMovieDetails(tmdbId: number): Promise<TmdbMovieDetails>` — calls `GET /3/movie/{id}?language=en-US`
-  - [ ] 2.9 Implement `getTvDetails(tmdbId: number): Promise<TmdbTvDetails>` — calls `GET /3/tv/{id}?language=en-US`
-  - [ ] 2.10 Implement `getTvSeasonDetails(tmdbId: number, seasonNum: number): Promise<TmdbSeasonDetails>` — calls `GET /3/tv/{id}/season/{season_number}?language=en-US`
-  - [ ] 2.11 Implement `getImageBaseUrl(): Promise<string>` — returns cached base URL if fresh (<24h), otherwise fetches `/3/configuration` and updates `tmdb_config` table
-  - [ ] 2.12 Use Bearer token auth: `Authorization: Bearer ${TMDB_API_KEY}` header on all requests
-- [ ] 3. Define TypeScript interfaces (AC: 2, 3)
-  - [ ] 3.1 `TmdbSearchResult`: { id, title/name, overview, poster_path, release_date/first_air_date, vote_average, popularity }
-  - [ ] 3.2 `TmdbMovieDetails`: { id, title, overview, poster_path, backdrop_path, vote_average, runtime, release_date, genres[], production_countries[] }
-  - [ ] 3.3 `TmdbTvDetails`: { id, name, overview, poster_path, backdrop_path, vote_average, first_air_date, genres[], number_of_seasons }
-  - [ ] 3.4 `TmdbSeasonDetails`: { season_number, episodes[]: { episode_number, name, overview, air_date, still_path } }
-  - [ ] 3.5 `TmdbUnavailableError` and `TmdbClientError` custom error classes
-- [ ] 4. Register in LibraryModule (AC: all)
-  - [ ] 4.1 Add `TmdbService` to providers in `library.module.ts`
-  - [ ] 4.2 Export `TmdbService` from `LibraryModule` for use by MatchingService and future Story 2.5
-- [ ] 5. Unit tests (AC: all)
-  - [ ] 5.1 Test searchMovie — mock fetch returning sample TMDB search results JSON
-  - [ ] 5.2 Test searchTv — mock fetch returning TV search results
-  - [ ] 5.3 Test getMovieDetails — mock fetch returning movie detail JSON
-  - [ ] 5.4 Test getTvSeasonDetails — mock fetch returning season detail with episodes
-  - [ ] 5.5 Test rate limit: mock 429 response with Retry-After header, verify retry after delay
-  - [ ] 5.6 Test TMDB unavailable: mock network error (fetch throws), verify `TmdbUnavailableError` thrown
-  - [ ] 5.7 Test TMDB 5xx: mock 503 response, verify `TmdbUnavailableError` thrown
-  - [ ] 5.8 Test image base URL caching: first call fetches from API, second call returns cached, third call after 24h refetches
-  - [ ] 5.9 Test missing API key: verify meaningful error on startup/first call
+- [x] 1. Database schema for TMDB config caching (AC: 4, 5)
+  - [x] 1.1 Add `tmdb_config` table to `DatabaseService.runMigrations()`: id, image_base_url, last_fetched
+- [x] 2. Create `TmdbService` in library module (AC: all)
+  - [x] 2.1 Inject NestJS `ConfigService` to read `TMDB_API_KEY` env var (NFR12)
+  - [x] 2.2 Inject `DatabaseService` for tmdb_config cache reads/writes
+  - [x] 2.3 Implement private `fetchWithRetry(url: string): Promise<Response>` — wraps native `fetch` with rate limit and error handling
+  - [x] 2.4 Implement rate limit handling: on HTTP 429, read `Retry-After` header, wait, retry up to 3 times with exponential backoff (1s → 2s → 4s) (NFR18)
+  - [x] 2.5 Implement error classification: network error / 5xx → throw `TmdbUnavailableError`; 4xx (not 429) → throw `TmdbClientError`
+  - [x] 2.6 Implement `searchMovie(title: string, year?: number): Promise<TmdbSearchResult[]>` — calls `GET /3/search/movie?query=...&year=...&language=en-US`
+  - [x] 2.7 Implement `searchTv(title: string, year?: number): Promise<TmdbSearchResult[]>` — calls `GET /3/search/tv?query=...&first_air_date_year=...&language=en-US`
+  - [x] 2.8 Implement `getMovieDetails(tmdbId: number): Promise<TmdbMovieDetails>` — calls `GET /3/movie/{id}?language=en-US`
+  - [x] 2.9 Implement `getTvDetails(tmdbId: number): Promise<TmdbTvDetails>` — calls `GET /3/tv/{id}?language=en-US`
+  - [x] 2.10 Implement `getTvSeasonDetails(tmdbId: number, seasonNum: number): Promise<TmdbSeasonDetails>` — calls `GET /3/tv/{id}/season/{season_number}?language=en-US`
+  - [x] 2.11 Implement `getImageBaseUrl(): Promise<string>` — returns cached base URL if fresh (<24h), otherwise fetches `/3/configuration` and updates `tmdb_config` table
+  - [x] 2.12 Use Bearer token auth: `Authorization: Bearer ${TMDB_API_KEY}` header on all requests
+- [x] 3. Define TypeScript interfaces (AC: 2, 3)
+  - [x] 3.1 `TmdbSearchResult`: { id, title/name, overview, poster_path, release_date/first_air_date, vote_average, popularity }
+  - [x] 3.2 `TmdbMovieDetails`: { id, title, overview, poster_path, backdrop_path, vote_average, runtime, release_date, genres[], production_countries[] }
+  - [x] 3.3 `TmdbTvDetails`: { id, name, overview, poster_path, backdrop_path, vote_average, first_air_date, genres[], number_of_seasons }
+  - [x] 3.4 `TmdbSeasonDetails`: { season_number, episodes[]: { episode_number, name, overview, air_date, still_path } }
+  - [x] 3.5 `TmdbUnavailableError` and `TmdbClientError` custom error classes
+- [x] 4. Register in LibraryModule (AC: all)
+  - [x] 4.1 Add `TmdbService` to providers in `library.module.ts`
+  - [x] 4.2 Export `TmdbService` from `LibraryModule` for use by MatchingService and future Story 2.5
+- [x] 5. Unit tests (AC: all)
+  - [x] 5.1 Test searchMovie — mock fetch returning sample TMDB search results JSON
+  - [x] 5.2 Test searchTv — mock fetch returning TV search results
+  - [x] 5.3 Test getMovieDetails — mock fetch returning movie detail JSON
+  - [x] 5.4 Test getTvSeasonDetails — mock fetch returning season detail with episodes
+  - [x] 5.5 Test rate limit: mock 429 response with Retry-After header, verify retry after delay
+  - [x] 5.6 Test TMDB unavailable: mock network error (fetch throws), verify `TmdbUnavailableError` thrown
+  - [x] 5.7 Test TMDB 5xx: mock 503 response, verify `TmdbUnavailableError` thrown
+  - [x] 5.8 Test image base URL caching: first call fetches from API, second call returns cached, third call after 24h refetches
+  - [x] 5.9 Test missing API key: verify meaningful error on startup/first call
 
 ## Dev Notes
 
@@ -187,8 +187,32 @@ apps/backend/src/database/
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Debug Log References
+
+None — clean implementation, all tests passed.
 
 ### Completion Notes List
 
+- Added `tmdb_config` table to database migrations for image base URL caching with 24h TTL
+- Implemented `TmdbService` as `@Injectable()` NestJS service using native `fetch` (no external HTTP deps)
+- All 5 TMDB endpoints implemented: searchMovie, searchTv, getMovieDetails, getTvDetails, getTvSeasonDetails
+- `getImageBaseUrl()` caches configuration response in SQLite with 24h refresh
+- Rate limiting: HTTP 429 → read Retry-After header, exponential backoff (1s→2s→4s), 3 attempts max
+- Error classification: network/5xx → `TmdbUnavailableError` (retriable), 4xx → `TmdbClientError` (permanent)
+- Bearer token auth via `TMDB_API_KEY` env var through NestJS ConfigService (never exposed to frontend)
+- TypeScript interfaces: TmdbSearchResult, TmdbMovieDetails, TmdbTvDetails, TmdbSeasonDetails
+- 11 unit tests covering all endpoints, rate limiting, error handling, and cache lifecycle
+- Full regression suite: 59 tests across 8 suites — all passing, zero regressions
+
 ### File List
+
+- apps/backend/src/library/tmdb.service.ts (NEW)
+- apps/backend/src/library/tmdb.service.spec.ts (NEW)
+- apps/backend/src/library/library.module.ts (MODIFIED)
+- apps/backend/src/database/database.service.ts (MODIFIED)
+
+## Change Log
+
+- 2026-05-02: Implemented TmdbService — TMDB API client with retry/backoff, error classification, image base URL caching, and full unit test coverage
