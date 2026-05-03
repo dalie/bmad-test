@@ -1,3 +1,11 @@
+## Deferred from: code review of 3-2-aac-audio-sidecar-generation-tier-2 (2026-05-03)
+
+- `output_path` column not migrated on existing DBs — `CREATE TABLE IF NOT EXISTS` is a no-op when the table exists; `output_path TEXT` column is absent on DBs created before story 3-2. Fresh install or manual `DROP TABLE transcode_jobs` required. Accepted as known limitation (dev/fresh-install only). A future schema migration story should address all pending column additions across the codebase.
+- No FFmpeg execution timeout — a hung `execFileAsync` call permanently locks `this.transcoding = true` for the lifetime of the process, blocking all future sidecar queue runs.
+- `processAudioSidecar` is public — callers can invoke it directly, bypassing the `this.transcoding` mutex guard. Should be private.
+- Crash-recovery UPDATE unguarded — if the `UPDATE … WHERE status = 'processing'` throws, the entire queue is skipped for that run. Low probability but unguarded; caught and logged by the caller's `.catch()`.
+- No row-count validation on completion transaction — if `file_id` is cascade-deleted between SELECT and completion UPDATE, the transaction succeeds with zero rows changed, producing an orphaned sidecar file with a false success log.
+
 ## Deferred from: code review (2026-05-01) of 1-1-scaffold-monorepo-with-nestjs-backend-and-angular-frontend.md
 
 - Incomplete backend health endpoint HTTP test coverage: Backend test coverage only verifies the health endpoint via direct controller method call, not over HTTP.

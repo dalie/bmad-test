@@ -6,3 +6,4 @@ build/
 *.db-shm
 .env
 media/
+sidecars/

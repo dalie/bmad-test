@@ -150,6 +150,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         tier INTEGER NOT NULL CHECK (tier IN (1,2,3)),
         status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','processing','completed','failed')),
         error_details TEXT,
+        output_path TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE(file_id)

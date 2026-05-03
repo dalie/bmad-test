@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { ProbeResult } from "./probe.service";
+import { TranscodeService } from "./transcode.service";
 
 const WEB_COMPATIBLE_VIDEO_CODECS = new Set([
   "h264",
@@ -18,7 +19,10 @@ export class ClassificationService {
   private readonly logger = new Logger(ClassificationService.name);
   private classifying = false;
 
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly transcodeService: TranscodeService,
+  ) {}
 
   async executeClassification(): Promise<void> {
     if (this.classifying) {
@@ -43,6 +47,11 @@ export class ClassificationService {
           );
         }
       }
+      this.transcodeService.executeAudioSidecarQueue().catch((err: unknown) =>
+        this.logger.error(
+          `Transcode queue failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
     } finally {
       this.classifying = false;
     }

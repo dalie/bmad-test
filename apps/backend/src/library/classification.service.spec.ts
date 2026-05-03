@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import Database from "better-sqlite3";
 import { ClassificationService } from "./classification.service";
 import { DatabaseService } from "../database/database.service";
+import { TranscodeService } from "./transcode.service";
 
 describe("ClassificationService", () => {
   let service: ClassificationService;
@@ -21,6 +22,12 @@ describe("ClassificationService", () => {
               if (key === "CACHE_PATH") return ":memory:";
               return undefined;
             },
+          },
+        },
+        {
+          provide: TranscodeService,
+          useValue: {
+            executeAudioSidecarQueue: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
