@@ -28,6 +28,7 @@ describe("ClassificationService", () => {
           provide: TranscodeService,
           useValue: {
             executeAudioSidecarQueue: jest.fn().mockResolvedValue(undefined),
+            executeVideoTranscodeQueue: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

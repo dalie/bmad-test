@@ -37,6 +37,15 @@
 - No observable "probing in progress" state — scan API reports "completed" immediately while probing still runs in background. Future UX story should add a probing status indicator.
 - Case-insensitive filesystem matching — sidecar detection uses case-sensitive `startsWith` which may miss subtitles on Windows/exFAT mounts. Depends on deployment environment.
 
+## Deferred from: code review of 3-3-full-video-transcode-tier-3 (2026-05-03)
+
+- `processVideoTranscode` is public, callers can bypass `videoTranscoding` mutex — same pattern as `processAudioSidecar`; explicitly deferred in story notes to future refactor story.
+- Crash recovery races in multi-instance deployments — `videoTranscoding` is in-process boolean only; two instances against the same SQLite file can both reset and re-queue the same Tier 3 job. Pre-existing pattern shared with audio queue.
+- No retry path for `failed` transcode jobs — jobs stuck in `failed` status are permanently dead-ended; no operator mechanism to re-attempt without direct DB intervention. Pre-existing pattern.
+- `processVideoTranscode` 'processing' UPDATE runs before the inner try block — if the DB UPDATE itself throws, the job stays `queued` and retries, but repeated DB errors loop the job indefinitely with no attempt counter or cap. Pre-existing pattern from audio sidecar.
+- Unbounded `.all()` query materializes full Tier 3 queue into memory — consistent with rest of pipeline; future scalability concern on large libraries.
+- Video files with no audio stream produce a silent MP4 output (FFmpeg exits 0, job completes) with no warning — out of scope for this story.
+
 ## Deferred from: code review of 3-1-transcode-tier-classification (2026-05-03)
 
 - W1: Existing deployments — `tier` column never added to live `media_files` table. `CREATE TABLE IF NOT EXISTS` is a no-op on existing DBs; no `ALTER TABLE` migration provided. Pre-existing schema migration strategy issue.

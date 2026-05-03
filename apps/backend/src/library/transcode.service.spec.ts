@@ -15,6 +15,7 @@ jest.mock("child_process", () => ({ execFile: jest.fn() }));
 // TranscodeService uses ':memory:' as cachePath → sidecar dir becomes ':memory:/sidecars' (relative)
 const TEST_CACHE_PATH = ":memory:";
 const SIDECAR_DIR = path.join(TEST_CACHE_PATH, "sidecars");
+const TRANSCODE_DIR = path.join(TEST_CACHE_PATH, "transcodes");
 
 describe("TranscodeService", () => {
   let service: TranscodeService;
@@ -55,6 +56,10 @@ describe("TranscodeService", () => {
     // Clean up the sidecar directory artifact created by mkdirSync during tests
     if (fs.existsSync(SIDECAR_DIR)) {
       fs.rmSync(SIDECAR_DIR, { recursive: true, force: true });
+    }
+    // Clean up the transcodes directory artifact created by mkdirSync during tests
+    if (fs.existsSync(TRANSCODE_DIR)) {
+      fs.rmSync(TRANSCODE_DIR, { recursive: true, force: true });
     }
   });
 
@@ -265,6 +270,168 @@ describe("TranscodeService", () => {
 
       // Tier 3 job should remain untouched (queued, not processed by this service)
       expect(getJob(job3Id).status).toBe("queued");
+      expect(mockExecFile).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── 5.2: Successful video transcode ──────────────────────────────────────
+
+  describe("5.2: successful video transcode", () => {
+    it("sets transcode_jobs.status to completed, output_path to transcodes/{fileId}.mp4, and media_files.status to ready", async () => {
+      mockFfmpegSuccess();
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "movie.mkv", 3);
+      const jobId = insertTranscodeJob(fileId, 3);
+
+      await service.executeVideoTranscodeQueue();
+
+      const job = getJob(jobId);
+      expect(job.status).toBe("completed");
+      expect(job.output_path).toBe(path.join(TRANSCODE_DIR, `${fileId}.mp4`));
+
+      const file = getFile(fileId);
+      expect(file.status).toBe("ready");
+    });
+  });
+
+  // ── 5.3: FFmpeg failure for Tier 3 ───────────────────────────────────────
+
+  describe("5.3: FFmpeg failure for Tier 3", () => {
+    it("sets transcode_jobs.status to failed with error_details, media_files.status stays classified", async () => {
+      mockFfmpegFailure("libx264 not found");
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "movie.mkv", 3);
+      const jobId = insertTranscodeJob(fileId, 3);
+
+      await service.executeVideoTranscodeQueue();
+
+      const job = getJob(jobId);
+      expect(job.status).toBe("failed");
+      expect(job.error_details).toContain("libx264 not found");
+
+      const file = getFile(fileId);
+      expect(file.status).toBe("classified");
+    });
+  });
+
+  // ── 5.4: Tier 3 crash recovery ───────────────────────────────────────────
+
+  describe("5.4: Tier 3 crash recovery", () => {
+    it("resets Tier 3 processing jobs to queued then processes them to completion", async () => {
+      mockFfmpegSuccess();
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "movie.mkv", 3);
+      const jobId = insertTranscodeJob(fileId, 3, "processing");
+
+      expect(getJob(jobId).status).toBe("processing");
+
+      await service.executeVideoTranscodeQueue();
+
+      const job = getJob(jobId);
+      expect(job.status).toBe("completed");
+    });
+  });
+
+  // ── 5.5: Crash recovery Tier isolation ───────────────────────────────────
+
+  describe("5.5: crash recovery Tier isolation", () => {
+    it("does NOT reset Tier 2 processing jobs when running Tier 3 crash recovery", async () => {
+      const sourceId = insertSource();
+      const file2Id = insertClassifiedFile(sourceId, "audio.mkv", 2);
+      const job2Id = insertTranscodeJob(file2Id, 2, "processing");
+
+      await service.executeVideoTranscodeQueue();
+
+      // Tier 2 job must remain 'processing' — video queue must not touch it
+      expect(getJob(job2Id).status).toBe("processing");
+    });
+  });
+
+  // ── 5.6: Video mutex guard ────────────────────────────────────────────────
+
+  describe("5.6: video mutex guard", () => {
+    it("skips concurrent execution — second call while first is running is a no-op", async () => {
+      (service as any).videoTranscoding = true;
+
+      const logSpy = jest.spyOn((service as any).logger, "log");
+      await service.executeVideoTranscodeQueue();
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("already in progress"),
+      );
+      expect(mockExecFile).not.toHaveBeenCalled();
+
+      (service as any).videoTranscoding = false;
+    });
+  });
+
+  // ── 5.7: Error isolation for Tier 3 ──────────────────────────────────────
+
+  describe("5.7: error isolation for Tier 3", () => {
+    it("continues processing remaining Tier 3 jobs when one FFmpeg call fails", async () => {
+      const sourceId = insertSource();
+      const file1Id = insertClassifiedFile(sourceId, "fail.mkv", 3);
+      const job1Id = insertTranscodeJob(file1Id, 3);
+      const file2Id = insertClassifiedFile(sourceId, "success.mkv", 3);
+      const job2Id = insertTranscodeJob(file2Id, 3);
+
+      mockExecFile
+        .mockImplementationOnce((...args: any[]) => {
+          const callback = args[args.length - 1];
+          callback(new Error("FFmpeg failure"), "", "");
+        })
+        .mockImplementationOnce((...args: any[]) => {
+          const callback = args[args.length - 1];
+          callback(null, "", "");
+        });
+
+      await service.executeVideoTranscodeQueue();
+
+      expect(getJob(job1Id).status).toBe("failed");
+      expect(getFile(file1Id).status).toBe("classified");
+
+      expect(getJob(job2Id).status).toBe("completed");
+      expect(getFile(file2Id).status).toBe("ready");
+    });
+  });
+
+  // ── 5.8: No Tier 3 jobs ───────────────────────────────────────────────────
+
+  describe("5.8: no Tier 3 queued jobs", () => {
+    it("completes without calling FFmpeg when no queued Tier 3 jobs exist", async () => {
+      await service.executeVideoTranscodeQueue();
+      expect(mockExecFile).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── 5.9: Output path construction for Tier 3 ─────────────────────────────
+
+  describe("5.9: output path construction for Tier 3", () => {
+    it("constructs transcode path as <cachePath>/transcodes/<fileId>.mp4", async () => {
+      mockFfmpegSuccess();
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "movie.mkv", 3);
+      const jobId = insertTranscodeJob(fileId, 3);
+
+      await service.executeVideoTranscodeQueue();
+
+      const job = getJob(jobId);
+      const expectedPath = path.join(TRANSCODE_DIR, `${fileId}.mp4`);
+      expect(job.output_path).toBe(expectedPath);
+    });
+  });
+
+  // ── 5.10: Tier filtering for video queue ─────────────────────────────────
+
+  describe("5.10: tier filtering for video queue", () => {
+    it("does not process Tier 2 queued jobs — they stay queued and FFmpeg is not called", async () => {
+      const sourceId = insertSource();
+      const file2Id = insertClassifiedFile(sourceId, "audio.mkv", 2);
+      const job2Id = insertTranscodeJob(file2Id, 2);
+
+      await service.executeVideoTranscodeQueue();
+
+      expect(getJob(job2Id).status).toBe("queued");
       expect(mockExecFile).not.toHaveBeenCalled();
     });
   });

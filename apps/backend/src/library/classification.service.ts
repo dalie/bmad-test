@@ -52,6 +52,11 @@ export class ClassificationService {
           `Transcode queue failed: ${err instanceof Error ? err.message : String(err)}`,
         ),
       );
+      this.transcodeService.executeVideoTranscodeQueue().catch((err: unknown) =>
+        this.logger.error(
+          `Video transcode queue failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
     } finally {
       this.classifying = false;
     }

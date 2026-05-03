@@ -1,6 +1,6 @@
 # Story 3.3: Full Video Transcode (Tier 3)
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -29,9 +29,9 @@ And the video transcode queue runs independently from the audio sidecar queue (s
 
 ## Tasks / Subtasks
 
-- [ ] 1. Add `executeVideoTranscodeQueue()` method to `TranscodeService` (AC: all)
-  - [ ] 1.1 Add private flag `videoTranscoding = false` as a class member in `transcode.service.ts` (separate from the existing `this.transcoding` audio flag)
-  - [ ] 1.2 Implement `async executeVideoTranscodeQueue(): Promise<void>`:
+- [x] 1. Add `executeVideoTranscodeQueue()` method to `TranscodeService` (AC: all)
+  - [x] 1.1 Add private flag `videoTranscoding = false` as a class member in `transcode.service.ts` (separate from the existing `this.transcoding` audio flag)
+  - [x] 1.2 Implement `async executeVideoTranscodeQueue(): Promise<void>`:
     - Guard with `this.videoTranscoding` boolean flag (same mutex pattern as `executeAudioSidecarQueue()`)
     - Log skip: `'Video transcode already in progress, skipping'` when mutex is held
     - On entry: reset stuck Tier-3 `'processing'` rows back to `'queued'` via: `UPDATE transcode_jobs SET status = 'queued', updated_at = datetime('now') WHERE status = 'processing' AND tier = 3` (tier-specific crash recovery — prevents interfering with Tier 2 jobs)
@@ -40,8 +40,8 @@ And the video transcode queue runs independently from the audio sidecar queue (s
     - Log: `Processing ${jobs.length} queued Tier 3 video transcode jobs`
     - Set `this.videoTranscoding = false` in finally block
 
-- [ ] 2. Add `processVideoTranscode()` method to `TranscodeService` (AC: all)
-  - [ ] 2.1 Implement `async processVideoTranscode(job: { id: number; file_id: number; file_path: string }): Promise<void>` — same structure as `processAudioSidecar()`:
+- [x] 2. Add `processVideoTranscode()` method to `TranscodeService` (AC: all)
+  - [x] 2.1 Implement `async processVideoTranscode(job: { id: number; file_id: number; file_path: string }): Promise<void>` — same structure as `processAudioSidecar()`:
     - Read `cachePath` from `this.config.get<string>('CACHE_PATH') || '/mnt/cache'`
     - Compute output directory: `path.join(cachePath, 'transcodes')` — different from sidecars (`'sidecars'` vs `'transcodes'`)
     - Create it with `fs.mkdirSync(outputDir, { recursive: true })` inside the try block (after the 'processing' status update, so failures here are caught and marked 'failed')
@@ -58,14 +58,14 @@ And the video transcode queue runs independently from the audio sidecar queue (s
       - Rethrow so the outer loop can catch and continue to next job
     - **On success** log: `Video transcode completed for file_id ${job.file_id}: ${outputPath}`
 
-- [ ] 3. Add private `runFfmpegVideoTranscode()` to `TranscodeService` (AC: FFmpeg H.264 encoding)
-  - [ ] 3.1 Implement `private async runFfmpegVideoTranscode(inputPath: string, outputPath: string): Promise<void>`:
+- [x] 3. Add private `runFfmpegVideoTranscode()` to `TranscodeService` (AC: FFmpeg H.264 encoding)
+  - [x] 3.1 Implement `private async runFfmpegVideoTranscode(inputPath: string, outputPath: string): Promise<void>`:
     - Call: `await execFileAsync('ffmpeg', ['-v', 'warning', '-i', inputPath, '-c:v', 'libx264', '-preset', 'medium', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-ac', '2', '-movflags', '+faststart', '-y', outputPath])`
     - No stdout/stderr processing needed — FFmpeg exit code non-zero triggers rejection automatically
     - See Dev Notes for FFmpeg flag rationale
 
-- [ ] 4. Wire `executeVideoTranscodeQueue()` into `ClassificationService` pipeline (AC: pipeline integration)
-  - [ ] 4.1 In `classification.service.ts`, immediately after the existing `this.transcodeService.executeAudioSidecarQueue().catch(...)` fire-and-forget call, add an identical call for the video queue:
+- [x] 4. Wire `executeVideoTranscodeQueue()` into `ClassificationService` pipeline (AC: pipeline integration)
+  - [x] 4.1 In `classification.service.ts`, immediately after the existing `this.transcodeService.executeAudioSidecarQueue().catch(...)` fire-and-forget call, add an identical call for the video queue:
     ```typescript
     this.transcodeService.executeVideoTranscodeQueue().catch((err: unknown) =>
       this.logger.error(
@@ -73,20 +73,31 @@ And the video transcode queue runs independently from the audio sidecar queue (s
       ),
     );
     ```
-  - [ ] 4.2 Update the TranscodeService mock in `classification.service.spec.ts` to add `executeVideoTranscodeQueue: jest.fn().mockResolvedValue(undefined)` to the mock's `useValue` object — this prevents `TypeError: ... is not a function` when the classification service calls the new method during tests
+  - [x] 4.2 Update the TranscodeService mock in `classification.service.spec.ts` to add `executeVideoTranscodeQueue: jest.fn().mockResolvedValue(undefined)` to the mock's `useValue` object — this prevents `TypeError: ... is not a function` when the classification service calls the new method during tests
 
-- [ ] 5. Unit tests for Tier 3 in `transcode.service.spec.ts` (AC: all)
-  - [ ] 5.1 Add helpers to existing spec: `insertClassifiedFile(..., tier = 3)` already supports any tier; no helper changes needed
-  - [ ] 5.2 Test successful video transcode: mock `execFileAsync` resolves → `transcode_jobs.status = 'completed'`, `output_path` set to `{cachePath}/transcodes/{fileId}.mp4`, `media_files.status = 'ready'`
-  - [ ] 5.3 Test FFmpeg failure: mock `execFileAsync` rejects → `transcode_jobs.status = 'failed'`, `error_details` populated, `media_files.status` stays `'classified'`
-  - [ ] 5.4 Test Tier-3-specific crash recovery: insert a Tier 3 job with `status = 'processing'`, call `executeVideoTranscodeQueue()` → job resets to `'queued'` then processes to `'completed'`
-  - [ ] 5.5 Test crash recovery Tier isolation: insert Tier 2 job with `status = 'processing'`, call `executeVideoTranscodeQueue()` → Tier 2 job is NOT reset (stays `'processing'`)
-  - [ ] 5.6 Test mutex guard (`videoTranscoding`): set `(service as any).videoTranscoding = true` → second call is no-op, logs 'already in progress'
-  - [ ] 5.7 Test error isolation: two Tier 3 jobs, first fails, second succeeds → second job completes
-  - [ ] 5.8 Test no Tier 3 jobs: `executeVideoTranscodeQueue()` with no queued Tier 3 jobs → no FFmpeg calls
-  - [ ] 5.9 Test output path construction: verify output path is `${cachePath}/transcodes/${fileId}.mp4`
-  - [ ] 5.10 Test tier filtering: Tier 2 queued job present → `executeVideoTranscodeQueue()` does NOT process it (status stays `'queued'`)
-  - [ ] 5.11 Run full backend test suite — target: all 142 currently-passing tests still pass; 2 pre-existing failures in `classification.service.spec.ts` (hevc description mismatch) are expected and unrelated to this story
+- [x] 5. Unit tests for Tier 3 in `transcode.service.spec.ts` (AC: all)
+  - [x] 5.1 Add helpers to existing spec: `insertClassifiedFile(..., tier = 3)` already supports any tier; no helper changes needed
+  - [x] 5.2 Test successful video transcode: mock `execFileAsync` resolves → `transcode_jobs.status = 'completed'`, `output_path` set to `{cachePath}/transcodes/{fileId}.mp4`, `media_files.status = 'ready'`
+  - [x] 5.3 Test FFmpeg failure: mock `execFileAsync` rejects → `transcode_jobs.status = 'failed'`, `error_details` populated, `media_files.status` stays `'classified'`
+  - [x] 5.4 Test Tier-3-specific crash recovery: insert a Tier 3 job with `status = 'processing'`, call `executeVideoTranscodeQueue()` → job resets to `'queued'` then processes to `'completed'`
+  - [x] 5.5 Test crash recovery Tier isolation: insert Tier 2 job with `status = 'processing'`, call `executeVideoTranscodeQueue()` → Tier 2 job is NOT reset (stays `'processing'`)
+  - [x] 5.6 Test mutex guard (`videoTranscoding`): set `(service as any).videoTranscoding = true` → second call is no-op, logs 'already in progress'
+  - [x] 5.7 Test error isolation: two Tier 3 jobs, first fails, second succeeds → second job completes
+  - [x] 5.8 Test no Tier 3 jobs: `executeVideoTranscodeQueue()` with no queued Tier 3 jobs → no FFmpeg calls
+  - [x] 5.9 Test output path construction: verify output path is `${cachePath}/transcodes/${fileId}.mp4`
+  - [x] 5.10 Test tier filtering: Tier 2 queued job present → `executeVideoTranscodeQueue()` does NOT process it (status stays `'queued'`)
+  - [x] 5.11 Run full backend test suite — target: all 142 currently-passing tests still pass; 2 pre-existing failures in `classification.service.spec.ts` (hevc description mismatch) are expected and unrelated to this story
+
+### Review Findings
+
+- [x] [Review][Patch] Syntax error in test 5.9 — extra `)` in `path.join(TRANSCODE_DIR, ...)` prevents test file from compiling [apps/backend/src/library/transcode.service.spec.ts] — false positive; staged file had correct syntax, no action needed
+- [x] [Review][Patch] Test 5.7 ordering is non-deterministic — `ORDER BY tj.created_at ASC` has 1-second SQLite resolution; two jobs inserted in the same second get identical timestamps, making queue order undefined and the test potentially flaky [apps/backend/src/library/transcode.service.ts + transcode.service.spec.ts]
+- [x] [Review][Defer] `processVideoTranscode` is public, callers can bypass `videoTranscoding` mutex [apps/backend/src/library/transcode.service.ts] — deferred, pre-existing (same as `processAudioSidecar`; explicit in story notes)
+- [x] [Review][Defer] Crash recovery races in multi-instance deployments — `videoTranscoding` is in-process only; two instances can both reset and re-queue the same job [apps/backend/src/library/transcode.service.ts] — deferred, pre-existing
+- [x] [Review][Defer] No retry path for `failed` transcode jobs — permanently stuck without DB intervention [apps/backend/src/library/transcode.service.ts] — deferred, pre-existing
+- [x] [Review][Defer] `processVideoTranscode` 'processing' update before try block — DB error loops job forever without a retry cap [apps/backend/src/library/transcode.service.ts] — deferred, pre-existing (same pattern as audio sidecar)
+- [x] [Review][Defer] Unbounded `.all()` query materializes full queue into memory [apps/backend/src/library/transcode.service.ts] — deferred, pre-existing systemic pattern
+- [x] [Review][Defer] Video with no audio stream transcodes silently to audio-less MP4 with no warning — out of scope [apps/backend/src/library/transcode.service.ts] — deferred, pre-existing
 
 ## Dev Notes
 
@@ -388,4 +399,22 @@ Claude Sonnet 4.6
 
 ### Completion Notes List
 
+- Implemented `executeVideoTranscodeQueue()` with tier-specific crash recovery (`WHERE status = 'processing' AND tier = 3`) and separate `videoTranscoding` mutex flag
+- Implemented `processVideoTranscode()` following the fixed pattern from story 3-2 review: `fs.mkdirSync` inside the try block, atomic completion transaction updating both `transcode_jobs` and `media_files`, failure does NOT update `media_files.status`
+- Implemented `runFfmpegVideoTranscode()` with H.264 libx264, `-pix_fmt yuv420p` (critical for browser compatibility), `-movflags +faststart`, AAC 192k stereo audio
+- Wired `executeVideoTranscodeQueue()` as fire-and-forget in `ClassificationService.executeClassification()` alongside the existing audio queue call; both queues run concurrently with independent mutex flags
+- Updated `classification.service.spec.ts` TranscodeService mock to include `executeVideoTranscodeQueue`
+- Added 9 Tier 3 unit tests covering: success, FFmpeg failure, crash recovery, Tier isolation, mutex guard, error isolation, no-jobs no-op, output path, tier filtering
+- `processVideoTranscode()` is public (consistent with `processAudioSidecar()`) — deferred to future refactor story
+- Test results: 153 total (151 passing, 2 pre-existing HEVC description failures in classification.service.spec.ts — unrelated to this story)
+
 ### File List
+
+apps/backend/src/library/transcode.service.ts
+apps/backend/src/library/transcode.service.spec.ts
+apps/backend/src/library/classification.service.ts
+apps/backend/src/library/classification.service.spec.ts
+
+## Change Log
+
+- 2026-05-03: Story 3-3 implemented — added full video transcode (Tier 3) to TranscodeService with H.264/AAC MP4 output, tier-specific crash recovery, separate mutex, and 9 new unit tests; wired into ClassificationService pipeline
