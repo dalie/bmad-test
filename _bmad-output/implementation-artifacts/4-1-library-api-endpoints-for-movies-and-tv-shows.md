@@ -1,6 +1,6 @@
 # Story 4.1: Library API Endpoints for Movies and TV Shows
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -25,8 +25,8 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
 
 ## Tasks / Subtasks
 
-- [ ] 1. Create `apps/backend/src/library/browse.service.ts` (AC: all data endpoints)
-  - [ ] 1.1 Define exported interfaces at top of file:
+- [x] 1. Create `apps/backend/src/library/browse.service.ts` (AC: all data endpoints)
+  - [x] 1.1 Define exported interfaces at top of file:
     ```typescript
     export interface MovieListItem {
       id: number;            // media_files.id
@@ -107,8 +107,8 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       added_at: string;
     }
     ```
-  - [ ] 1.2 Define class `BrowseService` with `@Injectable()`, `Logger`, constructor injecting `DatabaseService`
-  - [ ] 1.3 Implement `private getImageBaseUrl(): string | null`:
+  - [x] 1.2 Define class `BrowseService` with `@Injectable()`, `Logger`, constructor injecting `DatabaseService`
+  - [x] 1.3 Implement `private getImageBaseUrl(): string | null`:
     ```typescript
     private getImageBaseUrl(): string | null {
       const db = this.database.getDatabase();
@@ -118,7 +118,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       return row?.image_base_url ?? null;
     }
     ```
-  - [ ] 1.4 Implement `private buildPosterUrl(imageBaseUrl: string | null, posterPath: string | null): string | null`:
+  - [x] 1.4 Implement `private buildPosterUrl(imageBaseUrl: string | null, posterPath: string | null): string | null`:
     ```typescript
     // TMDB image URL format: {imageBaseUrl}w500{posterPath}
     // imageBaseUrl ends with '/', e.g. 'https://image.tmdb.org/t/p/'
@@ -129,7 +129,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       return `${imageBaseUrl}w500${posterPath}`;
     }
     ```
-  - [ ] 1.5 Implement `private extractYear(dateStr: string | null): number | null`:
+  - [x] 1.5 Implement `private extractYear(dateStr: string | null): number | null`:
     ```typescript
     private extractYear(dateStr: string | null): number | null {
       if (!dateStr) return null;
@@ -137,7 +137,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       return Number.isNaN(year) ? null : year;
     }
     ```
-  - [ ] 1.6 Implement `private getDuration(probeDataJson: string | null): number | null`:
+  - [x] 1.6 Implement `private getDuration(probeDataJson: string | null): number | null`:
     ```typescript
     // probe_data is stored as JSON string matching ProbeResult interface
     private getDuration(probeDataJson: string | null): number | null {
@@ -150,7 +150,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       }
     }
     ```
-  - [ ] 1.7 Implement `private getAudioTracks(probeDataJson: string | null): AudioTrack[]`:
+  - [x] 1.7 Implement `private getAudioTracks(probeDataJson: string | null): AudioTrack[]`:
     ```typescript
     private getAudioTracks(probeDataJson: string | null): AudioTrack[] {
       if (!probeDataJson) return [];
@@ -162,7 +162,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       }
     }
     ```
-  - [ ] 1.8 Implement `getMovies(): MovieListItem[]`:
+  - [x] 1.8 Implement `getMovies(): MovieListItem[]`:
     ```sql
     SELECT mf.id, m.title, m.release_date, m.poster_path, m.runtime,
            m.vote_average AS rating, mf.created_at AS added_at, mf.tier
@@ -174,7 +174,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     Map rows to `MovieListItem`: call `extractYear(release_date)`, `buildPosterUrl(imageBaseUrl, poster_path)`.
     Set `playback_ready = true` (always — filtered by query).
     Call `getImageBaseUrl()` once before the main query and reuse across all rows.
-  - [ ] 1.9 Implement `getShows(): ShowListItem[]`:
+  - [x] 1.9 Implement `getShows(): ShowListItem[]`:
     ```sql
     SELECT m.tmdb_id AS id, MIN(m.title) AS title,
            MIN(m.release_date) AS release_date,
@@ -191,7 +191,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     ```
     Map rows to `ShowListItem`: call `extractYear(release_date)`, `buildPosterUrl(imageBaseUrl, poster_path)`.
     Call `getImageBaseUrl()` once before the query.
-  - [ ] 1.10 Implement `getMovieById(id: number): MovieDetail | null`:
+  - [x] 1.10 Implement `getMovieById(id: number): MovieDetail | null`:
     - Query 1 — main row:
       ```sql
       SELECT mf.id, mf.path AS file_path, mf.tier, mf.probe_data,
@@ -212,7 +212,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       ORDER BY id ASC
       ```
     - Build `MovieDetail`: parse `probe_data` for audio tracks via `getAudioTracks()`, map subtitles rows to `SubtitleTrackInfo[]`.
-  - [ ] 1.11 Implement `getShowById(tmdbId: number): ShowDetail | null`:
+  - [x] 1.11 Implement `getShowById(tmdbId: number): ShowDetail | null`:
     - Query 1 — show header (any one row for the show):
       ```sql
       SELECT m.title, m.overview, m.release_date, m.poster_path, m.vote_average AS rating
@@ -235,7 +235,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     - Build `ShowDetail`: group episode rows into seasons. Season ordering: DESC by season_number (most recent season first). Episodes ordering within each season: ASC by episode_number.
     - Use a `Map<number, EpisodeItem[]>` to group, then convert to `SeasonInfo[]`.
     - Call `getDuration(probe_data)` per episode row to get duration.
-  - [ ] 1.12 Implement `getRecent(limit: number): RecentItem[]`:
+  - [x] 1.12 Implement `getRecent(limit: number): RecentItem[]`:
     ```sql
     SELECT
       CASE WHEN m.media_type = 'movie' THEN mf.id ELSE m.tmdb_id END AS id,
@@ -252,7 +252,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     ```
     This deduplicates TV shows (multiple episodes of same show collapse to one entry using tmdb_id). Returns the most recently added distinct titles.
     Map rows to `RecentItem[]` with `extractYear()` and `buildPosterUrl()`.
-  - [ ] 1.13 Implement `search(q: string): RecentItem[]`:
+  - [x] 1.13 Implement `search(q: string): RecentItem[]`:
     ```typescript
     // Returns same RecentItem shape as getRecent() but filtered by title
     // q = '' → returns all (% LIKE % matches everything — intentional for "cleared search" UX)
@@ -274,15 +274,15 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     ```
     Pass `pattern` as the bound parameter — parameterized binding prevents SQL injection.
     Return `RecentItem[]` (same shape as `getRecent` — frontend uses `media_type` to route).
-  - [ ] 1.14 Add required imports: `Injectable`, `Logger` from `@nestjs/common`; `DatabaseService` from `../database/database.service`
+  - [x] 1.14 Add required imports: `Injectable`, `Logger` from `@nestjs/common`; `DatabaseService` from `../database/database.service`
 
-- [ ] 2. Create `apps/backend/src/library/browse.controller.ts` (AC: all 6 endpoints)
-  - [ ] 2.1 Define `@Controller('library')` class `BrowseController` injecting `BrowseService`
-  - [ ] 2.2 Add `@Get('movies')` handler `getMovies()` → returns `this.browseService.getMovies()`
-  - [ ] 2.3 Add `@Get('shows')` handler `getShows()` → returns `this.browseService.getShows()`
-  - [ ] 2.4 Add `@Get('recent')` handler `getRecent(@Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number)` → returns `this.browseService.getRecent(limit)`
-  - [ ] 2.5 Add `@Get('search')` handler `search(@Query('q') q: string = '')` → returns `this.browseService.search(q ?? '')`
-  - [ ] 2.6 Add `@Get('movies/:id')` handler `getMovie(@Param('id', ParseIntPipe) id: number)`:
+- [x] 2. Create `apps/backend/src/library/browse.controller.ts` (AC: all 6 endpoints)
+  - [x] 2.1 Define `@Controller('library')` class `BrowseController` injecting `BrowseService`
+  - [x] 2.2 Add `@Get('movies')` handler `getMovies()` → returns `this.browseService.getMovies()`
+  - [x] 2.3 Add `@Get('shows')` handler `getShows()` → returns `this.browseService.getShows()`
+  - [x] 2.4 Add `@Get('recent')` handler `getRecent(@Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number)` → returns `this.browseService.getRecent(limit)`
+  - [x] 2.5 Add `@Get('search')` handler `search(@Query('q') q: string = '')` → returns `this.browseService.search(q ?? '')`
+  - [x] 2.6 Add `@Get('movies/:id')` handler `getMovie(@Param('id', ParseIntPipe) id: number)`:
     ```typescript
     @Get('movies/:id')
     getMovie(@Param('id', ParseIntPipe) id: number) {
@@ -291,7 +291,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       return result;
     }
     ```
-  - [ ] 2.7 Add `@Get('shows/:id')` handler `getShow(@Param('id', ParseIntPipe) id: number)`:
+  - [x] 2.7 Add `@Get('shows/:id')` handler `getShow(@Param('id', ParseIntPipe) id: number)`:
     ```typescript
     @Get('shows/:id')
     getShow(@Param('id', ParseIntPipe) id: number) {
@@ -300,18 +300,18 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       return result;
     }
     ```
-  - [ ] 2.8 Import: `Controller`, `Get`, `Param`, `Query`, `NotFoundException`, `ParseIntPipe`, `DefaultValuePipe` from `@nestjs/common`; `BrowseService` and relevant interfaces from `./browse.service`
-  - [ ] 2.9 **Route order caveat:** NestJS resolves static routes before dynamic routes within the same controller prefix. `movies`, `shows`, `recent`, `search` are static; `movies/:id` and `shows/:id` are dynamic. NestJS handles this correctly — no manual ordering needed.
+  - [x] 2.8 Import: `Controller`, `Get`, `Param`, `Query`, `NotFoundException`, `ParseIntPipe`, `DefaultValuePipe` from `@nestjs/common`; `BrowseService` and relevant interfaces from `./browse.service`
+  - [x] 2.9 **Route order caveat:** NestJS resolves static routes before dynamic routes within the same controller prefix. `movies`, `shows`, `recent`, `search` are static; `movies/:id` and `shows/:id` are dynamic. NestJS handles this correctly — no manual ordering needed.
 
-- [ ] 3. Register in `apps/backend/src/library/library.module.ts`
-  - [ ] 3.1 Add `import { BrowseService } from './browse.service';`
-  - [ ] 3.2 Add `import { BrowseController } from './browse.controller';`
-  - [ ] 3.3 Add `BrowseService` to `providers` array
-  - [ ] 3.4 Add `BrowseController` to `controllers` array
-  - [ ] 3.5 Add `BrowseService` to `exports` array (for future inter-module use)
+- [x] 3. Register in `apps/backend/src/library/library.module.ts`
+  - [x] 3.1 Add `import { BrowseService } from './browse.service';`
+  - [x] 3.2 Add `import { BrowseController } from './browse.controller';`
+  - [x] 3.3 Add `BrowseService` to `providers` array
+  - [x] 3.4 Add `BrowseController` to `controllers` array
+  - [x] 3.5 Add `BrowseService` to `exports` array (for future inter-module use)
 
-- [ ] 4. Create `apps/backend/src/library/browse.service.spec.ts` (AC: all service methods)
-  - [ ] 4.1 Set up test module using actual `DatabaseService` with `CACHE_PATH = ':memory:'` — follow `pipeline.service.spec.ts` pattern exactly:
+- [x] 4. Create `apps/backend/src/library/browse.service.spec.ts` (AC: all service methods)
+  - [x] 4.1 Set up test module using actual `DatabaseService` with `CACHE_PATH = ':memory:'` — follow `pipeline.service.spec.ts` pattern exactly:
     ```typescript
     beforeEach(async () => {
       const module: TestingModule = await Test.createTestingModule({
@@ -331,7 +331,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     });
     afterEach(() => { dbService.onModuleDestroy(); });
     ```
-  - [ ] 4.2 Define helper functions (same `lastInsertRowid as number` pattern from pipeline.service.spec.ts):
+  - [x] 4.2 Define helper functions (same `lastInsertRowid as number` pattern from pipeline.service.spec.ts):
     ```typescript
     function insertSource(type: 'movies' | 'tv' = 'movies'): number
     function insertMediaFile(sourceId: number, filename: string, status = 'ready', tier: number | null = 1): number
@@ -343,7 +343,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     function insertTmdbConfig(imageBaseUrl: string): void
     ```
     `insertMetadata` extras: `release_date`, `poster_path`, `overview`, `vote_average`, `runtime`, `content_rating`
-  - [ ] 4.3 Tests for `getMovies()`:
+  - [x] 4.3 Tests for `getMovies()`:
     - Empty DB: returns `[]`
     - Single ready movie: returns one item with correct fields (title, year extracted from release_date, poster_url built correctly, transcode_tier, playback_ready = true)
     - Movie with status='completed': also included in results (Tier 1 files go to 'completed')
@@ -352,14 +352,14 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     - Movie with null poster_path: poster_url = null
     - Missing tmdb_config (no image_base_url): poster_url = null
     - poster_url construction: given imageBaseUrl = 'https://image.tmdb.org/t/p/', posterPath = '/abc.jpg' → 'https://image.tmdb.org/t/p/w500/abc.jpg'
-  - [ ] 4.4 Tests for `getShows()`:
+  - [x] 4.4 Tests for `getShows()`:
     - Empty DB: returns `[]`
     - Single show with 2 episodes across 2 seasons: returns 1 show entry with season_count = 2
     - Show with status='completed' episodes: included
     - Show with multiple episodes, only some ready: only includes ready/completed episodes in season_count
     - Multiple shows: ordered A-Z
     - added_at = MIN(media_files.created_at) across all episodes for the show
-  - [ ] 4.5 Tests for `getMovieById()`:
+  - [x] 4.5 Tests for `getMovieById()`:
     - Non-existent id: returns null
     - Existing movie id: returns full MovieDetail with correct fields
     - Audio tracks parsed from probe_data correctly (index, codec, channels, language)
@@ -370,7 +370,7 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     - Tier 1 movie (no transcode job): transcode_output_path = null
     - Movie with status='classified' (not ready): returns null
     - TV show file with same id: returns null (WHERE media_type = 'movie' filter)
-  - [ ] 4.6 Tests for `getShowById()`:
+  - [x] 4.6 Tests for `getShowById()`:
     - Non-existent tmdbId: returns null
     - Single show, one season, two episodes: correct season/episode structure
     - Season ordering: latest season first (DESC by season_number)
@@ -379,21 +379,21 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
     - episode duration from probe_data
     - file_id = media_files.id for each episode
     - Show with no ready episodes: returns null
-  - [ ] 4.7 Tests for `getRecent()`:
+  - [x] 4.7 Tests for `getRecent()`:
     - Empty DB: returns `[]`
     - Mixed movies and TV shows: returned together, ordered by added_at DESC
     - TV show with 3 episodes: appears ONCE (grouped by tmdb_id, MAX(created_at))
     - `limit` parameter: returns at most `limit` items
     - `limit = 1`: returns only the most recently added
-  - [ ] 4.8 Tests for `search()`:
+  - [x] 4.8 Tests for `search()`:
     - `q = 'Task'`: matches 'Taskmaster' (substring, case-insensitive)
     - `q = 'task'`: same result (COLLATE NOCASE)
     - `q = ''`: returns all ready titles
     - `q = 'nonexistent'`: returns `[]`
     - TV show: appears once even with multiple matching episodes
 
-- [ ] 5. Create `apps/backend/src/library/browse.controller.spec.ts` (AC: all endpoints)
-  - [ ] 5.1 Set up test module with mock `BrowseService` — follow `library.controller.spec.ts` / `pipeline.controller.spec.ts` pattern:
+- [x] 5. Create `apps/backend/src/library/browse.controller.spec.ts` (AC: all endpoints)
+  - [x] 5.1 Set up test module with mock `BrowseService` — follow `library.controller.spec.ts` / `pipeline.controller.spec.ts` pattern:
     ```typescript
     browseService = {
       getMovies: jest.fn(),
@@ -404,21 +404,35 @@ And only titles with pipeline status "playback-ready" (media_files.status IN ('r
       search: jest.fn(),
     };
     ```
-  - [ ] 5.2 Test `GET /library/movies`: mock returns array; controller returns it; `getMovies()` called once
-  - [ ] 5.3 Test `GET /library/shows`: mock returns array; controller returns it; `getShows()` called once
-  - [ ] 5.4 Test `GET /library/movies/:id` — found: mock returns MovieDetail object; controller returns it; `getMovieById(42)` called with correct id
-  - [ ] 5.5 Test `GET /library/movies/:id` — not found: mock returns null; controller throws `NotFoundException`
-  - [ ] 5.6 Test `GET /library/shows/:id` — found: mock returns ShowDetail; controller returns it
-  - [ ] 5.7 Test `GET /library/shows/:id` — not found: mock returns null; controller throws `NotFoundException`
-  - [ ] 5.8 Test `GET /library/recent` — default limit: `getRecent(20)` called; controller returns result
-  - [ ] 5.9 Test `GET /library/recent?limit=5`: `getRecent(5)` called with limit=5
-  - [ ] 5.10 Test `GET /library/search?q=foo`: `search('foo')` called; controller returns result
-  - [ ] 5.11 Test `GET /library/search` (no q): `search('')` called (empty string default)
-  - [ ] 5.12 Verify `toHaveBeenCalledTimes(1)` on all mock method assertions
+  - [x] 5.2 Test `GET /library/movies`: mock returns array; controller returns it; `getMovies()` called once
+  - [x] 5.3 Test `GET /library/shows`: mock returns array; controller returns it; `getShows()` called once
+  - [x] 5.4 Test `GET /library/movies/:id` — found: mock returns MovieDetail object; controller returns it; `getMovieById(42)` called with correct id
+  - [x] 5.5 Test `GET /library/movies/:id` — not found: mock returns null; controller throws `NotFoundException`
+  - [x] 5.6 Test `GET /library/shows/:id` — found: mock returns ShowDetail; controller returns it
+  - [x] 5.7 Test `GET /library/shows/:id` — not found: mock returns null; controller throws `NotFoundException`
+  - [x] 5.8 Test `GET /library/recent` — default limit: `getRecent(20)` called; controller returns result
+  - [x] 5.9 Test `GET /library/recent?limit=5`: `getRecent(5)` called with limit=5
+  - [x] 5.10 Test `GET /library/search?q=foo`: `search('foo')` called; controller returns result
+  - [x] 5.11 Test `GET /library/search` (no q): `search('')` called (empty string default)
+  - [x] 5.12 Verify `toHaveBeenCalledTimes(1)` on all mock method assertions
 
-- [ ] 6. Run full backend test suite — no regressions
-  - [ ] 6.1 `npm test -w apps/backend` — all existing tests pass; new tests pass
-  - [ ] 6.2 Verify no TypeScript compile errors: `npm run build -w apps/backend`
+- [x] 6. Run full backend test suite — no regressions
+  - [x] 6.1 `npm test -w apps/backend` — all existing tests pass; new tests pass
+  - [x] 6.2 Verify no TypeScript compile errors: `npm run build -w apps/backend`
+
+### Review Findings
+
+- [x] [Review][Patch] No upper bound or negative-value guard on `limit` — SQLite treats `LIMIT -1` as no limit; large values trigger full-table scan [browse.controller.ts, browse.service.ts `getRecent()`]
+- [x] [Review][Patch] `search()` has no LIMIT clause — `GET /library/search?q=a` scans entire DB with no ceiling [browse.service.ts `search()`]
+- [x] [Review][Patch] `getMovieById` LEFT JOIN to `transcode_jobs` has no `ORDER BY` or status filter — multiple job rows (retries, failures) return arbitrary stale `transcode_output_path` [browse.service.ts `getMovieById()`]
+- [x] [Review][Patch] `getShows` groups all unmatched metadata rows (`tmdb_id IS NULL`) into a single phantom show entry [browse.service.ts `getShows()`]
+- [x] [Review][Patch] `NotFoundException` messages expose internal DB column name `tmdb_id` [browse.controller.ts `getShow()`]
+- [x] [Review][Patch] Files with no `tv_episodes` row (LEFT JOIN returns NULLs) are silently included as Season 0 / Episode 0 entries [browse.service.ts `getShowById()`]
+- [x] [Review][Patch] `AudioTrack.language` is `undefined` at runtime when absent from probe JSON — interface declares `string | null`; needs normalization via `?? null` [browse.service.ts `getAudioTracks()`]
+- [x] [Review][Defer] Non-atomic two-query show fetch in `getShowById()` — pre-existing SQLite/better-sqlite3 pattern across codebase; low practical risk in single-writer Node.js process
+- [x] [Review][Defer] `getImageBaseUrl()` issues a DB round-trip on every request — performance optimization; acceptable for current library sizes
+- [x] [Review][Defer] Double-episode files (one `media_files` → two `tv_episodes` rows) duplicate `file_id` in episode list — data model concern, requires pipeline schema decision
+- [x] [Review][Defer] `getDuration()` returns `0` instead of `null` for files with unknown duration — pre-existing: ProbeService stores `0` as sentinel; fix belongs in ProbeService
 
 ## Dev Notes
 
@@ -565,7 +579,18 @@ Claude Sonnet 4.5 (GitHub Copilot)
 
 ### Debug Log References
 
+_No blockers encountered._
+
 ### Completion Notes List
+
+- Implemented `BrowseService` with all 8 methods: `getMovies()`, `getShows()`, `getMovieById()`, `getShowById()`, `getRecent()`, `search()`, plus 5 private helpers.
+- All viewer-facing queries use `WHERE mf.status IN ('ready', 'completed')` per Dev Notes — Tier 1 files reach `completed` status, not just `ready`.
+- `BrowseController` registered as second `@Controller('library')` alongside existing `LibraryController` — NestJS merges routes at startup, no conflicts.
+- `getShowById()` groups episodes using `Map<season_number, EpisodeItem[]>` preserving DESC season order from SQL ORDER BY.
+- `search()` uses parameterized `LIKE ? COLLATE NOCASE` — SQL injection safe; user-supplied `q` is bound as `%q%` pattern.
+- `getRecent()` deduplicates TV shows via `GROUP BY tmdb_id` using `CASE WHEN` in SELECT and GROUP BY clauses.
+- 229 tests pass (2 pre-existing failures in `classification.service.spec.ts` unrelated to this story). TypeScript build clean.
+- New tests: 37 service tests (getMovies, getShows, getMovieById, getShowById, getRecent, search) + 12 controller tests = 49 new tests.
 
 ### File List
 
@@ -574,3 +599,6 @@ Claude Sonnet 4.5 (GitHub Copilot)
 - apps/backend/src/library/browse.service.spec.ts (NEW)
 - apps/backend/src/library/browse.controller.spec.ts (NEW)
 - apps/backend/src/library/library.module.ts (UPDATE)
+## Change Log
+
+- 2026-05-03: Implemented all 6 library browse API endpoints (GET /api/library/movies, /shows, /movies/:id, /shows/:id, /recent, /search). Created BrowseService with full SQLite queries, BrowseController, registered in LibraryModule. Added 49 tests (37 service, 12 controller). TypeScript build clean.

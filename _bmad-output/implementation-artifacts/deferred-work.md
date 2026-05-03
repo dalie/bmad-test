@@ -1,3 +1,10 @@
+## Deferred from: code review of 4-1-library-api-endpoints-for-movies-and-tv-shows (2026-05-03)
+
+- Non-atomic two-query show fetch in `getShowById()` — pre-existing SQLite/better-sqlite3 pattern across codebase; low practical risk in single-writer Node.js process.
+- `getImageBaseUrl()` issues a DB round-trip on every request — performance optimization; acceptable for current library sizes per NFR5.
+- Double-episode files (one `media_files` → two `tv_episodes` rows) duplicate `file_id` in episode list — data model concern, requires pipeline schema decision.
+- `getDuration()` returns `0` instead of `null` for files with unknown duration — pre-existing: ProbeService stores `0` as sentinel; fix belongs in ProbeService, not BrowseService.
+
 ## Deferred from: code review of 3-5-unattended-queue-processing-and-pipeline-status (2026-05-03)
 
 - Pre-existing `media_files` rows with `tier=1, status='classified'` (classified before story 3-5) will not be reflected in any status counter — deferred: dev fresh-install only, no persistent data to migrate. A future migration story should handle all schema/data backfills.
