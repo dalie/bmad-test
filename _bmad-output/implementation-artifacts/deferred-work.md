@@ -1,3 +1,10 @@
+## Deferred from: code review of 4-2-poster-grid-home-page-with-three-sections (2026-05-03)
+
+- Missing `/movie/:id` and `/show/:id` route handlers — intentional: route handlers added in stories 4-3 and 4-4.
+- No wildcard/404 fallback route — pre-existing gap; add when routing is fleshed out.
+- `continueWatchingItems` signal not reactive to future `localStorage` writes — intentional stub; story 4-5 implements this.
+- Poster card template triplicated across three sections in `home.component.html` — DRY refactor; extract to a `PosterCardComponent` in a future story.
+
 ## Deferred from: code review of 4-1-library-api-endpoints-for-movies-and-tv-shows (2026-05-03)
 
 - Non-atomic two-query show fetch in `getShowById()` — pre-existing SQLite/better-sqlite3 pattern across codebase; low practical risk in single-writer Node.js process.

@@ -1,6 +1,6 @@
 # Story 4.2: Poster Grid Home Page with Three Sections
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -29,8 +29,8 @@ And the page renders within 1 second perceived (NFR4)
 
 ## Tasks / Subtasks
 
-- [ ] 1. Create `apps/frontend/src/app/services/library.service.ts` (AC: all data endpoints)
-  - [ ] 1.1 Define exported backend response interfaces matching browse.service.ts output exactly (snake_case properties):
+- [x] 1. Create `apps/frontend/src/app/services/library.service.ts` (AC: all data endpoints)
+  - [x] 1.1 Define exported backend response interfaces matching browse.service.ts output exactly (snake_case properties):
     ```typescript
     export interface MovieListItem {
       id: number;
@@ -62,37 +62,37 @@ And the page renders within 1 second perceived (NFR4)
       added_at: string;
     }
     ```
-  - [ ] 1.2 Define `@Injectable({ providedIn: 'root' })` class `LibraryService` using `inject(HttpClient)`:
+  - [x] 1.2 Define `@Injectable({ providedIn: 'root' })` class `LibraryService` using `inject(HttpClient)`:
     ```typescript
     private readonly http = inject(HttpClient);
     ```
-  - [ ] 1.3 Implement `getMovies(): Observable<MovieListItem[]>`:
+  - [x] 1.3 Implement `getMovies(): Observable<MovieListItem[]>`:
     ```typescript
     return this.http.get<MovieListItem[]>('/api/library/movies');
     ```
-  - [ ] 1.4 Implement `getShows(): Observable<ShowListItem[]>`:
+  - [x] 1.4 Implement `getShows(): Observable<ShowListItem[]>`:
     ```typescript
     return this.http.get<ShowListItem[]>('/api/library/shows');
     ```
-  - [ ] 1.5 Implement `getRecent(limit = 20): Observable<RecentItem[]>`:
+  - [x] 1.5 Implement `getRecent(limit = 20): Observable<RecentItem[]>`:
     ```typescript
     return this.http.get<RecentItem[]>('/api/library/recent', { params: { limit } });
     ```
     Note: params object is fine for numeric values — Angular HttpClient serializes them correctly.
-  - [ ] 1.6 Add imports: `Injectable`, `inject` from `@angular/core`; `HttpClient` from `@angular/common/http`; `Observable` from `rxjs`
+  - [x] 1.6 Add imports: `Injectable`, `inject` from `@angular/core`; `HttpClient` from `@angular/common/http`; `Observable` from `rxjs`
 
-- [ ] 2. Update `apps/frontend/src/app/app.config.ts` — add HttpClient and scroll restoration
-  - [ ] 2.1 Import `provideHttpClient` from `@angular/common/http`
-  - [ ] 2.2 Import `withInMemoryScrolling` from `@angular/router`
-  - [ ] 2.3 Add `provideHttpClient()` to providers array
-  - [ ] 2.4 Update `provideRouter` call to include scroll position restoration:
+- [x] 2. Update `apps/frontend/src/app/app.config.ts` — add HttpClient and scroll restoration
+  - [x] 2.1 Import `provideHttpClient` from `@angular/common/http`
+  - [x] 2.2 Import `withInMemoryScrolling` from `@angular/router`
+  - [x] 2.3 Add `provideHttpClient()` to providers array
+  - [x] 2.4 Update `provideRouter` call to include scroll position restoration:
     ```typescript
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }))
     ```
     This satisfies UX-DR12: "Back button returns to grid at same scroll position". Must be set up here, in the first story that introduces real routing — not deferred.
 
-- [ ] 3. Update `apps/frontend/src/app/app.routes.ts` — register home route
-  - [ ] 3.1 Add lazy-loaded home route:
+- [x] 3. Update `apps/frontend/src/app/app.routes.ts` — register home route
+  - [x] 3.1 Add lazy-loaded home route:
     ```typescript
     import { Routes } from '@angular/router';
     export const routes: Routes = [
@@ -104,23 +104,23 @@ And the page renders within 1 second perceived (NFR4)
     ```
     This fixes the deferred work item "Empty Angular route table" from 1-1 code review.
 
-- [ ] 4. Update `apps/frontend/src/app/app.html` — remove placeholder, use router-outlet only
-  - [ ] 4.1 Replace current content with:
+- [x] 4. Update `apps/frontend/src/app/app.html` — remove placeholder, use router-outlet only
+  - [x] 4.1 Replace current content with:
     ```html
     <router-outlet />
     ```
     Remove the `<main class="app-container">` wrapper and `<h1>` — the home component owns its full page layout. The `.app-container` centering conflicts with the left-aligned poster grid.
-  - [ ] 4.2 Clear `apps/frontend/src/app/app.css` to empty (all rules refer to `.app-container` and `.app-title` which are no longer in the template):
+  - [x] 4.2 Clear `apps/frontend/src/app/app.css` to empty (all rules refer to `.app-container` and `.app-title` which are no longer in the template):
     ```css
     /* App shell has no styles — components own their layout */
     ```
 
-- [ ] 5. Update `apps/frontend/src/index.html` — fix document title
-  - [ ] 5.1 Change `<title>Frontend</title>` to `<title>Cineplex Rigaud</title>`
+- [x] 5. Update `apps/frontend/src/index.html` — fix document title
+  - [x] 5.1 Change `<title>Frontend</title>` to `<title>Cineplex Rigaud</title>`
     This fixes the deferred work item "Placeholder uses 'Frontend' as document title" from 1-1 code review.
 
-- [ ] 6. Update `apps/frontend/src/app/app.spec.ts` — fix tests after app.html change
-  - [ ] 6.1 Add `provideRouter([])` to TestBed providers (required for `<router-outlet>` when App imports `RouterOutlet`):
+- [x] 6. Update `apps/frontend/src/app/app.spec.ts` — fix tests after app.html change
+  - [x] 6.1 Add `provideRouter([])` to TestBed providers (required for `<router-outlet>` when App imports `RouterOutlet`):
     ```typescript
     import { provideRouter } from '@angular/router';
     // ...
@@ -129,7 +129,7 @@ And the page renders within 1 second perceived (NFR4)
       providers: [provideRouter([])],
     }).compileComponents();
     ```
-  - [ ] 6.2 Remove the `'should render title'` test — `<h1>` has been moved from app.html to HomeComponent. Replace with:
+  - [x] 6.2 Remove the `'should render title'` test — `<h1>` has been moved from app.html to HomeComponent. Replace with:
     ```typescript
     it('should have a router outlet', () => {
       const fixture = TestBed.createComponent(App);
@@ -139,8 +139,8 @@ And the page renders within 1 second perceived (NFR4)
     });
     ```
 
-- [ ] 7. Create `apps/frontend/src/app/home/home.component.ts`
-  - [ ] 7.1 Define exported `LibraryItem` interface and `WATCH_PROGRESS_KEY` constant:
+- [x] 7. Create `apps/frontend/src/app/home/home.component.ts`
+  - [x] 7.1 Define exported `LibraryItem` interface and `WATCH_PROGRESS_KEY` constant:
     ```typescript
     export const WATCH_PROGRESS_KEY = 'cineplex_progress';
 
@@ -153,7 +153,7 @@ And the page renders within 1 second perceived (NFR4)
     }
     ```
     This key and interface are the forward-compatible foundation for stories 4-5 (progress indicators) and 6-1 (progress writes).
-  - [ ] 7.2 Define `@Component` decorator:
+  - [x] 7.2 Define `@Component` decorator:
     ```typescript
     @Component({
       selector: 'app-home',
@@ -164,11 +164,11 @@ And the page renders within 1 second perceived (NFR4)
       changeDetection: ChangeDetectionStrategy.OnPush,
     })
     ```
-  - [ ] 7.3 Inject `LibraryService`:
+  - [x] 7.3 Inject `LibraryService`:
     ```typescript
     private readonly libraryService = inject(LibraryService);
     ```
-  - [ ] 7.4 Define `recentItems` signal — maps RecentItem[] from API to LibraryItem[]:
+  - [x] 7.4 Define `recentItems` signal — maps RecentItem[] from API to LibraryItem[]:
     ```typescript
     readonly recentItems = toSignal(
       this.libraryService.getRecent().pipe(
@@ -186,7 +186,7 @@ And the page renders within 1 second perceived (NFR4)
       { initialValue: [] as LibraryItem[] }
     );
     ```
-  - [ ] 7.5 Define `allItems` signal — combines movies + shows, sorted A-Z:
+  - [x] 7.5 Define `allItems` signal — combines movies + shows, sorted A-Z:
     ```typescript
     readonly allItems = toSignal(
       forkJoin([
@@ -216,17 +216,17 @@ And the page renders within 1 second perceived (NFR4)
       { initialValue: [] as LibraryItem[] }
     );
     ```
-  - [ ] 7.6 Define `continueWatchingItems` signal — reads from localStorage (empty until story 4-5):
+  - [x] 7.6 Define `continueWatchingItems` signal — reads from localStorage (empty until story 4-5):
     ```typescript
     readonly continueWatchingItems = signal<LibraryItem[]>(
       this.readContinueWatchingFromStorage()
     );
     ```
-  - [ ] 7.7 Define `showContinueWatching` computed signal:
+  - [x] 7.7 Define `showContinueWatching` computed signal:
     ```typescript
     readonly showContinueWatching = computed(() => this.continueWatchingItems().length > 0);
     ```
-  - [ ] 7.8 Implement `private readContinueWatchingFromStorage(): LibraryItem[]`:
+  - [x] 7.8 Implement `private readContinueWatchingFromStorage(): LibraryItem[]`:
     ```typescript
     private readContinueWatchingFromStorage(): LibraryItem[] {
       try {
@@ -241,7 +241,7 @@ And the page renders within 1 second perceived (NFR4)
       }
     }
     ```
-  - [ ] 7.9 Add all required imports:
+  - [x] 7.9 Add all required imports:
     ```typescript
     import { Component, ChangeDetectionStrategy, computed, signal, inject } from '@angular/core';
     import { RouterLink } from '@angular/router';
@@ -251,8 +251,8 @@ And the page renders within 1 second perceived (NFR4)
     import { LibraryService } from '../services/library.service';
     ```
 
-- [ ] 8. Create `apps/frontend/src/app/home/home.component.html`
-  - [ ] 8.1 Implement the three-section layout:
+- [x] 8. Create `apps/frontend/src/app/home/home.component.html`
+  - [x] 8.1 Implement the three-section layout:
     ```html
     <main class="content-container">
 
@@ -334,8 +334,8 @@ And the page renders within 1 second perceived (NFR4)
     - Routes `/movie/:id` and `/show/:id` are defined here as canonical URLs; route handlers added in stories 4-3 and 4-4
     - `loading="lazy"` is on the `<img>` element, not the `<a>` wrapper (UX-DR8)
 
-- [ ] 9. Create `apps/frontend/src/app/home/home.component.css`
-  - [ ] 9.1 Implement all component-scoped styles:
+- [x] 9. Create `apps/frontend/src/app/home/home.component.css`
+  - [x] 9.1 Implement all component-scoped styles:
     ```css
     .library-section {
       margin-block: var(--space-xl);
@@ -389,8 +389,8 @@ And the page renders within 1 second perceived (NFR4)
     ```
     Critical: **No hover effects, no transitions, no animations** (UX-DR10). The zero-animation policy is enforced by omission — do not add `:hover`, `transition`, or `animation` rules to any selector.
 
-- [ ] 10. Create `apps/frontend/src/app/services/library.service.spec.ts`
-  - [ ] 10.1 Set up TestBed with `provideHttpClient()` + `provideHttpClientTesting()`:
+- [x] 10. Create `apps/frontend/src/app/services/library.service.spec.ts`
+  - [x] 10.1 Set up TestBed with `provideHttpClient()` + `provideHttpClientTesting()`:
     ```typescript
     import { TestBed } from '@angular/core/testing';
     import { provideHttpClient } from '@angular/common/http';
@@ -412,20 +412,20 @@ And the page renders within 1 second perceived (NFR4)
       afterEach(() => { httpController.verify(); });
     });
     ```
-  - [ ] 10.2 Tests for `getMovies()`:
+  - [x] 10.2 Tests for `getMovies()`:
     - Sends GET to `/api/library/movies`
     - Returns the server response as MovieListItem[]
-  - [ ] 10.3 Tests for `getShows()`:
+  - [x] 10.3 Tests for `getShows()`:
     - Sends GET to `/api/library/shows`
     - Returns ShowListItem[]
-  - [ ] 10.4 Tests for `getRecent()` — default limit:
+  - [x] 10.4 Tests for `getRecent()` — default limit:
     - Sends GET to `/api/library/recent` with `params.limit = '20'`
     - Returns RecentItem[]
-  - [ ] 10.5 Tests for `getRecent(5)` — custom limit:
+  - [x] 10.5 Tests for `getRecent(5)` — custom limit:
     - Sends GET to `/api/library/recent` with `params.limit = '5'`
 
-- [ ] 11. Create `apps/frontend/src/app/home/home.component.spec.ts`
-  - [ ] 11.1 Set up TestBed with mock `LibraryService` and `provideRouter([])`:
+- [x] 11. Create `apps/frontend/src/app/home/home.component.spec.ts`
+  - [x] 11.1 Set up TestBed with mock `LibraryService` and `provideRouter([])`:
     ```typescript
     import { TestBed } from '@angular/core/testing';
     import { provideRouter } from '@angular/router';
@@ -468,51 +468,51 @@ And the page renders within 1 second perceived (NFR4)
       });
     });
     ```
-  - [ ] 11.2 Test: `'should create the component'` — basic instantiation
-  - [ ] 11.3 Test: `'should hide Continue Watching section when localStorage has no progress data'`:
+  - [x] 11.2 Test: `'should create the component'` — basic instantiation
+  - [x] 11.3 Test: `'should hide Continue Watching section when localStorage has no progress data'`:
     - localStorage.clear() in beforeEach guarantees no data
     - Create component, detectChanges
     - Query for `section.library-section` elements (or text "Continue Watching")
     - Expect no "Continue Watching" section to be present
-  - [ ] 11.4 Test: `'should show Continue Watching section when localStorage has progress data'`:
+  - [x] 11.4 Test: `'should show Continue Watching section when localStorage has progress data'`:
     - `localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify({ 'movie:1': { position: 100 } }))`
     - But wait — `readContinueWatchingFromStorage()` currently returns `[]` always (stub for story 4-5)
     - So this test verifies the CURRENT behavior: section is hidden even if key exists in localStorage
     - **NOTE**: This test documents the incomplete behavior and will be updated in story 4-5 when real population is implemented
     - Test: section is hidden (continueWatchingItems is always [])
-  - [ ] 11.5 Test: `'should display recently added items'`:
+  - [x] 11.5 Test: `'should display recently added items'`:
     - Mock `getRecent` returns `[makeRecentItem(1, 'Movie A', 'movie'), makeRecentItem(2, 'Show B', 'tv')]`
     - detectChanges; query for "Recently Added" section
     - Expect 2 poster items rendered
-  - [ ] 11.6 Test: `'should display library items sorted alphabetically'`:
+  - [x] 11.6 Test: `'should display library items sorted alphabetically'`:
     - Mock `getMovies` returns `[makeMovieItem(2, 'Zorro'), makeMovieItem(1, 'Alien')]`
     - Mock `getShows` returns `[makeShowItem(10, 'Breaking Bad')]`
     - detectChanges; query poster titles in Library section
     - Expect order: Alien, Breaking Bad, Zorro
-  - [ ] 11.7 Test: `'should render poster items as <a> elements with correct routerLink'`:
+  - [x] 11.7 Test: `'should render poster items as <a> elements with correct routerLink'`:
     - Mock `getRecent` returns `[makeRecentItem(5, 'Test Movie', 'movie')]`
     - detectChanges; find anchor elements in Recently Added section
     - Expect anchor `href` to contain `/movie/5`
-  - [ ] 11.8 Test: `'should render TV show posters linking to /show/:id'`:
+  - [x] 11.8 Test: `'should render TV show posters linking to /show/:id'`:
     - Mock `getRecent` returns `[makeRecentItem(99, 'Test Show', 'tv')]`
     - detectChanges; find anchor in Recently Added
     - Expect `href` to contain `/show/99`
-  - [ ] 11.9 Test: `'poster images should have loading=lazy attribute'`:
+  - [x] 11.9 Test: `'poster images should have loading=lazy attribute'`:
     - Mock `getMovies` returns `[{ ...makeMovieItem(1, 'Film'), poster_url: 'https://example.com/poster.jpg' }]`
     - Mock `getShows` returns `[]`
     - detectChanges; find `<img>` in Library section
     - Expect `img.getAttribute('loading')` to equal `'lazy'`
-  - [ ] 11.10 Test: `'should render fallback div when poster_url is null'`:
+  - [x] 11.10 Test: `'should render fallback div when poster_url is null'`:
     - Movie with `poster_url: null`
     - detectChanges
     - Expect `.poster-grid__image--fallback` div to be present, no `<img>`
-  - [ ] 11.11 Test: `'should call getMovies, getShows, and getRecent on init'`:
+  - [x] 11.11 Test: `'should call getMovies, getShows, and getRecent on init'`:
     - Verify mock service methods were called
 
-- [ ] 12. Build verification
-  - [ ] 12.1 Run `npm run test:frontend` — all existing and new tests pass; no vitest failures
-  - [ ] 12.2 Run `npm run build:frontend` — Angular build succeeds with no TypeScript errors
-  - [ ] 12.3 Verify no TypeScript strict-mode violations (tsconfig.json has `"strict": true`)
+- [x] 12. Build verification
+  - [x] 12.1 Run `npm run test:frontend` — all existing and new tests pass; no vitest failures
+  - [x] 12.2 Run `npm run build:frontend` — Angular build succeeds with no TypeScript errors
+  - [x] 12.3 Verify no TypeScript strict-mode violations (tsconfig.json has `"strict": true`)
 
 ## Dev Notes
 
@@ -707,10 +707,47 @@ This is achieved by the architecture, not code:
 ## Dev Agent Record
 
 ### Agent Model Used
-_To be filled by dev agent_
+Claude Sonnet 4.6
 
 ### Completion Notes List
-_To be filled by dev agent_
+- Implemented `LibraryService` with `getMovies()`, `getShows()`, `getRecent()` using `inject(HttpClient)` and relative API URLs
+- Updated `app.config.ts`: added `provideHttpClient()` and `withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })`
+- Updated `app.routes.ts`: added lazy-loaded home route pointing to `HomeComponent`
+- Updated `app.html`: replaced `<main>/<h1>` wrapper with bare `<router-outlet />`
+- Cleared `app.css`: removed `.app-container`/`.app-title` rules no longer needed
+- Updated `index.html`: changed title from "Frontend" to "Cineplex Rigaud"
+- Updated `app.spec.ts`: replaced `'should render title'` with `'should have a router outlet'` test; added `provideRouter([])`
+- Created `HomeComponent` with `toSignal`-based `recentItems`, `allItems` (A-Z sorted), and `continueWatchingItems` (stub for story 4-5)
+- `showContinueWatching` computed signal hides Continue Watching section until story 4-5 populates the data
+- `WATCH_PROGRESS_KEY = 'cineplex_progress'` constant established for future stories 4-5 and 6-1
+- Three-section template uses Angular `@if`/`@for` control flow, BEM-lite classes, `loading="lazy"` on all `<img>` elements
+- Component CSS has zero hover effects, transitions, or animations per UX-DR10
+- All 16 tests pass (3 test files); Angular production build succeeds with no TypeScript errors
 
 ### File List
-_To be filled by dev agent_
+- apps/frontend/src/app/services/library.service.ts (NEW)
+- apps/frontend/src/app/services/library.service.spec.ts (NEW)
+- apps/frontend/src/app/home/home.component.ts (NEW)
+- apps/frontend/src/app/home/home.component.html (NEW)
+- apps/frontend/src/app/home/home.component.css (NEW)
+- apps/frontend/src/app/home/home.component.spec.ts (NEW)
+- apps/frontend/src/app/app.config.ts (MODIFIED)
+- apps/frontend/src/app/app.routes.ts (MODIFIED)
+- apps/frontend/src/app/app.html (MODIFIED)
+- apps/frontend/src/app/app.css (MODIFIED)
+- apps/frontend/src/app/app.spec.ts (MODIFIED)
+- apps/frontend/src/index.html (MODIFIED)
+
+### Change Log
+- 2026-05-03: Implemented story 4-2 — Poster Grid Home Page with Three Sections. Created LibraryService and HomeComponent. Updated app shell (routing, HttpClient, scroll restoration, title). All 16 tests pass, build clean.
+
+### Review Findings
+
+- [x] [Review][Patch] `RecentItem.media_type` typed as `string` instead of `'movie' | 'tv'` literal union [apps/frontend/src/app/services/library.service.ts]
+- [x] [Review][Patch] `localeCompare()` called without locale/sensitivity options — sort order varies by environment [apps/frontend/src/app/home/home.component.ts]
+- [x] [Review][Patch] Fallback `<div>` incorrectly carries `.poster-grid__image` class — `object-fit: cover` is a no-op on a non-replaced element [apps/frontend/src/app/home/home.component.html]
+- [x] [Review][Patch] Section headers missing `text-align: left` — AC UX-DR3 requires left-aligned headers [apps/frontend/src/app/home/home.component.css]
+- [x] [Review][Defer] Missing `/movie/:id` and `/show/:id` route handlers — deferred, pre-existing [apps/frontend/src/app/app.routes.ts] — deferred, intentional: handlers added in stories 4-3 and 4-4
+- [x] [Review][Defer] No wildcard/404 fallback route — deferred, pre-existing [apps/frontend/src/app/app.routes.ts] — deferred, pre-existing gap
+- [x] [Review][Defer] `continueWatchingItems` signal not reactive to future `localStorage` writes — deferred, pre-existing [apps/frontend/src/app/home/home.component.ts] — deferred, intentional stub; story 4-5 owns this
+- [x] [Review][Defer] Poster card template triplicated verbatim across three sections — deferred, pre-existing [apps/frontend/src/app/home/home.component.html] — deferred, DRY refactor; extract to PosterCardComponent in a future story

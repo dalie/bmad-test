@@ -1,0 +1,71 @@
+<main class="content-container">
+
+  @if (showContinueWatching()) {
+    <section class="library-section">
+      <h2 class="library-section__header">Continue Watching</h2>
+      <div class="poster-grid">
+        @for (item of continueWatchingItems(); track (item.mediaType + ':' + item.id)) {
+          <a class="poster-grid__item"
+             [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]">
+            <div class="poster-grid__image-wrap">
+              @if (item.posterUrl) {
+                <img class="poster-grid__image"
+                     [src]="item.posterUrl"
+                     [alt]="item.title"
+                     loading="lazy" />
+              } @else {
+                <div class="poster-grid__image--fallback"></div>
+              }
+            </div>
+            <p class="poster-grid__title">{{ item.title }}</p>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="library-section">
+    <h2 class="library-section__header">Recently Added</h2>
+    <div class="poster-grid">
+      @for (item of recentItems(); track (item.mediaType + ':' + item.id)) {
+        <a class="poster-grid__item"
+           [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]">
+          <div class="poster-grid__image-wrap">
+            @if (item.posterUrl) {
+              <img class="poster-grid__image"
+                   [src]="item.posterUrl"
+                   [alt]="item.title"
+                   loading="lazy" />
+            } @else {
+              <div class="poster-grid__image--fallback"></div>
+            }
+          </div>
+          <p class="poster-grid__title">{{ item.title }}</p>
+        </a>
+      }
+    </div>
+  </section>
+
+  <section class="library-section">
+    <h2 class="library-section__header">Library</h2>
+    <div class="poster-grid">
+      @for (item of allItems(); track (item.mediaType + ':' + item.id)) {
+        <a class="poster-grid__item"
+           [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]">
+          <div class="poster-grid__image-wrap">
+            @if (item.posterUrl) {
+              <img class="poster-grid__image"
+                   [src]="item.posterUrl"
+                   [alt]="item.title"
+                   loading="lazy" />
+            } @else {
+              <div class="poster-grid__image--fallback"></div>
+            }
+          </div>
+          <p class="poster-grid__title">{{ item.title }}</p>
+        </a>
+      }
+    </div>
+  </section>
+
+</main>

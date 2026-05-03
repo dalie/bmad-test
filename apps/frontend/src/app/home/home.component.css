@@ -1,0 +1,50 @@
+.library-section {
+  margin-block: var(--space-xl);
+}
+
+.library-section__header {
+  /* Override global h2 size (--font-size-xl) with --font-size-lg per UX-DR3 */
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin-block-end: var(--space-md);
+  text-align: left;
+}
+
+/* Poster item link — reset link styles, stack image + title */
+.poster-grid__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Pre-sized 2:3 container prevents cumulative layout shift (UX-DR8) */
+.poster-grid__image-wrap {
+  aspect-ratio: var(--poster-ratio); /* 2 / 3 */
+  background-color: var(--color-surface);
+  overflow: hidden;
+}
+
+.poster-grid__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Shown when poster_url is null — solid surface bg */
+.poster-grid__image--fallback {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-surface-raised);
+}
+
+/* Title below poster — truncate to one line */
+.poster-grid__title {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
