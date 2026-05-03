@@ -1,6 +1,6 @@
 # Story 3.1: Transcode Tier Classification
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -25,55 +25,55 @@ And Tier 1 files have no transcode_jobs row (no processing needed)
 
 ## Tasks / Subtasks
 
-- [ ] 1. Update `DatabaseService.runMigrations()` — add `tier` column and `transcode_jobs` table (AC: 5, 7)
-  - [ ] 1.1 In the existing `CREATE TABLE IF NOT EXISTS media_files` statement in `database.service.ts`, add `tier INTEGER` as a new column (after `probe_data TEXT`)
-  - [ ] 1.2 In the main `db.exec()` block, add `CREATE TABLE IF NOT EXISTS transcode_jobs` with columns: `id INTEGER PRIMARY KEY AUTOINCREMENT`, `file_id INTEGER NOT NULL REFERENCES media_files(id) ON DELETE CASCADE`, `tier INTEGER NOT NULL CHECK (tier IN (1,2,3))`, `status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','processing','completed','failed'))`, `error_details TEXT`, `created_at TEXT NOT NULL DEFAULT (datetime('now'))`, `updated_at TEXT NOT NULL DEFAULT (datetime('now'))`
-  - [ ] 1.3 Add index: `CREATE INDEX IF NOT EXISTS idx_transcode_jobs_file_id ON transcode_jobs(file_id)`
-  - [ ] 1.4 Add index: `CREATE INDEX IF NOT EXISTS idx_transcode_jobs_status ON transcode_jobs(status)`
+- [x] 1. Update `DatabaseService.runMigrations()` — add `tier` column and `transcode_jobs` table (AC: 5, 7)
+  - [x] 1.1 In the existing `CREATE TABLE IF NOT EXISTS media_files` statement in `database.service.ts`, add `tier INTEGER` as a new column (after `probe_data TEXT`)
+  - [x] 1.2 In the main `db.exec()` block, add `CREATE TABLE IF NOT EXISTS transcode_jobs` with columns: `id INTEGER PRIMARY KEY AUTOINCREMENT`, `file_id INTEGER NOT NULL REFERENCES media_files(id) ON DELETE CASCADE`, `tier INTEGER NOT NULL CHECK (tier IN (1,2,3))`, `status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','processing','completed','failed'))`, `error_details TEXT`, `created_at TEXT NOT NULL DEFAULT (datetime('now'))`, `updated_at TEXT NOT NULL DEFAULT (datetime('now'))`
+  - [x] 1.3 Add index: `CREATE INDEX IF NOT EXISTS idx_transcode_jobs_file_id ON transcode_jobs(file_id)`
+  - [x] 1.4 Add index: `CREATE INDEX IF NOT EXISTS idx_transcode_jobs_status ON transcode_jobs(status)`
 
-- [ ] 2. Create `ClassificationService` (AC: 1–6)
-  - [ ] 2.1 Create `apps/backend/src/library/classification.service.ts` — `@Injectable()` class with `DatabaseService` injected
-  - [ ] 2.2 Define `WEB_COMPATIBLE_VIDEO_CODECS` constant: `['h264', 'vp8', 'vp9', 'av1', 'theora']` (lowercase)
-  - [ ] 2.3 Define `WEB_COMPATIBLE_AUDIO_CODECS` constant: `['aac', 'opus', 'mp3', 'vorbis']` (lowercase)
-  - [ ] 2.4 Implement `classifyFile(file: { id: number; filename: string; probe_data: string | null })` method that:
+- [x] 2. Create `ClassificationService` (AC: 1–6)
+  - [x] 2.1 Create `apps/backend/src/library/classification.service.ts` — `@Injectable()` class with `DatabaseService` injected
+  - [x] 2.2 Define `WEB_COMPATIBLE_VIDEO_CODECS` constant: `['h264', 'vp8', 'vp9', 'av1', 'theora']` (lowercase)
+  - [x] 2.3 Define `WEB_COMPATIBLE_AUDIO_CODECS` constant: `['aac', 'opus', 'mp3', 'vorbis']` (lowercase)
+  - [x] 2.4 Implement `classifyFile(file: { id: number; filename: string; probe_data: string | null })` method that:
     - Returns early (logs warning) if `probe_data` is null
     - Parses `probe_data` as `ProbeResult` (JSON.parse)
     - Determines tier using `determineTier(probeResult)` helper
     - Stores tier in `media_files.tier` and updates status to `'classified'` within a transaction
     - For Tier 2 and Tier 3 only: inserts a `transcode_jobs` row with `{ file_id, tier, status: 'queued' }`
     - Logs tier assignment: `Classified ${file.filename} → Tier ${tier}`
-  - [ ] 2.5 Implement `determineTier(probe: ProbeResult): 1 | 2 | 3` helper (private):
+  - [x] 2.5 Implement `determineTier(probe: ProbeResult): 1 | 2 | 3` helper (private):
     - If no video stream (`probe.video === null`) → Tier 3 (cannot serve as-is)
     - Get video codec: `probe.video.codec.toLowerCase()`
     - If video codec NOT in `WEB_COMPATIBLE_VIDEO_CODECS` → Tier 3
     - If video codec IS web-compatible: check all audio tracks (`probe.audioTracks`)
     - If no audio tracks OR all audio codecs (lowercased) are in `WEB_COMPATIBLE_AUDIO_CODECS` → Tier 1
     - If any audio codec is NOT web-compatible → Tier 2
-  - [ ] 2.6 Implement `executeClassification()` method — same mutex pattern as `executeProbing()`/`executeMatching()`:
+  - [x] 2.6 Implement `executeClassification()` method — same mutex pattern as `executeProbing()`/`executeMatching()`:
     - Guard with `this.classifying` flag to prevent concurrent runs
     - Query all `media_files` with `status = 'matched'`
     - Call `classifyFile()` for each, wrapped in try-catch (log error, continue to next file)
     - Logs: `Classifying ${files.length} matched files`
 
-- [ ] 3. Register `ClassificationService` in `LibraryModule` and integrate into pipeline (AC: all)
-  - [ ] 3.1 Add `ClassificationService` to `providers` and `exports` arrays in `library.module.ts`
-  - [ ] 3.2 Inject `ClassificationService` into `LibraryService` constructor
-  - [ ] 3.3 At the end of `executeMatching()` (after the `do...while` loop, before setting `this.matching = false`), add: `this.classificationService.executeClassification().catch(err => this.logger.error(...))`
+- [x] 3. Register `ClassificationService` in `LibraryModule` and integrate into pipeline (AC: all)
+  - [x] 3.1 Add `ClassificationService` to `providers` and `exports` arrays in `library.module.ts`
+  - [x] 3.2 Inject `ClassificationService` into `LibraryService` constructor
+  - [x] 3.3 At the end of `executeMatching()` (after the `do...while` loop, before setting `this.matching = false`), add: `this.classificationService.executeClassification().catch(err => this.logger.error(...))`
     - Use the same non-blocking fire-and-forget pattern that `executeProbing()` uses to call `executeMatching()`
 
-- [ ] 4. Unit tests for `ClassificationService` (AC: all)
-  - [ ] 4.1 Create `apps/backend/src/library/classification.service.spec.ts`
-  - [ ] 4.2 Test Tier 1: web-compatible video + web-compatible audio → tier = 1, no `transcode_jobs` row inserted
-  - [ ] 4.3 Test Tier 2: web-compatible video (h264) + incompatible audio (ac3) → tier = 2, `transcode_jobs` row with status `queued`
-  - [ ] 4.4 Test Tier 3: non-web-compatible video (hevc) → tier = 3, `transcode_jobs` row with status `queued`
-  - [ ] 4.5 Test Tier 3: null video stream → tier = 3
-  - [ ] 4.6 Test Tier 1: web-compatible video + no audio tracks → tier = 1
-  - [ ] 4.7 Test null probe_data: logs warning, no DB update, no crash
-  - [ ] 4.8 Test malformed probe_data JSON: logs error, no crash (JSON.parse in try-catch)
-  - [ ] 4.9 Test `executeClassification()` mutex: a second concurrent call is a no-op while first runs
-  - [ ] 4.10 Test `executeClassification()` error isolation: classifyFile throws for one file, remaining files still processed
-  - [ ] 4.11 Use in-memory SQLite (`:memory:`) via `DatabaseService` mock or test helper — mock `DatabaseService.getDatabase()` to return a real in-memory DB so SQL assertions can be verified
-  - [ ] 4.12 Run full backend test suite to verify no regressions (target: all existing tests pass)
+- [x] 4. Unit tests for `ClassificationService` (AC: all)
+  - [x] 4.1 Create `apps/backend/src/library/classification.service.spec.ts`
+  - [x] 4.2 Test Tier 1: web-compatible video + web-compatible audio → tier = 1, no `transcode_jobs` row inserted
+  - [x] 4.3 Test Tier 2: web-compatible video (h264) + incompatible audio (ac3) → tier = 2, `transcode_jobs` row with status `queued`
+  - [x] 4.4 Test Tier 3: non-web-compatible video (hevc) → tier = 3, `transcode_jobs` row with status `queued`
+  - [x] 4.5 Test Tier 3: null video stream → tier = 3
+  - [x] 4.6 Test Tier 1: web-compatible video + no audio tracks → tier = 1
+  - [x] 4.7 Test null probe_data: logs warning, no DB update, no crash
+  - [x] 4.8 Test malformed probe_data JSON: logs error, no crash (JSON.parse in try-catch)
+  - [x] 4.9 Test `executeClassification()` mutex: a second concurrent call is a no-op while first runs
+  - [x] 4.10 Test `executeClassification()` error isolation: classifyFile throws for one file, remaining files still processed
+  - [x] 4.11 Use in-memory SQLite (`:memory:`) via `DatabaseService` mock or test helper — mock `DatabaseService.getDatabase()` to return a real in-memory DB so SQL assertions can be verified
+  - [x] 4.12 Run full backend test suite to verify no regressions (target: all existing tests pass)
 
 ## Dev Notes
 
@@ -324,4 +324,38 @@ Claude Sonnet 4.6
 
 ### Completion Notes List
 
+- Implemented `ClassificationService` with `classifyFile()` and `executeClassification()` using the established mutex/fire-and-forget pipeline pattern.
+- Added `tier INTEGER` column to `media_files` CREATE TABLE DDL and created `transcode_jobs` table with two indexes, all via `IF NOT EXISTS` — no migration scripts needed.
+- `determineTier()` uses `Set`-based lookup for O(1) codec matching; handles null video, no audio, and mixed audio tracks correctly.
+- `classifyFile()` wraps DB UPDATE + optional INSERT in a `db.transaction()` — tier assignment and job creation are atomic.
+- Tier 1 files (serve original) produce no `transcode_jobs` row; Tier 2 and Tier 3 produce one row with `status = 'queued'`.
+- `executeClassification()` is wired into `executeMatching()` as a non-blocking fire-and-forget call after the `do...while` loop, exactly matching the probing→matching pipeline pattern.
+- `ClassificationService` added to `LibraryModule` providers and exports; injected as last constructor parameter in `LibraryService`.
+- 12 new unit tests cover all ACs: Tier 1/2/3 classification, null video, no audio, null probe_data warning, malformed JSON error, mutex guard, error isolation per file, and full integration run.
+- All 136 backend tests pass (124 prior + 12 new). Zero regressions.
+
 ### File List
+
+- apps/backend/src/database/database.service.ts
+- apps/backend/src/library/classification.service.ts
+- apps/backend/src/library/classification.service.spec.ts
+- apps/backend/src/library/library.module.ts
+- apps/backend/src/library/library.service.ts
+- apps/backend/src/library/library.service.spec.ts
+
+## Change Log
+
+- 2026-05-03: Story 3-1 implemented. Added `tier` column + `transcode_jobs` table to DB schema; created `ClassificationService` with tier 1/2/3 logic; wired classification pipeline after matching; 12 new unit tests. All 136 tests pass.
+
+### Review Findings
+
+- [x] [Review][Patch] P1: `probe.audioTracks` null/undefined crashes `determineTier` [classification.service.ts:determineTier] — add guard `if (!probe.audioTracks) return 3;` before `.every()` call
+- [x] [Review][Patch] P2: `probe.video.codec` null/undefined crashes `.toLowerCase()` [classification.service.ts:determineTier] — add guard `if (!probe.video.codec) return 3;`
+- [x] [Review][Patch] P3: individual `track.codec` null/undefined crashes inside `.every()` [classification.service.ts:determineTier] — use `(track.codec ?? '').toLowerCase()`
+- [x] [Review][Patch] P4: no `UNIQUE` constraint on `transcode_jobs(file_id)` — re-runs insert duplicate job rows [database.service.ts] — add `UNIQUE(file_id)` constraint or use `INSERT OR IGNORE`
+- [x] [Review][Patch] P5: `err.message` access when rejection is not an Error instance [library.service.ts:executeMatching] — use `err instanceof Error ? err.message : String(err)`
+- [x] [Review][Patch] P6: test asserts `toHaveBeenCalled()` instead of `toHaveBeenCalledTimes(1)` [library.service.spec.ts] — tighten assertion
+- [x] [Review][Defer] W1: existing deployments — `tier` column never added to live `media_files` table [database.service.ts] — deferred, pre-existing schema migration strategy
+- [x] [Review][Defer] W2: `error_details` column defined but never populated [database.service.ts] — deferred, owned by future transcode stories 3-2/3-3
+- [x] [Review][Defer] W3: no retry/attempts tracking on `transcode_jobs` — `failed` status is a dead end [database.service.ts] — deferred, future story scope
+- [x] [Review][Defer] W4: `executeClassification` loads all matched files with an unbounded query [classification.service.ts] — deferred, pre-existing pipeline pattern

@@ -29,6 +29,13 @@
 - No observable "probing in progress" state — scan API reports "completed" immediately while probing still runs in background. Future UX story should add a probing status indicator.
 - Case-insensitive filesystem matching — sidecar detection uses case-sensitive `startsWith` which may miss subtitles on Windows/exFAT mounts. Depends on deployment environment.
 
+## Deferred from: code review of 3-1-transcode-tier-classification (2026-05-03)
+
+- W1: Existing deployments — `tier` column never added to live `media_files` table. `CREATE TABLE IF NOT EXISTS` is a no-op on existing DBs; no `ALTER TABLE` migration provided. Pre-existing schema migration strategy issue.
+- W2: `transcode_jobs.error_details` column defined but never populated. Future transcode stories (3-2/3-3) own population of this field.
+- W3: No retry/attempts tracking on `transcode_jobs` — `failed` status is a permanent dead end with no attempt count, `started_at`, or `completed_at`. Future story scope.
+- W4: `executeClassification` loads all matched files with a single unbounded `.all()` query. Consistent with rest of pipeline but a future scalability concern on large libraries.
+
 ## Deferred from: code review of 2-6-folder-watcher-for-new-content-detection (2026-05-03)
 
 - No mechanism to reload media sources without restart — if a user adds a new source to the DB, the watcher remains blind until app restart. Not in story scope; would require a hot-reload API or event hook.

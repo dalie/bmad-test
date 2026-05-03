@@ -9,6 +9,7 @@ import { FilenameParserService } from "./filename-parser.service";
 import { MatchingService } from "./matching.service";
 import { TmdbService } from "./tmdb.service";
 import { WatcherService } from "./watcher.service";
+import { ClassificationService } from "./classification.service";
 
 @Module({
   imports: [DatabaseModule],
@@ -21,6 +22,7 @@ import { WatcherService } from "./watcher.service";
     TmdbService,
     MatchingService,
     WatcherService,
+    ClassificationService,
   ],
   exports: [
     ScannerService,
@@ -30,6 +32,7 @@ import { WatcherService } from "./watcher.service";
     TmdbService,
     MatchingService,
     WatcherService,
+    ClassificationService,
   ],
 })
 export class LibraryModule implements OnModuleInit {

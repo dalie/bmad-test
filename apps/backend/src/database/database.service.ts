@@ -73,6 +73,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         size INTEGER,
         mtime REAL,
         probe_data TEXT,
+        tier INTEGER,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -142,6 +143,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       );
 
       CREATE INDEX IF NOT EXISTS idx_tv_episodes_metadata_id ON tv_episodes(metadata_id);
+
+      CREATE TABLE IF NOT EXISTS transcode_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL REFERENCES media_files(id) ON DELETE CASCADE,
+        tier INTEGER NOT NULL CHECK (tier IN (1,2,3)),
+        status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','processing','completed','failed')),
+        error_details TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(file_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_transcode_jobs_file_id ON transcode_jobs(file_id);
+      CREATE INDEX IF NOT EXISTS idx_transcode_jobs_status ON transcode_jobs(status);
 
     `);
   }

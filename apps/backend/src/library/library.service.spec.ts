@@ -4,6 +4,7 @@ import { DatabaseService } from "../database/database.service";
 import { ScannerService } from "./scanner.service";
 import { ProbeService } from "./probe.service";
 import { MatchingService } from "./matching.service";
+import { ClassificationService } from "./classification.service";
 
 describe("LibraryService", () => {
   let service: LibraryService;
@@ -11,6 +12,7 @@ describe("LibraryService", () => {
   let mockScanner: any;
   let mockProbeService: any;
   let mockMatchingService: any;
+  let mockClassificationService: any;
   let mockTransaction: jest.Mock;
 
   beforeEach(async () => {
@@ -39,6 +41,9 @@ describe("LibraryService", () => {
     mockMatchingService = {
       matchFile: jest.fn().mockResolvedValue("matched"),
     };
+    mockClassificationService = {
+      executeClassification: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,6 +52,7 @@ describe("LibraryService", () => {
         { provide: ScannerService, useValue: mockScanner },
         { provide: ProbeService, useValue: mockProbeService },
         { provide: MatchingService, useValue: mockMatchingService },
+        { provide: ClassificationService, useValue: mockClassificationService },
       ],
     }).compile();
 
@@ -446,6 +452,19 @@ describe("LibraryService", () => {
       await service.executeProbing();
 
       expect(matchingSpy).toHaveBeenCalled();
+    });
+
+    it("should trigger executeClassification after matching completes", async () => {
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: jest.fn().mockReturnValue([]),
+        get: jest.fn(),
+        run: jest.fn(),
+      });
+
+      await service.executeMatching();
+
+      expect(mockClassificationService.executeClassification).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -6,6 +6,7 @@ import { DatabaseService } from "../database/database.service";
 import { MatchingService } from "./matching.service";
 import { ProbeService, ProbeResult } from "./probe.service";
 import { ScannerService, ScannedFile } from "./scanner.service";
+import { ClassificationService } from "./classification.service";
 
 export interface ScanRecord {
   id: string;
@@ -31,6 +32,7 @@ export class LibraryService {
     private readonly scanner: ScannerService,
     private readonly probeService: ProbeService,
     private readonly matchingService: MatchingService,
+    private readonly classificationService: ClassificationService,
   ) {}
 
   startScan(full?: boolean): string {
@@ -233,6 +235,11 @@ export class LibraryService {
           }
         }
       } while (this.matchingQueued);
+
+      // Trigger classification after all matching passes complete (non-blocking)
+      this.classificationService.executeClassification().catch((err) =>
+        this.logger.error(`Classification failed: ${err instanceof Error ? err.message : String(err)}`),
+      );
     } finally {
       this.matching = false;
     }
