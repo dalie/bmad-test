@@ -36,6 +36,7 @@
 
 generated: 2026-04-30
 last_updated: 2026-05-02
+
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -56,7 +57,7 @@ development_status:
   2-4a-filename-parser-service: done
   2-4b-tmdb-api-service: done
   2-4c-matching-orchestration-and-pipeline-integration: done
-  2-5-manual-tmdb-match-and-needs-attention-queue: backlog
+  2-5-manual-tmdb-match-and-needs-attention-queue: ready-for-dev
   2-6-folder-watcher-for-new-content-detection: backlog
   epic-2-retrospective: optional
 
