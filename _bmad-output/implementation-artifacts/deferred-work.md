@@ -17,6 +17,11 @@
 - No concurrency guard on scan initiation — parallel POST requests can race on same media_files rows causing SQLITE_BUSY or duplicates. Requires architectural decision on scan mutex/queue.
 - scan_errors table has no index on file_path/created_at and no retention/cleanup mechanism — will grow unbounded on noisy filesystems.
 
+## Deferred from: code review of 2-4a-filename-parser-service (2026-05-02)
+
+- No multi-episode handling (S01E01E02, S01E01-03, S01E01-E02) — parser only captures first episode number; multi-episode files are common in TV scene releases.
+- `stripQualityTags` list missing HDR/streaming service tags (AMZN, NF, DSNP, ATVP, HMAX, HDR, HDR10, DV, DoVi, 10bit, Atmos, TrueHD) — will need periodic maintenance as new tags appear.
+
 ## Deferred from: code review of 2-3-video-file-probing-with-ffmpeg (2026-05-02)
 
 - No atomicity across `probeAndStore` operations — if crash occurs between status update to 'probed' and subtitle inserts completing, file is permanently marked probed with incomplete subtitle data. Would need wrapping in a transaction.

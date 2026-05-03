@@ -1,6 +1,6 @@
 # Story 2.4a: Filename Parser Service
 
-Status: review
+Status: done
 
 ## Story
 
@@ -126,6 +126,16 @@ None — clean implementation, all tests passed on first run.
 - apps/backend/src/library/filename-parser.service.ts (NEW)
 - apps/backend/src/library/filename-parser.service.spec.ts (NEW)
 - apps/backend/src/library/library.module.ts (MODIFIED)
+
+### Review Findings
+
+- [x] [Review][Decision] TV parser never extracts year — resolved: added year extraction to parseTv() with graceful undefined when absent
+- [x] [Review][Patch] Dead `parenYearMatch` variable — removed [filename-parser.service.ts:69]
+- [x] [Review][Patch] Year regex requires trailing delimiter but spec regex has optional `?` — fixed with lookahead `(?=[.\s)]|$)` [filename-parser.service.ts:72]
+- [x] [Review][Patch] TV fallback path (no TV pattern matched) doesn't strip quality tags — now calls stripQualityTags [filename-parser.service.ts:59]
+- [x] [Review][Patch] S##E## match at index 0 yields empty title — added index > 0 guard [filename-parser.service.ts:44]
+- [x] [Review][Defer] No multi-episode handling (S01E01E02, S01E01-03) — deferred, pre-existing
+- [x] [Review][Defer] `stripQualityTags` list missing HDR/streaming service tags (AMZN, NF, DV, etc.) — deferred, pre-existing
 
 ## Change Log
 

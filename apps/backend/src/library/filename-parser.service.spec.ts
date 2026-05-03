@@ -87,5 +87,27 @@ describe("FilenameParserService", () => {
       expect(result.season).toBe(2);
       expect(result.episode).toBe(10);
     });
+
+    it("should extract year from TV filename when present", () => {
+      const result = service.parseFilename(
+        "Doctor.Who.2005.S01E01.720p.WEB.H264-GROUP.mkv",
+        "tv",
+      );
+      expect(result.title).toBe("Doctor Who");
+      expect(result.year).toBe(2005);
+      expect(result.season).toBe(1);
+      expect(result.episode).toBe(1);
+    });
+
+    it("should handle TV filename without year gracefully", () => {
+      const result = service.parseFilename(
+        "Show.Name.S03E05.Episode.Title.720p.WEB.H264-GROUP.mkv",
+        "tv",
+      );
+      expect(result.title).toBe("Show Name");
+      expect(result.year).toBeUndefined();
+      expect(result.season).toBe(3);
+      expect(result.episode).toBe(5);
+    });
   });
 });

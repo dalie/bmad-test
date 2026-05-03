@@ -26,7 +26,7 @@ export class FilenameParserService {
 
   private parseTv(input: string, result: ParsedFilename): void {
     // Try S##E## or s##e## pattern
-    const sPattern = /[.\s-]?[Ss](\d{1,2})[Ee](\d{1,2})/;
+    const sPattern = /[.\s-][Ss](\d{1,2})[Ee](\d{1,2})/;
     // Try #x## pattern
     const xPattern = /[.\s-](\d{1,2})x(\d{2,3})/;
     // Try Season.#.Episode.# pattern
@@ -39,35 +39,40 @@ export class FilenameParserService {
     if (sMatch) {
       result.season = parseInt(sMatch[1], 10);
       result.episode = parseInt(sMatch[2], 10);
-      titleCandidate = input.substring(0, sMatch.index!);
+      titleCandidate =
+        sMatch.index! > 0 ? input.substring(0, sMatch.index!) : input;
     } else {
       const xMatch = input.match(xPattern);
       if (xMatch) {
         result.season = parseInt(xMatch[1], 10);
         result.episode = parseInt(xMatch[2], 10);
-        titleCandidate = input.substring(0, xMatch.index!);
+        titleCandidate =
+          xMatch.index! > 0 ? input.substring(0, xMatch.index!) : input;
       } else {
         const seMatch = input.match(seasonEpPattern);
         if (seMatch) {
           result.season = parseInt(seMatch[1], 10);
           result.episode = parseInt(seMatch[2], 10);
-          titleCandidate = input.substring(0, seMatch.index!);
+          titleCandidate =
+            seMatch.index! > 0 ? input.substring(0, seMatch.index!) : input;
         } else {
-          // No TV pattern found, treat like movie
-          titleCandidate = input;
+          // No TV pattern found, strip quality tags
+          titleCandidate = this.stripQualityTags(input);
         }
       }
     }
 
-    result.title = this.cleanTitle(titleCandidate);
+    // Extract year from the title candidate if present
+    this.extractYear(titleCandidate, result);
   }
 
   private parseMovie(input: string, result: ParsedFilename): void {
-    // Check for parenthesized year: "Movie Name (2023)"
-    const parenYearMatch = input.match(/\(?(19|20)\d{2}\)?/g);
+    this.extractYear(input, result);
+  }
 
-    // Find year: last occurrence of 4-digit year before quality tags
-    const yearPattern = /[.\s(]?((?:19|20)\d{2})[.\s)]/g;
+  private extractYear(input: string, result: ParsedFilename): void {
+    // Find year: last occurrence of 4-digit year (optional trailing delimiter)
+    const yearPattern = /[.\s(]?((?:19|20)\d{2})(?=[.\s)]|$)/g;
     let yearMatch: RegExpExecArray | null;
     let lastYear: RegExpExecArray | null = null;
 
