@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { DatabaseService } from "../database/database.service";
+import { MatchingService } from "./matching.service";
 import { ProbeService, ProbeResult } from "./probe.service";
 import { ScannerService, ScannedFile } from "./scanner.service";
 
@@ -22,11 +23,14 @@ export class LibraryService {
   private readonly logger = new Logger(LibraryService.name);
   private readonly scans = new Map<string, ScanRecord>();
   private probing = false;
+  private matching = false;
+  private matchingQueued = false;
 
   constructor(
     private readonly db: DatabaseService,
     private readonly scanner: ScannerService,
     private readonly probeService: ProbeService,
+    private readonly matchingService: MatchingService,
   ) {}
 
   startScan(full?: boolean): string {
@@ -190,8 +194,47 @@ export class LibraryService {
       for (const file of files) {
         await this.probeAndStore(file);
       }
+
+      // Trigger matching after probing completes
+      this.executeMatching().catch((err) => {
+        this.logger.error(`Matching failed: ${err.message}`);
+      });
     } finally {
       this.probing = false;
+    }
+  }
+
+  async executeMatching(): Promise<void> {
+    if (this.matching) {
+      this.matchingQueued = true;
+      this.logger.log("Matching already in progress, queueing another pass");
+      return;
+    }
+
+    this.matching = true;
+    try {
+      do {
+        this.matchingQueued = false;
+
+        const db = this.db.getDatabase();
+        const stmt = db.prepare(
+          "SELECT * FROM media_files WHERE status = 'probed'",
+        );
+        const files = stmt.all() as any[];
+
+        this.logger.log(`Matching ${files.length} probed files`);
+
+        for (const file of files) {
+          try {
+            await this.matchingService.matchFile(file);
+          } catch (err: any) {
+            const message = err?.message || String(err);
+            this.logger.error(`Matching failed for ${file.path}: ${message}`);
+          }
+        }
+      } while (this.matchingQueued);
+    } finally {
+      this.matching = false;
     }
   }
 

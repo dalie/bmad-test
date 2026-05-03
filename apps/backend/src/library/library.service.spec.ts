@@ -3,12 +3,14 @@ import { LibraryService } from "./library.service";
 import { DatabaseService } from "../database/database.service";
 import { ScannerService } from "./scanner.service";
 import { ProbeService } from "./probe.service";
+import { MatchingService } from "./matching.service";
 
 describe("LibraryService", () => {
   let service: LibraryService;
   let mockDbService: any;
   let mockScanner: any;
   let mockProbeService: any;
+  let mockMatchingService: any;
   let mockTransaction: jest.Mock;
 
   beforeEach(async () => {
@@ -34,6 +36,9 @@ describe("LibraryService", () => {
     mockProbeService = {
       probeFile: jest.fn(),
     };
+    mockMatchingService = {
+      matchFile: jest.fn().mockResolvedValue("matched"),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -41,6 +46,7 @@ describe("LibraryService", () => {
         { provide: DatabaseService, useValue: mockDbService },
         { provide: ScannerService, useValue: mockScanner },
         { provide: ProbeService, useValue: mockProbeService },
+        { provide: MatchingService, useValue: mockMatchingService },
       ],
     }).compile();
 
@@ -326,6 +332,120 @@ describe("LibraryService", () => {
 
       const result = service.getFile(999);
       expect(result).toBeNull();
+    });
+  });
+
+  describe("executeMatching", () => {
+    it("should process all probed files", async () => {
+      const probedFiles = [
+        { id: 1, path: "/media/a.mkv", filename: "a.mkv", source_id: 1 },
+        { id: 2, path: "/media/b.mkv", filename: "b.mkv", source_id: 1 },
+      ];
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: jest.fn().mockReturnValue(probedFiles),
+        get: jest.fn(),
+        run: jest.fn(),
+      });
+
+      await service.executeMatching();
+
+      expect(mockMatchingService.matchFile).toHaveBeenCalledTimes(2);
+      expect(mockMatchingService.matchFile).toHaveBeenCalledWith(
+        probedFiles[0],
+      );
+      expect(mockMatchingService.matchFile).toHaveBeenCalledWith(
+        probedFiles[1],
+      );
+    });
+
+    it("should queue another pass if matching is already in progress", async () => {
+      const mockDb = mockDbService.getDatabase();
+      const firstBatch = [
+        { id: 1, path: "/media/a.mkv", filename: "a.mkv", source_id: 1 },
+      ];
+      const secondBatch = [
+        { id: 2, path: "/media/b.mkv", filename: "b.mkv", source_id: 1 },
+      ];
+      const all = jest
+        .fn()
+        .mockReturnValueOnce(firstBatch)
+        .mockReturnValueOnce(secondBatch);
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all,
+        get: jest.fn(),
+        run: jest.fn(),
+      });
+
+      mockMatchingService.matchFile.mockImplementation(
+        async (file: { id: number }) => {
+          if (file.id === 1) {
+            await service.executeMatching();
+          }
+          return "matched";
+        },
+      );
+
+      await service.executeMatching();
+
+      expect(mockMatchingService.matchFile).toHaveBeenCalledTimes(2);
+      expect(mockMatchingService.matchFile).toHaveBeenNthCalledWith(
+        1,
+        firstBatch[0],
+      );
+      expect(mockMatchingService.matchFile).toHaveBeenNthCalledWith(
+        2,
+        secondBatch[0],
+      );
+      expect(all).toHaveBeenCalledTimes(2);
+    });
+
+    it("should continue matching remaining files after one failure", async () => {
+      const probedFiles = [
+        { id: 1, path: "/media/a.mkv", filename: "a.mkv", source_id: 1 },
+        { id: 2, path: "/media/b.mkv", filename: "b.mkv", source_id: 1 },
+      ];
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: jest.fn().mockReturnValue(probedFiles),
+        get: jest.fn(),
+        run: jest.fn(),
+      });
+
+      mockMatchingService.matchFile
+        .mockRejectedValueOnce(new Error("boom"))
+        .mockResolvedValueOnce("matched");
+
+      await expect(service.executeMatching()).resolves.toBeUndefined();
+      expect(mockMatchingService.matchFile).toHaveBeenCalledTimes(2);
+      expect(mockMatchingService.matchFile).toHaveBeenNthCalledWith(
+        1,
+        probedFiles[0],
+      );
+      expect(mockMatchingService.matchFile).toHaveBeenNthCalledWith(
+        2,
+        probedFiles[1],
+      );
+    });
+  });
+
+  describe("pipeline integration", () => {
+    it("should trigger executeMatching after probing completes", async () => {
+      const mockDb = mockDbService.getDatabase();
+      mockDb.prepare = jest.fn().mockReturnValue({
+        all: jest.fn().mockReturnValue([]),
+        get: jest.fn(),
+        run: jest.fn(),
+      });
+
+      // Spy on executeMatching
+      const matchingSpy = jest
+        .spyOn(service, "executeMatching")
+        .mockResolvedValue();
+
+      await service.executeProbing();
+
+      expect(matchingSpy).toHaveBeenCalled();
     });
   });
 });

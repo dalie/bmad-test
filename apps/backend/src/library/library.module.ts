@@ -5,6 +5,7 @@ import { ProbeService } from "./probe.service";
 import { LibraryService } from "./library.service";
 import { LibraryController } from "./library.controller";
 import { FilenameParserService } from "./filename-parser.service";
+import { MatchingService } from "./matching.service";
 import { TmdbService } from "./tmdb.service";
 
 @Module({
@@ -16,6 +17,7 @@ import { TmdbService } from "./tmdb.service";
     LibraryService,
     FilenameParserService,
     TmdbService,
+    MatchingService,
   ],
   exports: [
     ScannerService,
@@ -23,6 +25,7 @@ import { TmdbService } from "./tmdb.service";
     LibraryService,
     FilenameParserService,
     TmdbService,
+    MatchingService,
   ],
 })
 export class LibraryModule implements OnModuleInit {

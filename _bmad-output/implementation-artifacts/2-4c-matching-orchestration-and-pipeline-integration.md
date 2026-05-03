@@ -1,6 +1,6 @@
 # Story 2.4c: Matching Orchestration and Pipeline Integration
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -27,36 +27,43 @@ And concurrent matching runs are prevented via a mutex flag
 
 ## Tasks / Subtasks
 
-- [ ] 1. Database schema for metadata storage (AC: 4, 5)
-  - [ ] 1.1 Add `metadata` table to `DatabaseService.runMigrations()`: id, media_file_id (FK, UNIQUE), tmdb_id, media_type ('movie'|'tv'), title, overview, poster_path, backdrop_path, vote_average, runtime, release_date, content_rating, genres (JSON text), created_at, updated_at
-  - [ ] 1.2 Add `tv_episodes` table: id, metadata_id (FK), season_number, episode_number, name, overview, air_date, still_path, created_at
-  - [ ] 1.3 Add indexes on media_file_id, tmdb_id, and metadata_id
-- [ ] 2. Create `MatchingService` in library module (AC: all)
-  - [ ] 2.1 Inject `FilenameParserService`, `TmdbService`, `DatabaseService`
-  - [ ] 2.2 Implement `matchFile(file: MediaFile): Promise<'matched' | 'match_failed' | 'retry'>` — orchestrates the full flow
-  - [ ] 2.3 Determine media type: join `media_files.source_id` → `media_sources.type` to get 'movies' or 'tv'
-  - [ ] 2.4 For movies: call parser → searchMovie(title, year) → pick best result (highest popularity, prefer matching year) → getMovieDetails → store in metadata table → status "matched"
-  - [ ] 2.5 For TV: call parser → searchTv(title) → pick best result → getTvDetails → getTvSeasonDetails for the parsed season → store metadata + episode in tv_episodes → status "matched"
-  - [ ] 2.6 On no search results: set status "match_failed", insert scan_errors with error_type "MATCH_FAILED"
-  - [ ] 2.7 On `TmdbUnavailableError`: return 'retry' — keep status "probed", log warning (NOT to scan_errors)
-  - [ ] 2.8 On `TmdbClientError` or unexpected error: set status "match_failed", log to scan_errors
-  - [ ] 2.9 Store content_rating: for movies, fetch from release_dates endpoint or use certification; for TV, use content_ratings. (Simplification: store vote_average as primary, skip certification API calls for V1 — can enhance in future)
-- [ ] 3. Integrate matching into scan pipeline (AC: 7, 8, 9)
-  - [ ] 3.1 Add `executeMatching(): Promise<void>` to `LibraryService` — queries files with status "probed", calls `matchingService.matchFile()` sequentially
-  - [ ] 3.2 Add `private matching = false` mutex flag to `LibraryService` (same pattern as `this.probing`)
-  - [ ] 3.3 After `executeProbing()` completes, trigger `executeMatching().catch(...)` (fire-and-forget async)
-  - [ ] 3.4 Ensure matching doesn't block API responses — runs in background
-- [ ] 4. Register in LibraryModule (AC: all)
-  - [ ] 4.1 Add `MatchingService` to providers in `library.module.ts`
-  - [ ] 4.2 Export `MatchingService` from `LibraryModule` for future use by Story 2.5 (manual match)
-- [ ] 5. Unit tests (AC: all)
-  - [ ] 5.1 Test movie matching happy path: parser returns title+year → TMDB search returns results → details fetched → metadata stored → status "matched"
-  - [ ] 5.2 Test TV matching happy path: parser returns title+season+episode → TMDB search → TV details + season details → metadata + episode stored → status "matched"
-  - [ ] 5.3 Test match failure: TMDB search returns empty results → status "match_failed", error in scan_errors
-  - [ ] 5.4 Test TMDB unavailable: TmdbUnavailableError thrown → status stays "probed", no scan_errors entry
-  - [ ] 5.5 Test executeMatching: processes all "probed" files, respects mutex flag
-  - [ ] 5.6 Test pipeline integration: after probing, matching is triggered automatically
-  - [ ] 5.7 Use `:memory:` database for all DB tests
+- [x] 1. Database schema for metadata storage (AC: 4, 5)
+  - [x] 1.1 Add `metadata` table to `DatabaseService.runMigrations()`: id, media_file_id (FK, UNIQUE), tmdb_id, media_type ('movie'|'tv'), title, overview, poster_path, backdrop_path, vote_average, runtime, release_date, content_rating, genres (JSON text), created_at, updated_at
+  - [x] 1.2 Add `tv_episodes` table: id, metadata_id (FK), season_number, episode_number, name, overview, air_date, still_path, created_at
+  - [x] 1.3 Add indexes on media_file_id, tmdb_id, and metadata_id
+- [x] 2. Create `MatchingService` in library module (AC: all)
+  - [x] 2.1 Inject `FilenameParserService`, `TmdbService`, `DatabaseService`
+  - [x] 2.2 Implement `matchFile(file: MediaFile): Promise<'matched' | 'match_failed' | 'retry'>` — orchestrates the full flow
+  - [x] 2.3 Determine media type: join `media_files.source_id` → `media_sources.type` to get 'movies' or 'tv'
+  - [x] 2.4 For movies: call parser → searchMovie(title, year) → pick best result (highest popularity, prefer matching year) → getMovieDetails → store in metadata table → status "matched"
+  - [x] 2.5 For TV: call parser → searchTv(title) → pick best result → getTvDetails → getTvSeasonDetails for the parsed season → store metadata + episode in tv_episodes → status "matched"
+  - [x] 2.6 On no search results: set status "match_failed", insert scan_errors with error_type "MATCH_FAILED"
+  - [x] 2.7 On `TmdbUnavailableError`: return 'retry' — keep status "probed", log warning (NOT to scan_errors)
+  - [x] 2.8 On `TmdbClientError` or unexpected error: set status "match_failed", log to scan_errors
+  - [x] 2.9 Store content_rating: for movies, fetch from release_dates endpoint or use certification; for TV, use content_ratings. (Simplification: store vote_average as primary, skip certification API calls for V1 — can enhance in future)
+- [x] 3. Integrate matching into scan pipeline (AC: 7, 8, 9)
+  - [x] 3.1 Add `executeMatching(): Promise<void>` to `LibraryService` — queries files with status "probed", calls `matchingService.matchFile()` sequentially
+  - [x] 3.2 Add `private matching = false` mutex flag to `LibraryService` (same pattern as `this.probing`)
+  - [x] 3.3 After `executeProbing()` completes, trigger `executeMatching().catch(...)` (fire-and-forget async)
+  - [x] 3.4 Ensure matching doesn't block API responses — runs in background
+- [x] 4. Register in LibraryModule (AC: all)
+  - [x] 4.1 Add `MatchingService` to providers in `library.module.ts`
+  - [x] 4.2 Export `MatchingService` from `LibraryModule` for future use by Story 2.5 (manual match)
+- [x] 5. Unit tests (AC: all)
+  - [x] 5.1 Test movie matching happy path: parser returns title+year → TMDB search returns results → details fetched → metadata stored → status "matched"
+  - [x] 5.2 Test TV matching happy path: parser returns title+season+episode → TMDB search → TV details + season details → metadata + episode stored → status "matched"
+  - [x] 5.3 Test match failure: TMDB search returns empty results → status "match_failed", error in scan_errors
+  - [x] 5.4 Test TMDB unavailable: TmdbUnavailableError thrown → status stays "probed", no scan_errors entry
+  - [x] 5.5 Test executeMatching: processes all "probed" files, respects mutex flag
+  - [x] 5.6 Test pipeline integration: after probing, matching is triggered automatically
+  - [x] 5.7 Use `:memory:` database for all DB tests
+
+  ### Review Findings
+  - [x] [Review][Patch] Matching mutex can leave newly probed files stranded in `probed` [apps/backend/src/library/library.service.ts:207]
+  - [x] [Review][Patch] TV matches can be finalized without required episode rows [apps/backend/src/library/matching.service.ts:131]
+  - [x] [Review][Patch] Metadata and episode writes are not wrapped in a transaction [apps/backend/src/library/matching.service.ts:99]
+  - [x] [Review][Patch] One thrown match can abort the rest of the batch [apps/backend/src/library/library.service.ts:226]
+  - [x] [Review][Patch] seasonDetails.episodes unguarded against null/undefined from TMDB [apps/backend/src/library/matching.service.ts:169]
 
 ## Dev Notes
 
@@ -233,8 +240,30 @@ apps/backend/src/database/
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Debug Log References
+
+- All 69 backend tests pass (9 suites), zero regressions
+- TypeScript compiles cleanly with `--noEmit`
 
 ### Completion Notes List
 
+- Added `metadata` and `tv_episodes` tables with proper foreign keys, constraints, and indexes to `DatabaseService.runMigrations()`
+- Created `MatchingService` with full orchestration: filename parsing → TMDB search → best-match selection → metadata storage → status transitions
+- Movie matching uses year-preference + popularity sort; TV matching uses popularity sort
+- Graceful error handling: `TmdbUnavailableError` → retry (stays "probed"), `TmdbClientError`/unexpected → "match_failed" + scan_errors
+- Integrated `executeMatching()` into `LibraryService` with mutex flag, triggered automatically after probing
+- Pipeline: scan → probe → match (each fire-and-forgets the next), non-blocking to API responses
+- V1 simplification: content_rating stored as null (skipped certification API calls per story spec)
+- Registered and exported `MatchingService` from `LibraryModule`
+- 6 unit tests for `MatchingService` + 3 integration tests in `LibraryService` spec (executeMatching mutex + pipeline trigger)
+
 ### File List
+
+- apps/backend/src/database/database.service.ts (modified - added metadata + tv_episodes tables)
+- apps/backend/src/library/matching.service.ts (new - matching orchestration service)
+- apps/backend/src/library/matching.service.spec.ts (new - 6 unit tests)
+- apps/backend/src/library/library.service.ts (modified - added executeMatching + mutex + pipeline trigger + MatchingService injection)
+- apps/backend/src/library/library.service.spec.ts (modified - added MatchingService mock + 3 new tests)
+- apps/backend/src/library/library.module.ts (modified - registered + exported MatchingService)

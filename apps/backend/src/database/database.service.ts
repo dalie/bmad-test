@@ -108,6 +108,41 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         last_fetched TEXT NOT NULL DEFAULT (datetime('now'))
       );
 
+      CREATE TABLE IF NOT EXISTS metadata (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        media_file_id INTEGER NOT NULL UNIQUE REFERENCES media_files(id) ON DELETE CASCADE,
+        tmdb_id INTEGER NOT NULL,
+        media_type TEXT NOT NULL CHECK (media_type IN ('movie', 'tv')),
+        title TEXT NOT NULL,
+        overview TEXT,
+        poster_path TEXT,
+        backdrop_path TEXT,
+        vote_average REAL,
+        runtime INTEGER,
+        release_date TEXT,
+        content_rating TEXT,
+        genres TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_metadata_media_file_id ON metadata(media_file_id);
+      CREATE INDEX IF NOT EXISTS idx_metadata_tmdb_id ON metadata(tmdb_id);
+
+      CREATE TABLE IF NOT EXISTS tv_episodes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        metadata_id INTEGER NOT NULL REFERENCES metadata(id) ON DELETE CASCADE,
+        season_number INTEGER NOT NULL,
+        episode_number INTEGER NOT NULL,
+        name TEXT,
+        overview TEXT,
+        air_date TEXT,
+        still_path TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tv_episodes_metadata_id ON tv_episodes(metadata_id);
+
     `);
   }
 }
