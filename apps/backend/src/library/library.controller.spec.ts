@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { LibraryController } from "./library.controller";
 import { LibraryService } from "./library.service";
+import { WatcherService } from "./watcher.service";
 import { TmdbUnavailableError, TmdbClientError } from "./tmdb.service";
 import {
   NotFoundException,
@@ -14,6 +15,7 @@ import {
 describe("LibraryController", () => {
   let controller: LibraryController;
   let libraryService: any;
+  let watcherService: any;
 
   beforeEach(async () => {
     libraryService = {
@@ -25,9 +27,16 @@ describe("LibraryController", () => {
       manualMatch: jest.fn(),
     };
 
+    watcherService = {
+      getStatus: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LibraryController],
-      providers: [{ provide: LibraryService, useValue: libraryService }],
+      providers: [
+        { provide: LibraryService, useValue: libraryService },
+        { provide: WatcherService, useValue: watcherService },
+      ],
     }).compile();
 
     controller = module.get<LibraryController>(LibraryController);
@@ -175,15 +184,15 @@ describe("LibraryController", () => {
         new TmdbClientError("TMDB returned 404: Not Found"),
       );
 
-      await expect(controller.manualMatch(1, { tmdbId: 999999 })).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        controller.manualMatch(1, { tmdbId: 999999 }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it("should throw BadRequestException when body is null", async () => {
-      await expect(
-        controller.manualMatch(1, null as any),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.manualMatch(1, null as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -198,6 +207,21 @@ describe("LibraryController", () => {
       expect(() => controller.getUnmatchedFiles(0, 0)).toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe("GET /library/watcher/status", () => {
+    it("should return watcher status", () => {
+      const mockStatus = {
+        watching: true,
+        paths: ["/media/movies", "/media/tv"],
+        errors: [],
+      };
+      watcherService.getStatus.mockReturnValue(mockStatus);
+
+      const result = controller.getWatcherStatus();
+      expect(result).toEqual(mockStatus);
+      expect(watcherService.getStatus).toHaveBeenCalled();
     });
   });
 });

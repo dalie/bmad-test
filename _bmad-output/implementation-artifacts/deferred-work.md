@@ -29,6 +29,11 @@
 - No observable "probing in progress" state — scan API reports "completed" immediately while probing still runs in background. Future UX story should add a probing status indicator.
 - Case-insensitive filesystem matching — sidecar detection uses case-sensitive `startsWith` which may miss subtitles on Windows/exFAT mounts. Depends on deployment environment.
 
+## Deferred from: code review of 2-6-folder-watcher-for-new-content-detection (2026-05-03)
+
+- No mechanism to reload media sources without restart — if a user adds a new source to the DB, the watcher remains blind until app restart. Not in story scope; would require a hot-reload API or event hook.
+- No auth on `GET /library/watcher/status` — exposes internal filesystem paths and error messages. Pre-existing pattern: no endpoints in this app have auth yet. Should be addressed when auth layer is added.
+
 ## Deferred from: code review of 2-5-manual-tmdb-match-and-needs-attention-queue (2026-05-03)
 
 - No rate limiting on TMDB proxy endpoints (GET /api/tmdb/search, POST /api/library/files/:id/match) — unauthenticated callers can spam TMDB API and exhaust quota.

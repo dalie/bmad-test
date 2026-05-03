@@ -8,6 +8,7 @@ import { TmdbController } from "./tmdb.controller";
 import { FilenameParserService } from "./filename-parser.service";
 import { MatchingService } from "./matching.service";
 import { TmdbService } from "./tmdb.service";
+import { WatcherService } from "./watcher.service";
 
 @Module({
   imports: [DatabaseModule],
@@ -19,6 +20,7 @@ import { TmdbService } from "./tmdb.service";
     FilenameParserService,
     TmdbService,
     MatchingService,
+    WatcherService,
   ],
   exports: [
     ScannerService,
@@ -27,6 +29,7 @@ import { TmdbService } from "./tmdb.service";
     FilenameParserService,
     TmdbService,
     MatchingService,
+    WatcherService,
   ],
 })
 export class LibraryModule implements OnModuleInit {

@@ -16,11 +16,15 @@ import {
   BadGatewayException,
 } from "@nestjs/common";
 import { LibraryService } from "./library.service";
+import { WatcherService } from "./watcher.service";
 import { TmdbUnavailableError, TmdbClientError } from "./tmdb.service";
 
 @Controller("library")
 export class LibraryController {
-  constructor(private readonly libraryService: LibraryService) {}
+  constructor(
+    private readonly libraryService: LibraryService,
+    private readonly watcherService: WatcherService,
+  ) {}
 
   @Post("scan")
   @HttpCode(202)
@@ -73,11 +77,7 @@ export class LibraryController {
     @Param("id", ParseIntPipe) id: number,
     @Body() body: { tmdbId: number },
   ) {
-    if (
-      !body?.tmdbId ||
-      !Number.isInteger(body.tmdbId) ||
-      body.tmdbId <= 0
-    ) {
+    if (!body?.tmdbId || !Number.isInteger(body.tmdbId) || body.tmdbId <= 0) {
       throw new BadRequestException("tmdbId must be a positive integer");
     }
 
@@ -113,5 +113,10 @@ export class LibraryController {
       }
       throw err;
     }
+  }
+
+  @Get("watcher/status")
+  getWatcherStatus() {
+    return this.watcherService.getStatus();
   }
 }

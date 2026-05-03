@@ -1,6 +1,6 @@
 # Story 2.6: Folder Watcher for New Content Detection
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -22,37 +22,37 @@ And watcher errors (permissions, disconnected volumes) are logged without crashi
 
 ## Tasks / Subtasks
 
-- [ ] 1. Create `WatcherService` (AC: 1, 5)
-  - [ ] 1.1 Create `apps/backend/src/library/watcher.service.ts` — `@Injectable()` with `OnModuleInit` and `OnModuleDestroy` lifecycle hooks
-  - [ ] 1.2 Inject `DatabaseService` to query media sources (for source IDs), and `LibraryService` for pipeline triggering
-  - [ ] 1.3 On `onModuleInit()`: query `media_sources` table for all source paths and IDs, start a recursive `fs.watch()` on each source path with `{ recursive: true }` option
-  - [ ] 1.4 On `onModuleDestroy()`: call `.close()` on all `fs.FSWatcher` instances
-  - [ ] 1.5 On `fs.watch` `rename` event (which fires for new files on Linux): validate the filename has a video extension, then `fs.stat()` the full path to confirm it exists (rename fires for both creates and deletes), then queue for stability check
-  - [ ] 1.6 Handle watcher errors: wrap `fs.watch()` in try-catch for initial setup failures (missing dir, permissions), and listen for `error` event on the watcher instance — log without crashing
-- [ ] 2. Implement file stability check for watched files (AC: 3)
-  - [ ] 2.1 After detecting a new video file, wait for stability using the same pattern as `ScannerService.checkFileStability()` — stat the file, wait 2 seconds, stat again, compare size/mtime
-  - [ ] 2.2 If the file is unstable (still being written), re-queue for another stability check after 2 seconds (retry up to 30 times = 60s max wait)
-  - [ ] 2.3 If stability check fails after max retries, log a warning and skip the file
-- [ ] 3. Process detected files through existing pipeline (AC: 2, 3)
-  - [ ] 3.1 Once a file passes stability check: call existing `LibraryService.syncFiles()` to register it, then trigger `executeProbing()` followed by `executeMatching()` — reuse the exact same pipeline as startup scan
-  - [ ] 3.2 Debounce/batch: accumulate stable files for 3 seconds before calling `syncFiles()` once with the batch (prevents excessive DB writes when many files arrive simultaneously, e.g., a torrent dropping a full season)
-  - [ ] 3.3 For each detected file, resolve its `source_id` from the media source whose path is a prefix of the file path
-- [ ] 4. Register WatcherService in LibraryModule (AC: all)
-  - [ ] 4.1 Add `WatcherService` to `providers` array in `library.module.ts`
-  - [ ] 4.2 No additional module imports needed — `WatcherService` queries `media_sources` directly via `DatabaseService` (already available in `LibraryModule`)
-- [ ] 5. Add watcher status API (AC: 5)
-  - [ ] 5.1 Add `GET /api/library/watcher/status` endpoint to `LibraryController` — returns `{ watching: boolean, paths: string[], errors: string[] }`
-  - [ ] 5.2 Expose a `getStatus()` method on `WatcherService` that returns current state
-- [ ] 6. Unit tests (AC: all)
-  - [ ] 6.1 Test `WatcherService` creation and lifecycle: mock `fs.watch`, verify called with correct paths on init, verify `.close()` called on destroy
-  - [ ] 6.2 Test file detection: simulate `fs.watch` callback with `rename` event and a video filename, verify stability check runs and `syncFiles()` is called
-  - [ ] 6.3 Test stability check: mock `fs.promises.stat` to return same size/mtime on both calls, verify file proceeds to pipeline
-  - [ ] 6.4 Test unstable file: mock `fs.promises.stat` to return different sizes, verify retry behavior
-  - [ ] 6.5 Test error resilience: simulate watcher `error` event, verify logged but not thrown
-  - [ ] 6.6 Test filtering: simulate event for non-video file (.txt, .nfo), verify no pipeline call
-  - [ ] 6.7 Test debouncing: simulate multiple rapid events, verify `syncFiles()` is called once with all files
-  - [ ] 6.8 Test `GET /api/library/watcher/status` returns correct structure
-  - [ ] 6.9 Use `jest.mock('fs')` for watcher and `jest.useFakeTimers()` for stability/debounce — do NOT use real filesystem watchers in tests
+- [x] 1. Create `WatcherService` (AC: 1, 5)
+  - [x] 1.1 Create `apps/backend/src/library/watcher.service.ts` — `@Injectable()` with `OnModuleInit` and `OnModuleDestroy` lifecycle hooks
+  - [x] 1.2 Inject `DatabaseService` to query media sources (for source IDs), and `LibraryService` for pipeline triggering
+  - [x] 1.3 On `onModuleInit()`: query `media_sources` table for all source paths and IDs, start a recursive `fs.watch()` on each source path with `{ recursive: true }` option
+  - [x] 1.4 On `onModuleDestroy()`: call `.close()` on all `fs.FSWatcher` instances
+  - [x] 1.5 On `fs.watch` `rename` event (which fires for new files on Linux): validate the filename has a video extension, then `fs.stat()` the full path to confirm it exists (rename fires for both creates and deletes), then queue for stability check
+  - [x] 1.6 Handle watcher errors: wrap `fs.watch()` in try-catch for initial setup failures (missing dir, permissions), and listen for `error` event on the watcher instance — log without crashing
+- [x] 2. Implement file stability check for watched files (AC: 3)
+  - [x] 2.1 After detecting a new video file, wait for stability using the same pattern as `ScannerService.checkFileStability()` — stat the file, wait 2 seconds, stat again, compare size/mtime
+  - [x] 2.2 If the file is unstable (still being written), re-queue for another stability check after 2 seconds (retry up to 30 times = 60s max wait)
+  - [x] 2.3 If stability check fails after max retries, log a warning and skip the file
+- [x] 3. Process detected files through existing pipeline (AC: 2, 3)
+  - [x] 3.1 Once a file passes stability check: call existing `LibraryService.syncFiles()` to register it, then trigger `executeProbing()` followed by `executeMatching()` — reuse the exact same pipeline as startup scan
+  - [x] 3.2 Debounce/batch: accumulate stable files for 3 seconds before calling `syncFiles()` once with the batch (prevents excessive DB writes when many files arrive simultaneously, e.g., a torrent dropping a full season)
+  - [x] 3.3 For each detected file, resolve its `source_id` from the media source whose path is a prefix of the file path
+- [x] 4. Register WatcherService in LibraryModule (AC: all)
+  - [x] 4.1 Add `WatcherService` to `providers` array in `library.module.ts`
+  - [x] 4.2 No additional module imports needed — `WatcherService` queries `media_sources` directly via `DatabaseService` (already available in `LibraryModule`)
+- [x] 5. Add watcher status API (AC: 5)
+  - [x] 5.1 Add `GET /api/library/watcher/status` endpoint to `LibraryController` — returns `{ watching: boolean, paths: string[], errors: string[] }`
+  - [x] 5.2 Expose a `getStatus()` method on `WatcherService` that returns current state
+- [x] 6. Unit tests (AC: all)
+  - [x] 6.1 Test `WatcherService` creation and lifecycle: mock `fs.watch`, verify called with correct paths on init, verify `.close()` called on destroy
+  - [x] 6.2 Test file detection: simulate `fs.watch` callback with `rename` event and a video filename, verify stability check runs and `syncFiles()` is called
+  - [x] 6.3 Test stability check: mock `fs.promises.stat` to return same size/mtime on both calls, verify file proceeds to pipeline
+  - [x] 6.4 Test unstable file: mock `fs.promises.stat` to return different sizes, verify retry behavior
+  - [x] 6.5 Test error resilience: simulate watcher `error` event, verify logged but not thrown
+  - [x] 6.6 Test filtering: simulate event for non-video file (.txt, .nfo), verify no pipeline call
+  - [x] 6.7 Test debouncing: simulate multiple rapid events, verify `syncFiles()` is called once with all files
+  - [x] 6.8 Test `GET /api/library/watcher/status` returns correct structure
+  - [x] 6.9 Use `jest.mock('fs')` for watcher and `jest.useFakeTimers()` for stability/debounce — do NOT use real filesystem watchers in tests
 
 ## Dev Notes
 
@@ -324,8 +324,43 @@ Do NOT call `ScannerService.checkFileStability()` directly — it's a private me
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+None
 
 ### Completion Notes List
 
+- Implemented `WatcherService` using native `fs.watch` with `{ recursive: true }` — zero new dependencies
+- File stability check (stat→wait 2s→re-stat) with up to 30 retries (60s max) for partially written files (NFR16)
+- Debounce/batch pattern: accumulates stable files per source for 3s before flushing to pipeline
+- Pipeline integration reuses existing `LibraryService.syncFiles()` → `executeProbing()` → `executeMatching()` chain
+- Error resilience: watcher errors logged without crashing, individual file failures isolated
+- Added `GET /api/library/watcher/status` endpoint returning `{ watching, paths, errors }`
+- 18 unit tests covering lifecycle, detection, stability, errors, debouncing, and status API
+- All 123 backend tests pass with zero regressions
+
 ### File List
+
+- apps/backend/src/library/watcher.service.ts (NEW)
+- apps/backend/src/library/watcher.service.spec.ts (NEW)
+- apps/backend/src/library/library.module.ts (MODIFIED)
+- apps/backend/src/library/library.controller.ts (MODIFIED)
+- apps/backend/src/library/library.controller.spec.ts (MODIFIED)
+
+### Review Findings
+
+- [x] [Review][Patch] Dead code: `resolveSourceId()` never called [watcher.service.ts:204-209] — removed
+- [x] [Review][Patch] `errors` array grows without bound [watcher.service.ts:17] — capped at 100 entries
+- [x] [Review][Patch] `loadSources()` unhandled throw in `startWatching()` [watcher.service.ts:55] — wrapped in try-catch
+- [x] [Review][Patch] Duplicate stability checks from rapid rename events [watcher.service.ts:107-115] — added dedup guard
+- [x] [Review][Patch] Use-after-destroy: stability check continues after `stopWatching()` [watcher.service.ts:123-148] — added `watching` guard
+- [x] [Review][Patch] Uncaught exception in `flushPending` [watcher.service.ts:166-178] — wrapped in try-catch
+- [x] [Review][Defer] No mechanism to reload sources without restart — deferred, not in story scope
+- [x] [Review][Defer] No auth on `GET /library/watcher/status` — deferred, pre-existing architectural pattern
+
+## Change Log
+
+- 2026-05-03: Implemented folder watcher service with native fs.watch, file stability checks, debounced batch processing, watcher status API, and 18 unit tests. All 123 tests pass.
+- 2026-05-03: Code review — applied 6 patches (dead code removal, error cap, try-catch guards, dedup, use-after-destroy protection). 2 deferred.
