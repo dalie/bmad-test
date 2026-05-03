@@ -28,3 +28,9 @@
 - `execFileAsync` default maxBuffer (1MB) may be exceeded for files with hundreds of streams/chapters producing large JSON output. Unlikely in practice but could cause valid files to be marked probe_failed.
 - No observable "probing in progress" state — scan API reports "completed" immediately while probing still runs in background. Future UX story should add a probing status indicator.
 - Case-insensitive filesystem matching — sidecar detection uses case-sensitive `startsWith` which may miss subtitles on Windows/exFAT mounts. Depends on deployment environment.
+
+## Deferred from: code review of 2-4b-tmdb-api-service (2026-05-02)
+
+- 5xx responses not retried internally (asymmetry with network error retry) — matches spec Dev Notes pattern; caller can retry via TmdbUnavailableError. Consider internal retry for transient 502/503 in future.
+- Race condition in getImageBaseUrl — concurrent calls could both INSERT rows. Mitigated by single-process SQLite and single-row LIMIT 1 query. Consider INSERT OR REPLACE for robustness.
+- No AbortController timeout on fetch calls — if TMDB API hangs, fetchWithRetry blocks indefinitely. Consider adding a 30s signal timeout per request.

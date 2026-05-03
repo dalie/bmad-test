@@ -182,20 +182,6 @@ describe("TmdbService", () => {
         .mockResolvedValueOnce({
           ok: false,
           status: 429,
-          headers: new Map([["Retry-After", "2"]]),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => ({ results: [] }),
-        });
-
-      // Use a mock headers object with get method
-      mockFetch.mockReset();
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 429,
           headers: { get: () => "2" },
         })
         .mockResolvedValueOnce({
@@ -205,11 +191,30 @@ describe("TmdbService", () => {
         });
 
       const promise = service.searchMovie("Test");
-      await jest.advanceTimersByTimeAsync(3000);
+      // Retry-After=2 → delay = Math.max(2*1000, 2^0*1000) = 2000ms
+      await jest.advanceTimersByTimeAsync(2000);
       const results = await promise;
 
       expect(results).toEqual([]);
       expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("should throw after 3 consecutive 429 responses", async () => {
+      jest.useRealTimers();
+      (service as any).delay = () => Promise.resolve();
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: { get: () => "1" },
+      });
+
+      await expect(service.searchMovie("Test")).rejects.toThrow(
+        TmdbUnavailableError,
+      );
+      await expect(service.searchMovie("Test")).rejects.toThrow(
+        "TMDB rate limited after 3 attempts",
+      );
+      jest.useFakeTimers({ advanceTimers: true });
     });
   });
 

@@ -82,10 +82,7 @@ export class TmdbService {
     private readonly database: DatabaseService,
   ) {}
 
-  async searchMovie(
-    title: string,
-    year?: number,
-  ): Promise<TmdbSearchResult[]> {
+  async searchMovie(title: string, year?: number): Promise<TmdbSearchResult[]> {
     const params = new URLSearchParams({
       query: title,
       language: "en-US",
@@ -96,7 +93,7 @@ export class TmdbService {
     const data = await this.fetchWithRetry(
       `${TMDB_BASE}/3/search/movie?${params}`,
     );
-    return data.results;
+    return data.results ?? [];
   }
 
   async searchTv(title: string, year?: number): Promise<TmdbSearchResult[]> {
@@ -110,13 +107,11 @@ export class TmdbService {
     const data = await this.fetchWithRetry(
       `${TMDB_BASE}/3/search/tv?${params}`,
     );
-    return data.results;
+    return data.results ?? [];
   }
 
   async getMovieDetails(tmdbId: number): Promise<TmdbMovieDetails> {
-    return this.fetchWithRetry(
-      `${TMDB_BASE}/3/movie/${tmdbId}?language=en-US`,
-    );
+    return this.fetchWithRetry(`${TMDB_BASE}/3/movie/${tmdbId}?language=en-US`);
   }
 
   async getTvDetails(tmdbId: number): Promise<TmdbTvDetails> {
@@ -135,8 +130,12 @@ export class TmdbService {
   async getImageBaseUrl(): Promise<string> {
     const db = this.database.getDatabase();
     const row = db
-      .prepare("SELECT image_base_url, last_fetched FROM tmdb_config LIMIT 1")
-      .get() as { image_base_url: string; last_fetched: string } | undefined;
+      .prepare(
+        "SELECT id, image_base_url, last_fetched FROM tmdb_config LIMIT 1",
+      )
+      .get() as
+      | { id: number; image_base_url: string; last_fetched: string }
+      | undefined;
 
     if (row) {
       const fetchedAt = new Date(row.last_fetched + "Z").getTime();
@@ -147,12 +146,15 @@ export class TmdbService {
 
     // Fetch fresh configuration
     const data = await this.fetchWithRetry(`${TMDB_BASE}/3/configuration`);
-    const baseUrl: string = data.images.secure_base_url;
+    const baseUrl = data.images?.secure_base_url;
+    if (!baseUrl) {
+      throw new TmdbClientError("Unexpected TMDB configuration response");
+    }
 
     if (row) {
       db.prepare(
         "UPDATE tmdb_config SET image_base_url = ?, last_fetched = datetime('now') WHERE id = ?",
-      ).run(baseUrl, (row as any).id ?? 1);
+      ).run(baseUrl, row.id);
     } else {
       db.prepare("INSERT INTO tmdb_config (image_base_url) VALUES (?)").run(
         baseUrl,
@@ -179,11 +181,20 @@ export class TmdbService {
         });
 
         if (response.status === 429) {
-          const retryAfter = parseInt(
+          if (attempt === 2) {
+            throw new TmdbUnavailableError(
+              "TMDB rate limited after 3 attempts",
+            );
+          }
+          const parsed = parseInt(
             response.headers.get("Retry-After") || "1",
             10,
           );
-          const delay = Math.max(retryAfter * 1000, Math.pow(2, attempt) * 1000);
+          const retryAfter = Number.isNaN(parsed) ? 1 : parsed;
+          const delay = Math.max(
+            retryAfter * 1000,
+            Math.pow(2, attempt) * 1000,
+          );
           this.logger.warn(
             `TMDB rate limited, retrying in ${delay}ms (attempt ${attempt + 1})`,
           );
@@ -203,19 +214,22 @@ export class TmdbService {
 
         return await response.json();
       } catch (err) {
-        if (err instanceof TmdbUnavailableError || err instanceof TmdbClientError) {
+        if (
+          err instanceof TmdbUnavailableError ||
+          err instanceof TmdbClientError
+        ) {
           throw err;
         }
         lastError = err as Error;
         if (attempt === 2) {
-          throw new TmdbUnavailableError(
-            `Network error: ${lastError.message}`,
-          );
+          throw new TmdbUnavailableError(`Network error: ${lastError.message}`);
         }
         await this.delay(Math.pow(2, attempt) * 1000);
       }
     }
-    throw new TmdbUnavailableError(lastError?.message || "Max retries exceeded");
+    throw new TmdbUnavailableError(
+      lastError?.message || "Max retries exceeded",
+    );
   }
 
   private delay(ms: number): Promise<void> {

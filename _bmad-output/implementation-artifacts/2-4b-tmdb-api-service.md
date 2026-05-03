@@ -1,6 +1,6 @@
 # Story 2.4b: TMDB API Service
 
-Status: review
+Status: done
 
 ## Story
 
@@ -212,6 +212,17 @@ None — clean implementation, all tests passed.
 - apps/backend/src/library/tmdb.service.spec.ts (NEW)
 - apps/backend/src/library/library.module.ts (MODIFIED)
 - apps/backend/src/database/database.service.ts (MODIFIED)
+
+### Review Findings
+
+- [x] [Review][Patch] SELECT omits `id` column; UPDATE uses `(row as any).id ?? 1` fallback [tmdb.service.ts:139]
+- [x] [Review][Patch] 429 on final attempt exits loop silently with misleading "Max retries exceeded" error [tmdb.service.ts:186-200]
+- [x] [Review][Patch] Retry-After non-numeric string → parseInt returns NaN → zero-delay retry [tmdb.service.ts:188]
+- [x] [Review][Patch] No runtime guard on `data.results` / `data.images.secure_base_url` (undefined access) [tmdb.service.ts:100,115,152]
+- [x] [Review][Patch] Rate limit test unreliable — dead first mock setup and magic-number timer advance [tmdb.service.spec.ts:230-262]
+- [x] [Review][Defer] 5xx responses not retried internally (asymmetry with network error retry) [tmdb.service.ts:193] — deferred, matches spec Dev Notes pattern
+- [x] [Review][Defer] Race condition in getImageBaseUrl (concurrent INSERT possible) [tmdb.service.ts:137-160] — deferred, single-process SQLite mitigates risk
+- [x] [Review][Defer] No AbortController timeout on fetch calls [tmdb.service.ts:177] — deferred, pre-existing pattern
 
 ## Change Log
 
