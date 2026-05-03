@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-30
-last_updated: 2026-05-02
+last_updated: 2026-05-03
 
 project: bmad
 project_key: NOKEY
@@ -58,7 +58,7 @@ development_status:
   2-4b-tmdb-api-service: done
   2-4c-matching-orchestration-and-pipeline-integration: done
   2-5-manual-tmdb-match-and-needs-attention-queue: done
-  2-6-folder-watcher-for-new-content-detection: backlog
+  2-6-folder-watcher-for-new-content-detection: ready-for-dev
   epic-2-retrospective: optional
 
   # Epic 3: Smart Transcode Pipeline
