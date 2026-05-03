@@ -62,8 +62,8 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Smart Transcode Pipeline
-  epic-3: backlog
-  3-1-transcode-tier-classification: backlog
+  epic-3: in-progress
+  3-1-transcode-tier-classification: ready-for-dev
   3-2-aac-audio-sidecar-generation-tier-2: backlog
   3-3-full-video-transcode-tier-3: backlog
   3-4-subtitle-extraction-and-webvtt-conversion: backlog
