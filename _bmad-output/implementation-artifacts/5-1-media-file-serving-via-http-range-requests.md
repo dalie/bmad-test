@@ -1,6 +1,6 @@
 # Story 5.1: Media File Serving via HTTP Range Requests
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -24,47 +24,47 @@ so that playback starts instantly and seeking is instant without any server-side
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create media module structure (AC: #1)
-  - [ ] Create `apps/backend/src/media/media.module.ts`
-  - [ ] Create `apps/backend/src/media/media.controller.ts`
-  - [ ] Create `apps/backend/src/media/media.service.ts`
-  - [ ] Register `MediaModule` in `app.module.ts`
-- [ ] Task 2: Implement media service with file resolution (AC: #2, #3, #4, #10, #11)
-  - [ ] `getFileInfo(fileId)` — query `media_files` + `transcode_jobs` to determine tier and resolve absolute path
-  - [ ] `getSubtitleInfo(subtitleId)` — query `subtitles` table for `webvtt_path`
-  - [ ] `getAudioSidecarPath(fileId)` — resolve Tier 2 AAC sidecar from `transcode_jobs.output_path`
-  - [ ] Path validation: ensure resolved path does not escape expected directories
-  - [ ] Status validation: only serve files where `media_files.status = 'ready'` OR `transcode_jobs.status = 'completed'`
-- [ ] Task 3: Implement range request streaming in controller (AC: #1, #8, #9)
-  - [ ] Parse `Range` header (support `bytes=START-END` and `bytes=START-`)
-  - [ ] Use `fs.statSync` for file size, `fs.createReadStream` with `{ start, end }` options
-  - [ ] Return `StreamableFile` with 206 status and proper headers via `@Res({ passthrough: true })`
-  - [ ] When no Range header: return full file with 200 and `Accept-Ranges: bytes`
-- [ ] Task 4: Implement video stream endpoint (AC: #1, #2, #3, #4)
-  - [ ] `GET /api/media/stream/:fileId` — serves video based on tier
-  - [ ] Set `Content-Type` to appropriate MIME (`video/mp4`, `video/x-matroska`, `video/webm`, etc.)
-- [ ] Task 5: Implement audio sidecar endpoint (AC: #3)
-  - [ ] `GET /api/media/stream/:fileId/audio` — serves AAC sidecar for Tier 2
-  - [ ] Return 404 if file is not Tier 2
-  - [ ] Set `Content-Type: audio/aac`
-- [ ] Task 6: Implement subtitle endpoint (AC: #5)
-  - [ ] `GET /api/media/subtitles/:subtitleId` — serves WebVTT file
-  - [ ] Set `Content-Type: text/vtt`
-  - [ ] Return 404 if subtitle not found or `webvtt_path` is null
-- [ ] Task 7: Write unit tests for media service (AC: all)
-  - [ ] Test file resolution for each tier
-  - [ ] Test status validation (reject non-ready files)
-  - [ ] Test path traversal prevention
-  - [ ] Test audio sidecar resolution (Tier 2 only)
-  - [ ] Test subtitle resolution
-- [ ] Task 8: Write controller integration tests (AC: #1, #8, #9)
-  - [ ] Test 206 response with proper range headers
-  - [ ] Test 200 response when no Range header
-  - [ ] Test 404 for non-existent file IDs
-  - [ ] Test 404 for non-ready files
-  - [ ] Test 416 Range Not Satisfiable for invalid ranges
-  - [ ] Test audio endpoint returns 404 for non-Tier-2 files
-  - [ ] Test subtitle endpoint with valid/invalid IDs
+- [x] Task 1: Create media module structure (AC: #1)
+  - [x] Create `apps/backend/src/media/media.module.ts`
+  - [x] Create `apps/backend/src/media/media.controller.ts`
+  - [x] Create `apps/backend/src/media/media.service.ts`
+  - [x] Register `MediaModule` in `app.module.ts`
+- [x] Task 2: Implement media service with file resolution (AC: #2, #3, #4, #10, #11)
+  - [x] `getFileInfo(fileId)` — query `media_files` + `transcode_jobs` to determine tier and resolve absolute path
+  - [x] `getSubtitleInfo(subtitleId)` — query `subtitles` table for `webvtt_path`
+  - [x] `getAudioSidecarPath(fileId)` — resolve Tier 2 AAC sidecar from `transcode_jobs.output_path`
+  - [x] Path validation: ensure resolved path does not escape expected directories
+  - [x] Status validation: only serve files where `media_files.status = 'ready'` OR `transcode_jobs.status = 'completed'`
+- [x] Task 3: Implement range request streaming in controller (AC: #1, #8, #9)
+  - [x] Parse `Range` header (support `bytes=START-END` and `bytes=START-`)
+  - [x] Use `fs.statSync` for file size, `fs.createReadStream` with `{ start, end }` options
+  - [x] Return `StreamableFile` with 206 status and proper headers via `@Res({ passthrough: true })`
+  - [x] When no Range header: return full file with 200 and `Accept-Ranges: bytes`
+- [x] Task 4: Implement video stream endpoint (AC: #1, #2, #3, #4)
+  - [x] `GET /api/media/stream/:fileId` — serves video based on tier
+  - [x] Set `Content-Type` to appropriate MIME (`video/mp4`, `video/x-matroska`, `video/webm`, etc.)
+- [x] Task 5: Implement audio sidecar endpoint (AC: #3)
+  - [x] `GET /api/media/stream/:fileId/audio` — serves AAC sidecar for Tier 2
+  - [x] Return 404 if file is not Tier 2
+  - [x] Set `Content-Type: audio/aac`
+- [x] Task 6: Implement subtitle endpoint (AC: #5)
+  - [x] `GET /api/media/subtitles/:subtitleId` — serves WebVTT file
+  - [x] Set `Content-Type: text/vtt`
+  - [x] Return 404 if subtitle not found or `webvtt_path` is null
+- [x] Task 7: Write unit tests for media service (AC: all)
+  - [x] Test file resolution for each tier
+  - [x] Test status validation (reject non-ready files)
+  - [x] Test path traversal prevention
+  - [x] Test audio sidecar resolution (Tier 2 only)
+  - [x] Test subtitle resolution
+- [x] Task 8: Write controller integration tests (AC: #1, #8, #9)
+  - [x] Test 206 response with proper range headers
+  - [x] Test 200 response when no Range header
+  - [x] Test 404 for non-existent file IDs
+  - [x] Test 404 for non-ready files
+  - [x] Test 416 Range Not Satisfiable for invalid ranges
+  - [x] Test audio endpoint returns 404 for non-Tier-2 files
+  - [x] Test subtitle endpoint with valid/invalid IDs
 
 ## Dev Notes
 
@@ -209,11 +209,22 @@ apps/backend/src/media/
 
 ### Agent Model Used
 
-(to be filled by dev agent)
+Claude Opus 4.6
 
 ### Completion Notes List
 
-Story context engine analysis completed — comprehensive developer guide created with full range request implementation guidance, security considerations, and performance requirements.
+- Implemented MediaModule with controller and service following established NestJS patterns
+- MediaService resolves file paths by tier: Tier 1 serves original, Tier 2 serves original video (audio sidecar via separate endpoint), Tier 3 serves transcoded output
+- Range request support with proper 206/200/416 responses, Accept-Ranges, Content-Range headers
+- Path traversal prevention via `..` detection and path normalization checks
+- Status validation ensures only ready/completed files are served (returns 404 otherwise)
+- MIME type detection via extension lookup map (no external dependency)
+- 24 tests passing: 12 service unit tests + 12 controller tests
+- Pre-existing classification test failures (2) unrelated to this story
+
+### Change Log
+
+- 2026-05-04: Implemented story 5-1 — media file serving with HTTP range requests, audio sidecar endpoint, subtitle endpoint, path security validation, and full test coverage
 
 ### File List
 
@@ -228,3 +239,13 @@ Story context engine analysis completed — comprehensive developer guide create
 **MODIFIED:**
 
 - `apps/backend/src/app.module.ts`
+
+### Review Findings
+
+- [x] [Review][Decision] Path validation has no allowlist of permitted base directories — DISMISSED: LAN-only app, no auth, paths sourced from DB only (never user input). Acceptable risk.
+- [x] [Review][Patch] 416 status overridden by NotFoundException — fixed: throw HttpException(416) instead of NotFoundException [media.controller.ts:70-74]
+- [x] [Review][Patch] NaN from malformed Range header — fixed: added isNaN guards for start/end [media.controller.ts:65-67]
+- [x] [Review][Patch] fs.statSync throws unhandled on file missing from disk — fixed: wrapped in try/catch returning 404 [media.controller.ts:61,48]
+- [x] [Review][Patch] Tier 2 readiness OR-logic allows serving when status ≠ 'ready' — fixed: simplified to require status='ready' [media.service.ts:60-65]
+- [x] [Review][Defer] Multiple transcode_jobs per file — query returns arbitrary row without ORDER BY [media.service.ts:38-50] — deferred, pre-existing schema design
+- [x] [Review][Defer] No Cache-Control / ETag / Last-Modified headers — performance improvement not in current AC [media.controller.ts] — deferred, not in scope

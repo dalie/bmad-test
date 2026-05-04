@@ -1,3 +1,8 @@
+## Deferred from: code review of 5-1-media-file-serving-via-http-range-requests (2026-05-04)
+
+- Multiple transcode_jobs per file — LEFT JOIN returns arbitrary row without ORDER BY when multiple jobs exist for the same file_id. Pre-existing schema design choice.
+- No Cache-Control / ETag / Last-Modified headers on streaming endpoints — performance improvement not required by current acceptance criteria.
+
 ## Deferred from: code review of 4-4-tv-show-detail-page-with-season-and-episode-listings (2026-05-03)
 
 - Route param snapshot stale on same-route navigation — spec explicitly mandated `snapshot.paramMap` to prevent "not found" flash (4-3 fix); no in-app show→show nav in current UI.

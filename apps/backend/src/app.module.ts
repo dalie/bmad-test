@@ -1,4 +1,5 @@
 import { LibraryModule } from "./library/library.module";
+import { MediaModule } from "./media/media.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule as NestConfigModule } from "@nestjs/config";
 import { ServeStaticModule } from "@nestjs/serve-static";
@@ -28,6 +29,7 @@ import { HealthController } from "./health/health.controller";
     DatabaseModule,
     ConfigModule,
     LibraryModule,
+    MediaModule,
   ],
   controllers: [HealthController],
 })

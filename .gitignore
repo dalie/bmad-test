@@ -5,6 +5,6 @@ build/
 *.db-wal
 *.db-shm
 .env
-media/
+_media/
 sidecars/
 subtitles/
