@@ -1,0 +1,11 @@
+<main class="player-container">
+  <button type="button" class="back-link" (click)="location.back()">← Back</button>
+
+  <video
+    class="player-video"
+    [src]="'/api/media/stream/' + fileId"
+    autoplay
+    controls
+    preload="auto"
+  ></video>
+</main>

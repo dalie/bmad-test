@@ -1,6 +1,6 @@
 # Story 5.2: Video Player with Standard Playback Controls
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -20,34 +20,34 @@ so that I can watch content with the controls I'm already familiar with.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create player component and route (AC: #1, #7)
-  - [ ] Create `apps/frontend/src/app/player/player.component.ts`
-  - [ ] Create `apps/frontend/src/app/player/player.component.html`
-  - [ ] Create `apps/frontend/src/app/player/player.component.css`
-  - [ ] Add lazy-loaded route `play/:fileId` to `app.routes.ts`
-- [ ] Task 2: Implement video element with streaming source (AC: #1, #2, #4)
-  - [ ] Read `fileId` from route params (`ActivatedRoute.snapshot.paramMap`)
-  - [ ] Set `<video>` element `src` to `/api/media/stream/${fileId}`
-  - [ ] Add `autoplay` attribute for instant playback on navigation
-  - [ ] Add `controls` attribute for native HTML5 player controls
-  - [ ] Set `preload="auto"` to begin buffering immediately
-- [ ] Task 3: Implement standard playback controls via native `<video controls>` (AC: #3, #4, #5, #6)
-  - [ ] Native controls provide: play/pause, seek bar, volume slider, fullscreen toggle
-  - [ ] Verify native seek works via HTTP range requests (no custom seek logic needed)
-  - [ ] Verify volume adjustment works via native controls
-  - [ ] Verify fullscreen enter/exit works via native controls
-- [ ] Task 4: Implement back navigation (AC: #7)
-  - [ ] Add back link/button that calls `location.back()`
-  - [ ] Style consistently with detail page back-link pattern
-- [ ] Task 5: Style player page (AC: #1)
-  - [ ] Full-viewport video element (dark background, centered)
-  - [ ] Back link positioned top-left, visible on hover or always visible
-  - [ ] Responsive: video fills available space at all viewports
-- [ ] Task 6: Write component tests (AC: all)
-  - [ ] Test component creates with route param
-  - [ ] Test video element has correct `src` attribute based on fileId
-  - [ ] Test video element has `controls`, `autoplay`, and `preload` attributes
-  - [ ] Test back button exists and triggers navigation
+- [x] Task 1: Create player component and route (AC: #1, #7)
+  - [x] Create `apps/frontend/src/app/player/player.component.ts`
+  - [x] Create `apps/frontend/src/app/player/player.component.html`
+  - [x] Create `apps/frontend/src/app/player/player.component.css`
+  - [x] Add lazy-loaded route `play/:fileId` to `app.routes.ts`
+- [x] Task 2: Implement video element with streaming source (AC: #1, #2, #4)
+  - [x] Read `fileId` from route params (`ActivatedRoute.snapshot.paramMap`)
+  - [x] Set `<video>` element `src` to `/api/media/stream/${fileId}`
+  - [x] Add `autoplay` attribute for instant playback on navigation
+  - [x] Add `controls` attribute for native HTML5 player controls
+  - [x] Set `preload="auto"` to begin buffering immediately
+- [x] Task 3: Implement standard playback controls via native `<video controls>` (AC: #3, #4, #5, #6)
+  - [x] Native controls provide: play/pause, seek bar, volume slider, fullscreen toggle
+  - [x] Verify native seek works via HTTP range requests (no custom seek logic needed)
+  - [x] Verify volume adjustment works via native controls
+  - [x] Verify fullscreen enter/exit works via native controls
+- [x] Task 4: Implement back navigation (AC: #7)
+  - [x] Add back link/button that calls `location.back()`
+  - [x] Style consistently with detail page back-link pattern
+- [x] Task 5: Style player page (AC: #1)
+  - [x] Full-viewport video element (dark background, centered)
+  - [x] Back link positioned top-left, visible on hover or always visible
+  - [x] Responsive: video fills available space at all viewports
+- [x] Task 6: Write component tests (AC: all)
+  - [x] Test component creates with route param
+  - [x] Test video element has correct `src` attribute based on fileId
+  - [x] Test video element has `controls`, `autoplay`, and `preload` attributes
+  - [x] Test back button exists and triggers navigation
 
 ## Dev Notes
 
@@ -180,10 +180,28 @@ Follow the exact same patterns as `MovieDetailComponent`:
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Completion Notes List
+
+- Created standalone `PlayerComponent` with native HTML5 `<video controls>` element
+- Route `play/:fileId` lazy-loads the component; fileId maps to backend streaming endpoint
+- Used `autoplay`, `controls`, `preload="auto"` attributes for instant playback with full native controls
+- Back button uses `location.back()` matching existing detail page pattern
+- Full-viewport dark background with centered, responsive video (`object-fit: contain`)
+- All 8 unit tests pass: component creation, route param reading, video src binding, all video attributes, back button presence and click handler
+- Full test suite passes (64 tests, 0 regressions)
 
 ### Change Log
 
+- 2026-05-04: Implemented story 5-2 — video player component with native HTML5 controls, lazy route, back navigation, full-viewport styling, and unit tests
+
 ### File List
+
+- apps/frontend/src/app/player/player.component.ts (new)
+- apps/frontend/src/app/player/player.component.html (new)
+- apps/frontend/src/app/player/player.component.css (new)
+- apps/frontend/src/app/player/player.component.spec.ts (new)
+- apps/frontend/src/app/app.routes.ts (modified)
 
 ### Review Findings

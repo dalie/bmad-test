@@ -83,7 +83,7 @@ development_status:
   # Epic 5: Video Playback & Dual-Element Sync
   epic-5: in-progress
   5-1-media-file-serving-via-http-range-requests: done
-  5-2-video-player-with-standard-playback-controls: ready-for-dev
+  5-2-video-player-with-standard-playback-controls: done
   5-3-dual-element-audio-sync-for-sidecar-playback: backlog
   5-4-subtitle-track-selection-during-playback: backlog
   5-5-audio-track-selection-during-playback: backlog
