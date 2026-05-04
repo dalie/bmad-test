@@ -5,10 +5,7 @@
     <div class="detail-layout">
       <div class="detail-poster-wrap">
         @if (s.poster_url) {
-          <img class="detail-poster"
-               [src]="s.poster_url"
-               [alt]="s.title"
-               loading="lazy" />
+          <img class="detail-poster" [src]="s.poster_url" [alt]="s.title" loading="lazy" />
         } @else {
           <div class="detail-poster detail-poster--fallback"></div>
         }
@@ -18,9 +15,15 @@
         <h1 class="detail-title">{{ s.title }}</h1>
 
         <p class="detail-meta">
-          @if (s.year) { <span>{{ s.year }}</span> }
-          @if (s.year && s.rating !== null) { <span aria-hidden="true"> · </span> }
-          @if (s.rating !== null) { <span>★ {{ formatRating(s.rating) }}</span> }
+          @if (s.year) {
+            <span>{{ s.year }}</span>
+          }
+          @if (s.year && s.rating !== null) {
+            <span aria-hidden="true"> · </span>
+          }
+          @if (s.rating !== null) {
+            <span>★ {{ formatRating(s.rating) }}</span>
+          }
         </p>
 
         @if (s.description) {
@@ -42,7 +45,13 @@
                 @if (dur) {
                   <span class="episode__duration">{{ dur }}</span>
                 }
-                <a class="episode__play" [routerLink]="['/play', ep.file_id]" [attr.aria-label]="'Play ' + (ep.name || 'Episode ' + ep.episode_number)">Play</a>
+                <a
+                  class="episode__play"
+                  [routerLink]="['/play', ep.file_id]"
+                  [queryParams]="{ tier: ep.tier }"
+                  [attr.aria-label]="'Play ' + (ep.name || 'Episode ' + ep.episode_number)"
+                  >Play</a
+                >
               </li>
             }
           </ol>

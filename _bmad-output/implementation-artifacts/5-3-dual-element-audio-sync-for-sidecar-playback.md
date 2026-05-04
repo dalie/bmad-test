@@ -1,6 +1,6 @@
 # Story 5.3: Dual-Element Audio Sync for Sidecar Playback
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -20,47 +20,47 @@ so that I never notice the system is doing anything special — it just plays.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Pass tier info to player via query parameter (AC: #1)
-  - [ ] Update movie-detail template: add `[queryParams]="{tier: m.tier}"` to Play link
-  - [ ] Update show-detail template: add `[queryParams]="{tier: ep.tier}"` to episode Play links
-  - [ ] Read `tier` from `ActivatedRoute.snapshot.queryParamMap` in PlayerComponent
-- [ ] Task 2: Implement dual-element DOM structure for Tier 2 (AC: #1)
-  - [ ] Add conditional template: Tier 2 uses `<video muted>` + hidden `<audio>`, others use `<video controls>` as before
-  - [ ] Set video src to `/api/media/stream/${fileId}` (same as current)
-  - [ ] Set audio src to `/api/media/stream/${fileId}/audio` (sidecar endpoint)
-  - [ ] Add `preload="auto"` to both elements
-  - [ ] Add `autoplay` to video; audio starts programmatically after sync setup
-- [ ] Task 3: Implement requestAnimationFrame sync loop (AC: #2, #7)
-  - [ ] Create sync loop function using `requestAnimationFrame`
-  - [ ] Check drift: `Math.abs(video.currentTime - audio.currentTime)`
-  - [ ] If drift > 0.05 (50ms), correct: `audio.currentTime = video.currentTime`
-  - [ ] Store RAF id for cleanup
-  - [ ] Start loop after both elements have fired `canplay`
-- [ ] Task 4: Implement seek synchronization (AC: #3)
-  - [ ] Listen to video `seeking` event → pause audio
-  - [ ] Listen to video `seeked` event → set `audio.currentTime = video.currentTime`, resume audio if video is playing
-- [ ] Task 5: Implement play/pause synchronization (AC: #4)
-  - [ ] Listen to video `play` event → `audio.currentTime = video.currentTime; audio.play()`
-  - [ ] Listen to video `pause` event → `audio.pause()`
-- [ ] Task 6: Implement volume mirroring (AC: #5)
-  - [ ] Listen to video `volumechange` event
-  - [ ] Mirror `video.volume` to `audio.volume`
-  - [ ] Mirror `video.muted` to `audio.muted` (with guard: re-mute video if user unmutes to prevent double-audio on AC3-capable browsers)
-- [ ] Task 7: Verify fullscreen behavior (AC: #6)
-  - [ ] Confirm native fullscreen toggle on `<video>` works — audio element continues playing in background
-  - [ ] Confirm RAF sync loop continues running during fullscreen
-- [ ] Task 8: Cleanup and lifecycle management
-  - [ ] Cancel RAF on `ngOnDestroy`
-  - [ ] Remove event listeners on `ngOnDestroy`
-  - [ ] Pause both elements on destroy to release resources
-- [ ] Task 9: Write unit tests (AC: all)
-  - [ ] Test standard mode (tier != 2): single `<video controls>` element rendered (no regression)
-  - [ ] Test dual-element mode (tier = 2): `<video muted>` + `<audio>` rendered
-  - [ ] Test video src and audio src URLs are correct
-  - [ ] Test sync loop drift correction logic
-  - [ ] Test seek synchronization event handling
-  - [ ] Test play/pause synchronization
-  - [ ] Test volume mirroring
+- [x] Task 1: Pass tier info to player via query parameter (AC: #1)
+  - [x] Update movie-detail template: add `[queryParams]="{tier: m.tier}"` to Play link
+  - [x] Update show-detail template: add `[queryParams]="{tier: ep.tier}"` to episode Play links
+  - [x] Read `tier` from `ActivatedRoute.snapshot.queryParamMap` in PlayerComponent
+- [x] Task 2: Implement dual-element DOM structure for Tier 2 (AC: #1)
+  - [x] Add conditional template: Tier 2 uses `<video muted>` + hidden `<audio>`, others use `<video controls>` as before
+  - [x] Set video src to `/api/media/stream/${fileId}` (same as current)
+  - [x] Set audio src to `/api/media/stream/${fileId}/audio` (sidecar endpoint)
+  - [x] Add `preload="auto"` to both elements
+  - [x] Add `autoplay` to video; audio starts programmatically after sync setup
+- [x] Task 3: Implement requestAnimationFrame sync loop (AC: #2, #7)
+  - [x] Create sync loop function using `requestAnimationFrame`
+  - [x] Check drift: `Math.abs(video.currentTime - audio.currentTime)`
+  - [x] If drift > 0.05 (50ms), correct: `audio.currentTime = video.currentTime`
+  - [x] Store RAF id for cleanup
+  - [x] Start loop after both elements have fired `canplay`
+- [x] Task 4: Implement seek synchronization (AC: #3)
+  - [x] Listen to video `seeking` event → pause audio
+  - [x] Listen to video `seeked` event → set `audio.currentTime = video.currentTime`, resume audio if video is playing
+- [x] Task 5: Implement play/pause synchronization (AC: #4)
+  - [x] Listen to video `play` event → `audio.currentTime = video.currentTime; audio.play()`
+  - [x] Listen to video `pause` event → `audio.pause()`
+- [x] Task 6: Implement volume mirroring (AC: #5)
+  - [x] Listen to video `volumechange` event
+  - [x] Mirror `video.volume` to `audio.volume`
+  - [x] Mirror `video.muted` to `audio.muted` (with guard: re-mute video if user unmutes to prevent double-audio on AC3-capable browsers)
+- [x] Task 7: Verify fullscreen behavior (AC: #6)
+  - [x] Confirm native fullscreen toggle on `<video>` works — audio element continues playing in background
+  - [x] Confirm RAF sync loop continues running during fullscreen
+- [x] Task 8: Cleanup and lifecycle management
+  - [x] Cancel RAF on `ngOnDestroy`
+  - [x] Remove event listeners on `ngOnDestroy`
+  - [x] Pause both elements on destroy to release resources
+- [x] Task 9: Write unit tests (AC: all)
+  - [x] Test standard mode (tier != 2): single `<video controls>` element rendered (no regression)
+  - [x] Test dual-element mode (tier = 2): `<video muted>` + `<audio>` rendered
+  - [x] Test video src and audio src URLs are correct
+  - [x] Test sync loop drift correction logic
+  - [x] Test seek synchronization event handling
+  - [x] Test play/pause synchronization
+  - [x] Test volume mirroring
 
 ## Dev Notes
 
@@ -353,8 +353,41 @@ No other styling changes. The video element styling remains identical to Story 5
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Completion Notes List
+
+- Implemented dual-element audio sync for Tier 2 sidecar playback in PlayerComponent
+- Movie-detail and show-detail templates now pass `tier` as a query parameter to the Play route
+- PlayerComponent reads `tier` from queryParamMap; when tier=2, renders `<video muted>` + hidden `<audio>` with RAF-based sync loop
+- Sync loop enforces 50ms drift tolerance (NFR8) using requestAnimationFrame
+- Seek, play/pause, and volume events are all synchronized between video and audio elements
+- Volume mirroring includes guard to re-mute video if user unmutes (prevents double-audio on AC3-capable browsers)
+- Audio error fallback: if sidecar 404s, video unmutes and plays without sidecar (graceful degradation)
+- Full lifecycle cleanup in ngOnDestroy (RAF cancellation, listener removal, element pausing)
+- Standard mode (non-Tier 2) is completely unaffected — backward compatible
+- All 26 player tests pass; 82 total tests pass with no regressions
+- Frontend build succeeds cleanly
 
 ### Change Log
 
+- 2026-05-04: Implemented Story 5.3 — dual-element audio sync for Tier 2 sidecar playback
+
 ### File List
+
+- apps/frontend/src/app/player/player.component.ts (modified)
+- apps/frontend/src/app/player/player.component.html (modified)
+- apps/frontend/src/app/player/player.component.css (modified)
+- apps/frontend/src/app/player/player.component.spec.ts (modified)
+- apps/frontend/src/app/movie-detail/movie-detail.component.html (modified)
+- apps/frontend/src/app/show-detail/show-detail.component.html (modified)
+
+### Review Findings
+
+- [x] [Review][Decision] Continue Watching links miss `tier` query param — Fixed: added `tier` to `WatchProgressEntry`, `ContinueWatchingItem`, and home template `[queryParams]`.
+- [x] [Review][Patch] Unhandled `audio.play()` promise rejections — Fixed: added `.catch(() => {})` to all `audio.play()` calls
+- [x] [Review][Patch] `canplay` may fire before listeners attached — Fixed: added `readyState >= 3` check after attaching listeners
+- [x] [Review][Patch] `play` event handler bypasses readiness gate — Fixed: added `this.audioReady` guard in play handler
+- [x] [Review][Patch] Audio error fallback leaves stale event listeners active — Fixed: added `syncDisabled` flag checked by all handlers
+- [x] [Review][Defer] iOS Safari blocks `audio.play()` without user gesture — programmatic `audio.play()` from `canplay` callback rejected on iOS. Needs platform-specific handling. [player.component.ts] — deferred, platform-specific
+- [x] [Review][Defer] Playback rate changes cause permanent drift — No `ratechange` listener to sync `audio.playbackRate`. Low risk for LAN use. [player.component.ts] — deferred, low priority enhancement

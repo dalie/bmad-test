@@ -4,7 +4,11 @@
       <h2 class="library-section__header">Continue Watching</h2>
       <div class="poster-grid">
         @for (item of continueWatchingItems(); track item.mediaType + ':' + item.id) {
-          <a class="poster-grid__item" [routerLink]="['/play', item.playFileId]">
+          <a
+            class="poster-grid__item"
+            [routerLink]="['/play', item.playFileId]"
+            [queryParams]="{ tier: item.tier }"
+          >
             <div class="poster-grid__image-wrap">
               @if (item.posterUrl) {
                 <img

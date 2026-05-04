@@ -1,3 +1,8 @@
+## Deferred from: code review of 5-3-dual-element-audio-sync-for-sidecar-playback (2026-05-04)
+
+- iOS Safari blocks `audio.play()` without user gesture — programmatic `audio.play()` from `canplay` callback is rejected on iOS Safari. Needs platform-specific handling (e.g., resume audio on first user tap). Low priority for LAN-only deployment.
+- Playback rate changes cause permanent drift — No `ratechange` listener syncs `audio.playbackRate` to `video.playbackRate`. If user changes rate via native controls or browser extensions, the sync loop hammers `audio.currentTime` every frame. Low risk for current use case.
+
 ## Deferred from: code review of 5-1-media-file-serving-via-http-range-requests (2026-05-04)
 
 - Multiple transcode_jobs per file — LEFT JOIN returns arbitrary row without ORDER BY when multiple jobs exist for the same file_id. Pre-existing schema design choice.

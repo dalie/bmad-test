@@ -26,6 +26,7 @@ export interface WatchProgressEntry {
   posterUrl: string | null;
   year: number | null;
   fileId: number;
+  tier?: number | null;
 }
 
 export type WatchProgressRecord = Record<string, WatchProgressEntry>;
@@ -34,6 +35,7 @@ export interface ContinueWatchingItem extends LibraryItem {
   progressPercent: number;
   watched: boolean;
   playFileId: number;
+  tier: number | null;
 }
 
 @Component({
@@ -197,6 +199,7 @@ export class HomeComponent {
           progressPercent: Math.min(100, Math.round((e.position / e.duration) * 100)),
           watched: false,
           playFileId: e.fileId,
+          tier: e.tier ?? null,
         }));
     } catch {
       return [];
