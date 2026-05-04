@@ -52,9 +52,30 @@ import { BrowseController } from "./browse.controller";
 export class LibraryModule implements OnModuleInit {
   private readonly logger = new Logger(LibraryModule.name);
 
-  constructor(private readonly libraryService: LibraryService) {}
+  constructor(
+    private readonly libraryService: LibraryService,
+    private readonly tmdbService: TmdbService,
+  ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
+    try {
+      let timeoutHandle: ReturnType<typeof setTimeout>;
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(
+          () => reject(new Error("TMDB startup timeout after 10s")),
+          10_000,
+        );
+      });
+      await Promise.race([this.tmdbService.getImageBaseUrl(), timeout]).finally(
+        () => clearTimeout(timeoutHandle),
+      );
+      this.logger.log("TMDB image base URL cached");
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Failed to fetch TMDB image base URL at startup: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
     this.logger.log("Triggering startup library scan");
     this.libraryService.startScan(true);
   }

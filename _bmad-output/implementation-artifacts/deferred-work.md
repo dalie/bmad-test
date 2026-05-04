@@ -1,3 +1,8 @@
+## Deferred from: code review of spec-fix-null-poster-url-in-library-api (2026-05-03)
+
+- `startScan(true)` is fire-and-forget inside an async `onModuleInit()` — if startScan rejects, Node.js 18+ will emit an unhandled rejection (potentially crashing the process). Pre-existing pattern; fix belongs in LibraryService.
+- `tmdb_config` rows with `null` or empty `image_base_url` inside the 24h TTL are returned by `TmdbService.getImageBaseUrl()` without validation — pre-existing issue in TmdbService; could cause malformed poster URLs.
+
 ## Deferred from: code review of 4-2-poster-grid-home-page-with-three-sections (2026-05-03)
 
 - Missing `/movie/:id` and `/show/:id` route handlers — intentional: route handlers added in stories 4-3 and 4-4.
