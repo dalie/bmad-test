@@ -1,3 +1,8 @@
+## Deferred from: code review of spec-fix-csp-tmdb-img-src (2026-05-03)
+
+- `script-src: ["'self'"]` default may be too strict for some Angular runtime patterns — audit Angular production build output for inline scripts; predates this change.
+- TMDB image base URL is fetched dynamically from TMDB API but CSP hardcodes `https://image.tmdb.org` — if TMDB ever changes CDN hostname, move to a config env var; stable for years so deferred.
+
 ## Deferred from: code review of spec-fix-null-poster-url-in-library-api (2026-05-03)
 
 - `startScan(true)` is fire-and-forget inside an async `onModuleInit()` — if startScan rejects, Node.js 18+ will emit an unhandled rejection (potentially crashing the process). Pre-existing pattern; fix belongs in LibraryService.
