@@ -29,6 +29,10 @@
 - `continueWatchingItems` signal not reactive to future `localStorage` writes — intentional stub; story 4-5 implements this.
 - Poster card template triplicated across three sections in `home.component.html` — DRY refactor; extract to a `PosterCardComponent` in a future story.
 
+## Deferred from: code review of 4-5-watch-progress-indicators-on-poster-grid (2026-05-04)
+
+- Playback route is still undefined for new Continue Watching links. `home.component.html` now routes these cards to `/play/:fileId`, but `app.routes.ts` still exposes only `''`, `movie/:id`, and `show/:id`. This blocks end-to-end playback from the new entry point, but the missing route is pre-existing because movie and show detail pages already emit `/play/...` links.
+
 ## Deferred from: code review of 4-1-library-api-endpoints-for-movies-and-tv-shows (2026-05-03)
 
 - Non-atomic two-query show fetch in `getShowById()` — pre-existing SQLite/better-sqlite3 pattern across codebase; low practical risk in single-writer Node.js process.

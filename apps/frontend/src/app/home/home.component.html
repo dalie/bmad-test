@@ -1,21 +1,22 @@
 <main class="content-container">
-
   @if (showContinueWatching()) {
     <section class="library-section">
       <h2 class="library-section__header">Continue Watching</h2>
       <div class="poster-grid">
-        @for (item of continueWatchingItems(); track (item.mediaType + ':' + item.id)) {
-          <a class="poster-grid__item"
-             [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]">
+        @for (item of continueWatchingItems(); track item.mediaType + ':' + item.id) {
+          <a class="poster-grid__item" [routerLink]="['/play', item.playFileId]">
             <div class="poster-grid__image-wrap">
               @if (item.posterUrl) {
-                <img class="poster-grid__image"
-                     [src]="item.posterUrl"
-                     [alt]="item.title"
-                     loading="lazy" />
+                <img
+                  class="poster-grid__image"
+                  [src]="item.posterUrl"
+                  [alt]="item.title"
+                  loading="lazy"
+                />
               } @else {
                 <div class="poster-grid__image--fallback"></div>
               }
+              <div class="poster-grid__progress" [style.width.%]="item.progressPercent"></div>
             </div>
             <p class="poster-grid__title">{{ item.title }}</p>
           </a>
@@ -27,17 +28,28 @@
   <section class="library-section">
     <h2 class="library-section__header">Recently Added</h2>
     <div class="poster-grid">
-      @for (item of recentItems(); track (item.mediaType + ':' + item.id)) {
-        <a class="poster-grid__item"
-           [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]">
-          <div class="poster-grid__image-wrap">
+      @for (item of recentItems(); track item.mediaType + ':' + item.id) {
+        <a
+          class="poster-grid__item"
+          [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]"
+        >
+          <div
+            class="poster-grid__image-wrap"
+            [class.poster-grid__image-wrap--watched]="isWatched(item)"
+          >
             @if (item.posterUrl) {
-              <img class="poster-grid__image"
-                   [src]="item.posterUrl"
-                   [alt]="item.title"
-                   loading="lazy" />
+              <img
+                class="poster-grid__image"
+                [src]="item.posterUrl"
+                [alt]="item.title"
+                loading="lazy"
+              />
             } @else {
               <div class="poster-grid__image--fallback"></div>
+            }
+            @let progress = getProgressPercent(item);
+            @if (progress > 0) {
+              <div class="poster-grid__progress" [style.width.%]="progress"></div>
             }
           </div>
           <p class="poster-grid__title">{{ item.title }}</p>
@@ -49,17 +61,28 @@
   <section class="library-section">
     <h2 class="library-section__header">Library</h2>
     <div class="poster-grid">
-      @for (item of allItems(); track (item.mediaType + ':' + item.id)) {
-        <a class="poster-grid__item"
-           [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]">
-          <div class="poster-grid__image-wrap">
+      @for (item of allItems(); track item.mediaType + ':' + item.id) {
+        <a
+          class="poster-grid__item"
+          [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]"
+        >
+          <div
+            class="poster-grid__image-wrap"
+            [class.poster-grid__image-wrap--watched]="isWatched(item)"
+          >
             @if (item.posterUrl) {
-              <img class="poster-grid__image"
-                   [src]="item.posterUrl"
-                   [alt]="item.title"
-                   loading="lazy" />
+              <img
+                class="poster-grid__image"
+                [src]="item.posterUrl"
+                [alt]="item.title"
+                loading="lazy"
+              />
             } @else {
               <div class="poster-grid__image--fallback"></div>
+            }
+            @let progress = getProgressPercent(item);
+            @if (progress > 0) {
+              <div class="poster-grid__progress" [style.width.%]="progress"></div>
             }
           </div>
           <p class="poster-grid__title">{{ item.title }}</p>
@@ -67,5 +90,4 @@
       }
     </div>
   </section>
-
 </main>

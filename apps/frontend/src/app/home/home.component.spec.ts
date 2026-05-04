@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
-import { HomeComponent, WATCH_PROGRESS_KEY } from './home.component';
+import { HomeComponent, WATCH_PROGRESS_KEY, WatchProgressEntry } from './home.component';
 import { LibraryService } from '../services/library.service';
 
 function makeMovieItem(id: number, title: string, poster_url: string | null = null) {
@@ -31,7 +31,12 @@ function makeShowItem(id: number, title: string) {
   };
 }
 
-function makeRecentItem(id: number, title: string, media_type: 'movie' | 'tv', poster_url: string | null = null) {
+function makeRecentItem(
+  id: number,
+  title: string,
+  media_type: 'movie' | 'tv',
+  poster_url: string | null = null,
+) {
   return {
     id,
     title,
@@ -40,6 +45,54 @@ function makeRecentItem(id: number, title: string, media_type: 'movie' | 'tv', p
     rating: null,
     added_at: '2024-01-01',
     media_type,
+  };
+}
+
+function makeMovieProgress(
+  mediaFilesId: number,
+  title: string,
+  position: number,
+  duration: number,
+  watched = false,
+  posterUrl: string | null = null,
+): Record<string, WatchProgressEntry> {
+  return {
+    [`movie:${mediaFilesId}`]: {
+      position,
+      duration,
+      watched,
+      updatedAt: Date.now(),
+      mediaType: 'movie',
+      id: mediaFilesId,
+      title,
+      posterUrl,
+      year: 2024,
+      fileId: mediaFilesId,
+    },
+  };
+}
+
+function makeTvProgress(
+  tmdbId: number,
+  fileId: number,
+  title: string,
+  position: number,
+  duration: number,
+  watched = false,
+): Record<string, WatchProgressEntry> {
+  return {
+    [`tv:${tmdbId}:${fileId}`]: {
+      position,
+      duration,
+      watched,
+      updatedAt: Date.now(),
+      mediaType: 'tv',
+      id: tmdbId,
+      title,
+      posterUrl: null,
+      year: 2024,
+      fileId,
+    },
   };
 }
 
@@ -56,10 +109,7 @@ describe('HomeComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
   });
 
@@ -75,33 +125,280 @@ describe('HomeComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const sections = Array.from(compiled.querySelectorAll('h2'));
-    const continueWatchingHeader = sections.find(h => h.textContent?.includes('Continue Watching'));
+    const continueWatchingHeader = sections.find((h) =>
+      h.textContent?.includes('Continue Watching'),
+    );
     expect(continueWatchingHeader).toBeFalsy();
   });
 
-  it('should show Continue Watching section hidden even when localStorage has progress key', () => {
-    // readContinueWatchingFromStorage() currently returns [] always (stub for story 4-5)
+  it('should show Continue Watching section hidden even when localStorage has incomplete progress entry', () => {
+    // Entry missing required fields (duration, id, fileId) → validation rejects it
     localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify({ 'movie:1': { position: 100 } }));
     const fixture = TestBed.createComponent(HomeComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const sections = Array.from(compiled.querySelectorAll('h2'));
-    const continueWatchingHeader = sections.find(h => h.textContent?.includes('Continue Watching'));
-    // Section hidden because continueWatchingItems is always [] in this story
+    const continueWatchingHeader = sections.find((h) =>
+      h.textContent?.includes('Continue Watching'),
+    );
+    expect(continueWatchingHeader).toBeFalsy();
+  });
+
+  it('should show Continue Watching section when localStorage has valid in-progress entry', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeMovieProgress(1, 'Test Movie', 600, 3600, false)),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = Array.from(el.querySelectorAll('h2'));
+    const header = sections.find((h) => h.textContent?.includes('Continue Watching'));
+    expect(header).toBeTruthy();
+  });
+
+  it('should hide Continue Watching section when all localStorage entries are watched', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeMovieProgress(1, 'Test Movie', 3400, 3600, true)),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = Array.from(el.querySelectorAll('h2'));
+    const header = sections.find((h) => h.textContent?.includes('Continue Watching'));
+    expect(header).toBeFalsy();
+  });
+
+  it('should link Continue Watching movie items to /play/:fileId', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeMovieProgress(42, 'The Matrix', 1200, 8400, false)),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = el.querySelectorAll('section.library-section');
+    let cwSection: Element | null = null;
+    sections.forEach((s) => {
+      if (s.querySelector('h2')?.textContent?.includes('Continue Watching')) cwSection = s;
+    });
+    const anchor = cwSection!.querySelector('a.poster-grid__item') as HTMLAnchorElement;
+    expect(anchor.getAttribute('href')).toContain('/play/42');
+  });
+
+  it('should link Continue Watching TV show items to /play/:lastEpisodeFileId', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeTvProgress(1399, 77, 'Game of Thrones', 1200, 3600, false)),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = el.querySelectorAll('section.library-section');
+    let cwSection: Element | null = null;
+    sections.forEach((s) => {
+      if (s.querySelector('h2')?.textContent?.includes('Continue Watching')) cwSection = s;
+    });
+    const anchor = cwSection!.querySelector('a.poster-grid__item') as HTMLAnchorElement;
+    expect(anchor.getAttribute('href')).toContain('/play/77');
+  });
+
+  it('should render progress bar on partially watched movie in Library section', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeMovieProgress(1, 'Alien', 1800, 7200, false)),
+    );
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien', null)]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = el.querySelectorAll('section.library-section');
+    let librarySection: Element | null = null;
+    sections.forEach((s) => {
+      if (s.querySelector('h2')?.textContent?.includes('Library')) librarySection = s;
+    });
+    const progressBar = librarySection!.querySelector('.poster-grid__progress') as HTMLElement;
+    expect(progressBar).toBeTruthy();
+    expect(progressBar.style.width).toBe('25%');
+  });
+
+  it('should not render progress bar for watched movie in Library section and apply dimmed class', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeMovieProgress(1, 'Alien', 7100, 7200, true)),
+    );
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien', null)]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = el.querySelectorAll('section.library-section');
+    let librarySection: Element | null = null;
+    sections.forEach((s) => {
+      if (s.querySelector('h2')?.textContent?.includes('Library')) librarySection = s;
+    });
+    expect(librarySection!.querySelector('.poster-grid__progress')).toBeFalsy();
+    expect(librarySection!.querySelector('.poster-grid__image-wrap--watched')).toBeTruthy();
+  });
+
+  it('should not apply dimmed class to item with no localStorage entry', async () => {
+    localStorage.clear();
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien', null)]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const sections = el.querySelectorAll('section.library-section');
+    let librarySection: Element | null = null;
+    sections.forEach((s) => {
+      if (s.querySelector('h2')?.textContent?.includes('Library')) librarySection = s;
+    });
+    expect(librarySection!.querySelector('.poster-grid__image-wrap--watched')).toBeFalsy();
+    expect(librarySection!.querySelector('.poster-grid__progress')).toBeFalsy();
+  });
+
+  it('should use most recent episode for TV show Continue Watching entry', async () => {
+    const now = Date.now();
+    const record: Record<string, WatchProgressEntry> = {
+      'tv:1399:10': {
+        position: 3600,
+        duration: 3600,
+        watched: true,
+        updatedAt: now - 10000,
+        mediaType: 'tv',
+        id: 1399,
+        title: 'Game of Thrones',
+        posterUrl: null,
+        year: 2011,
+        fileId: 10,
+      },
+      'tv:1399:20': {
+        position: 600,
+        duration: 3600,
+        watched: false,
+        updatedAt: now,
+        mediaType: 'tv',
+        id: 1399,
+        title: 'Game of Thrones',
+        posterUrl: null,
+        year: 2011,
+        fileId: 20,
+      },
+    };
+    localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(record));
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const sections = Array.from(el.querySelectorAll('h2'));
+    const header = sections.find((h) => h.textContent?.includes('Continue Watching'));
+    expect(header).toBeTruthy();
+
+    const cwSection = Array.from(el.querySelectorAll('section.library-section')).find((s) =>
+      s.querySelector('h2')?.textContent?.includes('Continue Watching'),
+    );
+    const anchor = cwSection!.querySelector('a.poster-grid__item') as HTMLAnchorElement;
+    expect(anchor.getAttribute('href')).toContain('/play/20');
+  });
+
+  it('should ignore malformed localStorage entries and not throw', async () => {
+    localStorage.setItem(WATCH_PROGRESS_KEY, '{ invalid json }');
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    expect(() => TestBed.createComponent(HomeComponent)).not.toThrow();
+  });
+
+  it('should ignore entries missing watched, updatedAt, or mediaType fields', () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify({
+        'movie:1': {
+          position: 100,
+          duration: 200,
+          id: 1,
+          fileId: 1,
+        },
+      }),
+    );
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const sections = Array.from(compiled.querySelectorAll('h2'));
+    const continueWatchingHeader = sections.find((h) =>
+      h.textContent?.includes('Continue Watching'),
+    );
     expect(continueWatchingHeader).toBeFalsy();
   });
 
   it('should display recently added items', async () => {
     (mockLibraryService.getRecent as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeRecentItem(1, 'Movie A', 'movie'), makeRecentItem(2, 'Show B', 'tv')])
+      of([makeRecentItem(1, 'Movie A', 'movie'), makeRecentItem(2, 'Show B', 'tv')]),
     );
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(HomeComponent);
@@ -111,7 +408,7 @@ describe('HomeComponent', () => {
     const sections = compiled.querySelectorAll('section.library-section');
     // Find Recently Added section (first visible section since Continue Watching is hidden)
     let recentSection: Element | null = null;
-    sections.forEach(s => {
+    sections.forEach((s) => {
       const header = s.querySelector('h2');
       if (header?.textContent?.includes('Recently Added')) {
         recentSection = s;
@@ -125,18 +422,15 @@ describe('HomeComponent', () => {
 
   it('should display library items sorted alphabetically', async () => {
     (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeMovieItem(2, 'Zorro'), makeMovieItem(1, 'Alien')])
+      of([makeMovieItem(2, 'Zorro'), makeMovieItem(1, 'Alien')]),
     );
     (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeShowItem(10, 'Breaking Bad')])
+      of([makeShowItem(10, 'Breaking Bad')]),
     );
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(HomeComponent);
@@ -145,7 +439,7 @@ describe('HomeComponent', () => {
 
     const sections = compiled.querySelectorAll('section.library-section');
     let librarySection: Element | null = null;
-    sections.forEach(s => {
+    sections.forEach((s) => {
       const header = s.querySelector('h2');
       if (header?.textContent?.includes('Library')) {
         librarySection = s;
@@ -153,23 +447,20 @@ describe('HomeComponent', () => {
     });
 
     expect(librarySection).toBeTruthy();
-    const titles = Array.from(librarySection!.querySelectorAll('.poster-grid__title')).map(
-      el => el.textContent?.trim()
+    const titles = Array.from(librarySection!.querySelectorAll('.poster-grid__title')).map((el) =>
+      el.textContent?.trim(),
     );
     expect(titles).toEqual(['Alien', 'Breaking Bad', 'Zorro']);
   });
 
   it('should render poster items as <a> elements with correct routerLink for movies', async () => {
     (mockLibraryService.getRecent as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeRecentItem(5, 'Test Movie', 'movie')])
+      of([makeRecentItem(5, 'Test Movie', 'movie')]),
     );
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(HomeComponent);
@@ -178,7 +469,7 @@ describe('HomeComponent', () => {
 
     const sections = compiled.querySelectorAll('section.library-section');
     let recentSection: Element | null = null;
-    sections.forEach(s => {
+    sections.forEach((s) => {
       if (s.querySelector('h2')?.textContent?.includes('Recently Added')) {
         recentSection = s;
       }
@@ -191,15 +482,12 @@ describe('HomeComponent', () => {
 
   it('should render TV show posters linking to /show/:id', async () => {
     (mockLibraryService.getRecent as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeRecentItem(99, 'Test Show', 'tv')])
+      of([makeRecentItem(99, 'Test Show', 'tv')]),
     );
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(HomeComponent);
@@ -208,7 +496,7 @@ describe('HomeComponent', () => {
 
     const sections = compiled.querySelectorAll('section.library-section');
     let recentSection: Element | null = null;
-    sections.forEach(s => {
+    sections.forEach((s) => {
       if (s.querySelector('h2')?.textContent?.includes('Recently Added')) {
         recentSection = s;
       }
@@ -221,16 +509,13 @@ describe('HomeComponent', () => {
 
   it('should render images with loading=lazy attribute', async () => {
     (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeMovieItem(1, 'Film', 'https://example.com/poster.jpg')])
+      of([makeMovieItem(1, 'Film', 'https://example.com/poster.jpg')]),
     );
     (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(HomeComponent);
@@ -239,7 +524,7 @@ describe('HomeComponent', () => {
 
     const sections = compiled.querySelectorAll('section.library-section');
     let librarySection: Element | null = null;
-    sections.forEach(s => {
+    sections.forEach((s) => {
       if (s.querySelector('h2')?.textContent?.includes('Library')) {
         librarySection = s;
       }
@@ -252,16 +537,13 @@ describe('HomeComponent', () => {
 
   it('should render fallback div when poster_url is null', async () => {
     (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
-      of([makeMovieItem(1, 'No Poster Movie', null)])
+      of([makeMovieItem(1, 'No Poster Movie', null)]),
     );
     (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        { provide: LibraryService, useValue: mockLibraryService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(HomeComponent);
@@ -270,7 +552,7 @@ describe('HomeComponent', () => {
 
     const sections = compiled.querySelectorAll('section.library-section');
     let librarySection: Element | null = null;
-    sections.forEach(s => {
+    sections.forEach((s) => {
       if (s.querySelector('h2')?.textContent?.includes('Library')) {
         librarySection = s;
       }
