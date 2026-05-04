@@ -48,6 +48,18 @@ function makeRecentItem(
   };
 }
 
+function getSectionByHeading(root: HTMLElement, heading: string): HTMLElement | null {
+  return Array.from(root.querySelectorAll('section.library-section')).find((section) =>
+    section.querySelector('h2')?.textContent?.includes(heading),
+  ) as HTMLElement | null;
+}
+
+function getSectionTitles(section: Element): string[] {
+  return Array.from(section.querySelectorAll('.poster-grid__title')).map(
+    (title) => title.textContent?.trim() ?? '',
+  );
+}
+
 function makeMovieProgress(
   mediaFilesId: number,
   title: string,
@@ -451,6 +463,173 @@ describe('HomeComponent', () => {
       el.textContent?.trim(),
     );
     expect(titles).toEqual(['Alien', 'Breaking Bad', 'Zorro']);
+  });
+
+  it('should render a labeled search input for the Library section', async () => {
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien')]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const label = compiled.querySelector('label[for="library-search"]');
+    const input = compiled.querySelector('#library-search') as HTMLInputElement | null;
+
+    expect(label?.textContent?.trim()).toBe('Search library');
+    expect(input).toBeTruthy();
+    expect(input?.type).toBe('search');
+  });
+
+  it('should filter only Library section items using case-insensitive partial matching', async () => {
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien'), makeMovieItem(2, 'Arrival')]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeShowItem(10, 'The Bear')]),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('#library-search') as HTMLInputElement;
+
+    input.value = 'ALI';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const librarySection = getSectionByHeading(compiled, 'Library');
+    expect(getSectionTitles(librarySection!)).toEqual(['Alien']);
+  });
+
+  it('should restore the full Library grid when the search query is cleared', async () => {
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien'), makeMovieItem(2, 'Arrival')]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeShowItem(10, 'The Bear')]),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('#library-search') as HTMLInputElement;
+
+    input.value = 'arr';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const librarySection = getSectionByHeading(compiled, 'Library');
+    expect(getSectionTitles(librarySection!)).toEqual(['Alien', 'Arrival', 'The Bear']);
+  });
+
+  it('should keep Continue Watching and Recently Added visible while Library is filtered', async () => {
+    localStorage.setItem(
+      WATCH_PROGRESS_KEY,
+      JSON.stringify(makeMovieProgress(1, 'Alien', 1800, 7200, false)),
+    );
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien'), makeMovieItem(2, 'Arrival')]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeShowItem(10, 'The Bear')]),
+    );
+    (mockLibraryService.getRecent as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeRecentItem(3, 'Recent Movie', 'movie')]),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('#library-search') as HTMLInputElement;
+
+    input.value = 'bear';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(getSectionByHeading(compiled, 'Continue Watching')).toBeTruthy();
+    expect(getSectionTitles(getSectionByHeading(compiled, 'Recently Added')!)).toEqual([
+      'Recent Movie',
+    ]);
+    expect(getSectionTitles(getSectionByHeading(compiled, 'Library')!)).toEqual(['The Bear']);
+  });
+
+  it('should show an empty state when an active search has no Library matches', async () => {
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeMovieItem(1, 'Alien')]),
+    );
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('#library-search') as HTMLInputElement;
+
+    input.value = 'matrix';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const librarySection = getSectionByHeading(compiled, 'Library');
+    expect(librarySection?.textContent).toContain('No titles match your search.');
+    expect(getSectionTitles(librarySection!)).toEqual([]);
+  });
+
+  it('should search TV items by show title only', async () => {
+    (mockLibraryService.getMovies as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+    (mockLibraryService.getShows as ReturnType<typeof vi.fn>).mockReturnValue(
+      of([makeShowItem(10, 'The Last of Us')]),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('#library-search') as HTMLInputElement;
+
+    input.value = 'episode';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(getSectionTitles(getSectionByHeading(compiled, 'Library')!)).toEqual([]);
+
+    input.value = 'last';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(getSectionTitles(getSectionByHeading(compiled, 'Library')!)).toEqual(['The Last of Us']);
   });
 
   it('should render poster items as <a> elements with correct routerLink for movies', async () => {

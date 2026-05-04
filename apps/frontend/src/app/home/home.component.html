@@ -60,8 +60,22 @@
 
   <section class="library-section">
     <h2 class="library-section__header">Library</h2>
+    <div class="library-search">
+      <label class="library-search__label" for="library-search">Search library</label>
+      <input
+        #librarySearch
+        id="library-search"
+        class="library-search__input"
+        type="search"
+        [value]="searchQuery()"
+        (input)="updateSearchQuery(librarySearch.value)"
+      />
+    </div>
+    @if (hasActiveSearch() && filteredLibraryItems().length === 0 && allItems().length > 0) {
+      <p class="library-search__empty-state">No titles match your search.</p>
+    }
     <div class="poster-grid">
-      @for (item of allItems(); track item.mediaType + ':' + item.id) {
+      @for (item of filteredLibraryItems(); track item.mediaType + ':' + item.id) {
         <a
           class="poster-grid__item"
           [routerLink]="item.mediaType === 'movie' ? ['/movie', item.id] : ['/show', item.id]"

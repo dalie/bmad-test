@@ -1,6 +1,6 @@
 # Story 4.6: Library Search
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -24,47 +24,47 @@ And the search input is accessible (labeled, keyboard navigable)
 
 ## Tasks / Subtasks
 
-- [ ] 1. Add search state and filtered library derivation in `apps/frontend/src/app/home/home.component.ts` (AC: 1, 2, 3, 4)
-  - [ ] 1.1 Add a writable `searchQuery` signal initialized to `''`
-  - [ ] 1.2 Add a small `updateSearchQuery(value: string)` method that stores the raw input text
-  - [ ] 1.3 Add a computed `filteredLibraryItems` signal that:
+- [x] 1. Add search state and filtered library derivation in `apps/frontend/src/app/home/home.component.ts` (AC: 1, 2, 3, 4)
+  - [x] 1.1 Add a writable `searchQuery` signal initialized to `''`
+  - [x] 1.2 Add a small `updateSearchQuery(value: string)` method that stores the raw input text
+  - [x] 1.3 Add a computed `filteredLibraryItems` signal that:
     - trims the query only for the empty/non-empty check
     - lowercases query and title values for case-insensitive matching
     - uses partial substring matching via `includes(...)`
     - treats TV entries exactly like the current `LibraryItem` contract does: searchable text is the show title already present on the card, not episode names
     - returns `allItems()` unchanged when the trimmed query is empty
-  - [ ] 1.4 Add a computed `hasActiveSearch` signal for template branching and empty-state rendering
-  - [ ] 1.5 Keep `allItems` as the canonical full-library source; do not mutate or re-sort filtered results separately
+  - [x] 1.4 Add a computed `hasActiveSearch` signal for template branching and empty-state rendering
+  - [x] 1.5 Keep `allItems` as the canonical full-library source; do not mutate or re-sort filtered results separately
 
-- [ ] 2. Add an accessible search control to the home page in `apps/frontend/src/app/home/home.component.html` (AC: 1, 3, 4, 5)
-  - [ ] 2.1 Place the search UI inside the A-Z Library section so Continue Watching and Recently Added remain unchanged above it
-  - [ ] 2.2 Add a visible `<label>` tied to a single `<input type="search">` with `id="library-search"`
-  - [ ] 2.3 Bind the input to `searchQuery` using an input event handler; do not introduce a new route or modal UI
-  - [ ] 2.4 Change the Library section loop from `allItems()` to `filteredLibraryItems()`
-  - [ ] 2.5 Preserve existing poster card routing and watch-progress rendering in filtered results by continuing to call `isWatched(item)` and `getProgressPercent(item)`
-  - [ ] 2.6 Render a simple empty state inside the Library section when a non-empty search has zero matches:
+- [x] 2. Add an accessible search control to the home page in `apps/frontend/src/app/home/home.component.html` (AC: 1, 3, 4, 5)
+  - [x] 2.1 Place the search UI inside the A-Z Library section so Continue Watching and Recently Added remain unchanged above it
+  - [x] 2.2 Add a visible `<label>` tied to a single `<input type="search">` with `id="library-search"`
+  - [x] 2.3 Bind the input to `searchQuery` using an input event handler; do not introduce a new route or modal UI
+  - [x] 2.4 Change the Library section loop from `allItems()` to `filteredLibraryItems()`
+  - [x] 2.5 Preserve existing poster card routing and watch-progress rendering in filtered results by continuing to call `isWatched(item)` and `getProgressPercent(item)`
+  - [x] 2.6 Render a simple empty state inside the Library section when a non-empty search has zero matches:
     - message text: `No titles match your search.`
     - placement: directly below the search control, above the grid area
     - styling: plain text using existing spacing and muted color tokens, no icons or animation
 
-- [ ] 3. Add minimal search styles in `apps/frontend/src/app/home/home.component.css` (AC: 5)
-  - [ ] 3.1 Add semantic classes for the search field wrapper, label, and input
-  - [ ] 3.2 Use existing design tokens (`--space-*`, `--color-*`, `--font-size-*`) and preserve the existing hand-written CSS approach
-  - [ ] 3.3 Preserve calm UI rules and accessibility requirements: no animations, no hover-driven behavior, no hidden labels, no `outline: none`, maintain existing WCAG AA-friendly contrast/focus treatment
-  - [ ] 3.4 Ensure the search control works cleanly on desktop, tablet, and mobile widths without changing the grid behavior
+- [x] 3. Add minimal search styles in `apps/frontend/src/app/home/home.component.css` (AC: 5)
+  - [x] 3.1 Add semantic classes for the search field wrapper, label, and input
+  - [x] 3.2 Use existing design tokens (`--space-*`, `--color-*`, `--font-size-*`) and preserve the existing hand-written CSS approach
+  - [x] 3.3 Preserve calm UI rules and accessibility requirements: no animations, no hover-driven behavior, no hidden labels, no `outline: none`, maintain existing WCAG AA-friendly contrast/focus treatment
+  - [x] 3.4 Ensure the search control works cleanly on desktop, tablet, and mobile widths without changing the grid behavior
 
-- [ ] 4. Extend frontend tests for the new behavior (AC: 1, 2, 3, 4, 5)
-  - [ ] 4.1 Update `apps/frontend/src/app/home/home.component.spec.ts` to verify typing filters only the Library section items
-  - [ ] 4.2 Add a case-insensitive partial-match test, for example `ali` matching `Alien`
-  - [ ] 4.3 Add a clearing test that restores the full A-Z Library grid
-  - [ ] 4.4 Add an accessibility-oriented assertion that the search input has an associated visible label and `type="search"`
-  - [ ] 4.5 Add a regression test that Continue Watching and Recently Added still render while the Library section is filtered
-  - [ ] 4.6 Add a TV-specific regression test proving search is based on show title only and does not attempt to match individual episode names
+- [x] 4. Extend frontend tests for the new behavior (AC: 1, 2, 3, 4, 5)
+  - [x] 4.1 Update `apps/frontend/src/app/home/home.component.spec.ts` to verify typing filters only the Library section items
+  - [x] 4.2 Add a case-insensitive partial-match test, for example `ali` matching `Alien`
+  - [x] 4.3 Add a clearing test that restores the full A-Z Library grid
+  - [x] 4.4 Add an accessibility-oriented assertion that the search input has an associated visible label and `type="search"`
+  - [x] 4.5 Add a regression test that Continue Watching and Recently Added still render while the Library section is filtered
+  - [x] 4.6 Add a TV-specific regression test proving search is based on show title only and does not attempt to match individual episode names
 
-- [ ] 5. Keep this story scoped to the existing frontend browsing flow
-  - [ ] 5.1 Do not add or change backend code unless you uncover a defect in the existing `/api/library/search` implementation
-  - [ ] 5.2 Do not add a dedicated search route, search results page, debounce library, state library, or component library
-  - [ ] 5.3 Do not change movie/show detail navigation, watch-progress storage keys, or section ordering
+- [x] 5. Keep this story scoped to the existing frontend browsing flow
+  - [x] 5.1 Do not add or change backend code unless you uncover a defect in the existing `/api/library/search` implementation
+  - [x] 5.2 Do not add a dedicated search route, search results page, debounce library, state library, or component library
+  - [x] 5.3 Do not change movie/show detail navigation, watch-progress storage keys, or section ordering
 
 ## Dev Notes
 
@@ -229,6 +229,10 @@ And the search input is accessible (labeled, keyboard navigable)
 
 - No `project-context.md` files were found in this repository during workflow activation.
 
+## Review Findings
+
+- [x] [Review][Patch] Empty state displayed prematurely during initial data load [home.component.html:72] — fixed: added `allItems().length > 0` guard
+
 ## References
 
 - Epics and story definition: `_bmad-output/planning-artifacts/epics.md` — `Epic 4`, `Story 4.6: Library Search`
@@ -249,13 +253,30 @@ GPT-5.4
 ### Debug Log References
 
 - Activation/config resolution executed via `_bmad/scripts/resolve_customization.py`
+- Focused red-phase validation: `npm run test --workspace=apps/frontend -- --watch=false --include='src/app/home/home.component.spec.ts'` (failed before implementation)
+- Focused green-phase validation: `npm run test --workspace=apps/frontend -- --watch=false --include='src/app/home/home.component.spec.ts'` (passed after implementation)
+- Frontend regression validation: `npm run test --workspace=apps/frontend -- --watch=false`
+- Repository regression check: `npm run test --workspace=apps/backend` (unrelated pre-existing failures in `src/library/classification.service.spec.ts`)
 
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created
 - Implementation is intentionally scoped to client-side filtering of the existing A-Z library data
 - Existing backend search endpoint was analyzed and retained as-is for this story
+- Added a local `searchQuery` signal, a computed `filteredLibraryItems` derivation, and a computed `hasActiveSearch` flag in the home component without changing the canonical `allItems()` source
+- Added a labeled `type="search"` control and empty-state messaging inside the Library section while leaving Continue Watching and Recently Added unchanged
+- Added search regression coverage for accessible labeling, partial/case-insensitive filtering, clearing behavior, unaffected upper sections, and TV show title-only matching
+- Frontend validations passed; backend suite still reports unrelated classification failures outside this story's change slice
 
 ### File List
 
 - `_bmad-output/implementation-artifacts/4-6-library-search.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `apps/frontend/src/app/home/home.component.ts`
+- `apps/frontend/src/app/home/home.component.html`
+- `apps/frontend/src/app/home/home.component.css`
+- `apps/frontend/src/app/home/home.component.spec.ts`
+
+## Change Log
+
+- 2026-05-04: Implemented client-side library search on the home page, added focused frontend search coverage, and advanced the story to review

@@ -47,6 +47,8 @@ export interface ContinueWatchingItem extends LibraryItem {
 export class HomeComponent {
   private readonly libraryService = inject(LibraryService);
 
+  readonly searchQuery = signal('');
+
   private isValidProgressEntry(entry: unknown): entry is WatchProgressEntry {
     const candidate = entry as Partial<WatchProgressEntry> | null;
 
@@ -116,6 +118,20 @@ export class HomeComponent {
 
   readonly showContinueWatching = computed(() => this.continueWatchingItems().length > 0);
 
+  readonly filteredLibraryItems = computed(() => {
+    const items = this.allItems();
+    const query = this.searchQuery();
+
+    if (query.trim().length === 0) {
+      return items;
+    }
+
+    const normalizedQuery = query.toLowerCase();
+    return items.filter((item) => item.title.toLowerCase().includes(normalizedQuery));
+  });
+
+  readonly hasActiveSearch = computed(() => this.searchQuery().trim().length > 0);
+
   private readonly progressData = signal<Map<string, WatchProgressEntry>>(this.buildProgressData());
 
   getProgressPercent(item: LibraryItem): number {
@@ -126,6 +142,10 @@ export class HomeComponent {
 
   isWatched(item: LibraryItem): boolean {
     return this.progressData().get(`${item.mediaType}:${item.id}`)?.watched ?? false;
+  }
+
+  updateSearchQuery(value: string): void {
+    this.searchQuery.set(value);
   }
 
   private buildProgressData(): Map<string, WatchProgressEntry> {

@@ -77,7 +77,7 @@ development_status:
   4-3-movie-detail-page: done
   4-4-tv-show-detail-page-with-season-and-episode-listings: done
   4-5-watch-progress-indicators-on-poster-grid: done
-  4-6-library-search: ready-for-dev
+  4-6-library-search: done
   epic-4-retrospective: optional
 
   # Epic 5: Video Playback & Dual-Element Sync
