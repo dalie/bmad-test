@@ -33,6 +33,7 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   private rafId: number | null = null;
   private videoReady = false;
   private audioReady = false;
+  private syncStarted = false;
   private isMirroring = false;
   private syncDisabled = false;
   private listeners: Array<[HTMLElement, string, EventListener]> = [];
@@ -124,13 +125,13 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   private tryStartSync(): void {
-    if (this.videoReady && this.audioReady) {
-      const video = this.videoElRef.nativeElement;
-      const audio = this.audioElRef.nativeElement;
-      audio.currentTime = video.currentTime;
-      audio.play().catch(() => {});
-      this.syncLoop();
-    }
+    if (this.syncStarted || !this.videoReady || !this.audioReady) return;
+    this.syncStarted = true;
+    const video = this.videoElRef.nativeElement;
+    const audio = this.audioElRef.nativeElement;
+    audio.currentTime = video.currentTime;
+    audio.play().catch(() => {});
+    this.syncLoop();
   }
 
   private syncLoop(): void {
@@ -138,9 +139,17 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     const audio = this.audioElRef?.nativeElement;
     if (!video || !audio) return;
 
-    const drift = Math.abs(video.currentTime - audio.currentTime);
-    if (drift > 0.05) {
-      audio.currentTime = video.currentTime;
+    if (!video.paused) {
+      const drift = video.currentTime - audio.currentTime;
+      const absDrift = Math.abs(drift);
+      if (absDrift > 0.3) {
+        audio.currentTime = video.currentTime;
+        if (audio.playbackRate !== 1.0) audio.playbackRate = 1.0;
+      } else if (absDrift > 0.05) {
+        audio.playbackRate = drift > 0 ? 1.02 : 0.98;
+      } else if (absDrift < 0.03 && audio.playbackRate !== 1.0) {
+        audio.playbackRate = 1.0;
+      }
     }
     this.rafId = requestAnimationFrame(() => this.syncLoop());
   }
