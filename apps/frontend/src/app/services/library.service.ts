@@ -66,6 +66,29 @@ export interface MovieDetail {
   transcode_output_path: string | null;
 }
 
+export interface EpisodeItem {
+  episode_number: number;
+  name: string | null;
+  duration: number | null;   // seconds (float) from probe_data.format.duration; may be 0 (sentinel for unknown)
+  file_id: number;           // media_files.id — used for Play route
+  tier: number | null;
+}
+
+export interface SeasonInfo {
+  season_number: number;
+  episodes: EpisodeItem[];
+}
+
+export interface ShowDetail {
+  id: number;                // tmdb_id — NOT media_files.id
+  title: string;
+  description: string | null;
+  year: number | null;
+  poster_url: string | null;
+  rating: number | null;
+  seasons: SeasonInfo[];     // ordered latest-first (DESC season_number) by backend SQL
+}
+
 @Injectable({ providedIn: 'root' })
 export class LibraryService {
   private readonly http = inject(HttpClient);
@@ -84,5 +107,9 @@ export class LibraryService {
 
   getMovieById(id: number): Observable<MovieDetail> {
     return this.http.get<MovieDetail>(`/api/library/movies/${id}`);
+  }
+
+  getShowById(id: number): Observable<ShowDetail> {
+    return this.http.get<ShowDetail>(`/api/library/shows/${id}`);
   }
 }

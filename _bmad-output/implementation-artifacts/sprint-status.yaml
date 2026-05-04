@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-30
-last_updated: 2026-05-04
+last_updated: 2026-05-03
 
 project: bmad
 project_key: NOKEY
@@ -75,7 +75,7 @@ development_status:
   4-1-library-api-endpoints-for-movies-and-tv-shows: done
   4-2-poster-grid-home-page-with-three-sections: done
   4-3-movie-detail-page: done
-  4-4-tv-show-detail-page-with-season-and-episode-listings: ready-for-dev
+  4-4-tv-show-detail-page-with-season-and-episode-listings: done
   4-5-watch-progress-indicators-on-poster-grid: backlog
   4-6-library-search: backlog
   epic-4-retrospective: optional

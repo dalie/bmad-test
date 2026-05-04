@@ -1,3 +1,11 @@
+## Deferred from: code review of 4-4-tv-show-detail-page-with-season-and-episode-listings (2026-05-03)
+
+- Route param snapshot stale on same-route navigation — spec explicitly mandated `snapshot.paramMap` to prevent "not found" flash (4-3 fix); no in-app show→show nav in current UI.
+- Loading state flash during fetch — `initialValue: null` briefly shows "Show not found." while HTTP is in-flight; spec-accepted trade-off, no loading indicator required.
+- Responsive breakpoint `600px` is a magic number — all other dimensions use CSS tokens; design-system gap, pre-existing pattern.
+- `getDuration()` returns `0` as sentinel for unknown duration — pre-existing ProbeService behavior (noted again here); fix belongs in ProbeService.
+- `ShowDetail.id` = `tmdb_id` naming — pre-existing API contract, documented in Dev Notes; rename if API is ever versioned.
+
 ## Deferred from: code review of 4-3-movie-detail-page (2026-05-03)
 
 - API errors (503/401/network timeout) in `getMovieById()` are caught by `catchError(() => of(null))` and shown as "Movie not found." — no spec requirement for error differentiation; consistent with project-wide error-handling pattern.

@@ -1,6 +1,6 @@
 # Story 4.4: TV Show Detail Page with Season and Episode Listings
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -24,8 +24,8 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
 
 ## Tasks / Subtasks
 
-- [ ] 1. Add `ShowDetail` interfaces and `getShowById()` to `apps/frontend/src/app/services/library.service.ts` (AC: data shape)
-  - [ ] 1.1 Add `EpisodeItem` interface after existing `SubtitleTrack` interface:
+- [x] 1. Add `ShowDetail` interfaces and `getShowById()` to `apps/frontend/src/app/services/library.service.ts` (AC: data shape)
+  - [x] 1.1 Add `EpisodeItem` interface after existing `SubtitleTrack` interface:
     ```typescript
     export interface EpisodeItem {
       episode_number: number;
@@ -35,14 +35,14 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       tier: number | null;
     }
     ```
-  - [ ] 1.2 Add `SeasonInfo` interface:
+  - [x] 1.2 Add `SeasonInfo` interface:
     ```typescript
     export interface SeasonInfo {
       season_number: number;
       episodes: EpisodeItem[];
     }
     ```
-  - [ ] 1.3 Add `ShowDetail` interface:
+  - [x] 1.3 Add `ShowDetail` interface:
     ```typescript
     export interface ShowDetail {
       id: number;                // tmdb_id — NOT media_files.id
@@ -54,7 +54,7 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       seasons: SeasonInfo[];     // ordered latest-first (DESC season_number) by backend SQL
     }
     ```
-  - [ ] 1.4 Add `getShowById(id: number): Observable<ShowDetail>` method to `LibraryService` class:
+  - [x] 1.4 Add `getShowById(id: number): Observable<ShowDetail>` method to `LibraryService` class:
     ```typescript
     getShowById(id: number): Observable<ShowDetail> {
       return this.http.get<ShowDetail>(`/api/library/shows/${id}`);
@@ -62,8 +62,8 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
     ```
     Note: `id` here is `tmdb_id`. The backend `GET /api/library/shows/:id` uses `ParseIntPipe` and passes directly to `getShowById(tmdbId)`. Do NOT confuse with `media_files.id`.
 
-- [ ] 2. Register `/show/:id` route in `apps/frontend/src/app/app.routes.ts` (AC: bookmarkable URL)
-  - [ ] 2.1 Add lazy-loaded show-detail route after the existing `movie/:id` route:
+- [x] 2. Register `/show/:id` route in `apps/frontend/src/app/app.routes.ts` (AC: bookmarkable URL)
+  - [x] 2.1 Add lazy-loaded show-detail route after the existing `movie/:id` route:
     ```typescript
     {
       path: 'show/:id',
@@ -92,8 +92,8 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
     ];
     ```
 
-- [ ] 3. Create `apps/frontend/src/app/show-detail/show-detail.component.ts` (AC: all rendering logic)
-  - [ ] 3.1 Define `@Component` decorator — standalone, OnPush, imports RouterLink:
+- [x] 3. Create `apps/frontend/src/app/show-detail/show-detail.component.ts` (AC: all rendering logic)
+  - [x] 3.1 Define `@Component` decorator — standalone, OnPush, imports RouterLink:
     ```typescript
     @Component({
       selector: 'app-show-detail',
@@ -104,16 +104,16 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       changeDetection: ChangeDetectionStrategy.OnPush,
     })
     ```
-  - [ ] 3.2 Inject services:
+  - [x] 3.2 Inject services:
     ```typescript
     private readonly libraryService = inject(LibraryService);
     readonly location = inject(Location);
     ```
-  - [ ] 3.3 Derive `showId` from route snapshot (same synchronous pattern as movie-detail — avoids the "not found" flash):
+  - [x] 3.3 Derive `showId` from route snapshot (same synchronous pattern as movie-detail — avoids the "not found" flash):
     ```typescript
     private readonly showId = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
     ```
-  - [ ] 3.4 Define `show` signal using `toSignal` + fetch-on-init:
+  - [x] 3.4 Define `show` signal using `toSignal` + fetch-on-init:
     ```typescript
     readonly show = toSignal(
       this.showId && !isNaN(this.showId)
@@ -124,14 +124,14 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       { initialValue: null as ShowDetail | null }
     );
     ```
-  - [ ] 3.5 Add `formatRating(rating: number | null): string` helper (same as movie-detail):
+  - [x] 3.5 Add `formatRating(rating: number | null): string` helper (same as movie-detail):
     ```typescript
     formatRating(rating: number | null): string {
       if (rating === null || rating === undefined) return '';
       return rating.toFixed(1);
     }
     ```
-  - [ ] 3.6 Add `formatDuration(seconds: number | null): string` helper:
+  - [x] 3.6 Add `formatDuration(seconds: number | null): string` helper:
     ```typescript
     formatDuration(seconds: number | null): string {
       if (!seconds || seconds <= 0) return '';
@@ -142,7 +142,7 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
     }
     ```
     Critical: Duration from backend is **seconds** (float from `probe_data.format.duration`), NOT minutes like movie runtime. A 42-minute episode is ~2520 seconds. Backend may return `0` as a sentinel for unknown duration (pre-existing ProbeService behavior) — the `<= 0` guard handles this.
-  - [ ] 3.7 Full import list:
+  - [x] 3.7 Full import list:
     ```typescript
     import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
     import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -153,8 +153,8 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
     import { LibraryService, ShowDetail } from '../services/library.service';
     ```
 
-- [ ] 4. Create `apps/frontend/src/app/show-detail/show-detail.component.html` (AC: layout, episodes, UX-DR12)
-  - [ ] 4.1 Implement the detail page — top section mirrors movie-detail, bottom section lists episodes by season:
+- [x] 4. Create `apps/frontend/src/app/show-detail/show-detail.component.html` (AC: layout, episodes, UX-DR12)
+  - [x] 4.1 Implement the detail page — top section mirrors movie-detail, bottom section lists episodes by season:
     ```html
     <main class="content-container">
       <button type="button" class="back-link" (click)="location.back()">← Back to Library</button>
@@ -222,8 +222,8 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
     - `@for ... track ep.file_id` — `file_id` is a stable unique key per episode (media_files.id).
     - No `@if (season.episodes.length > 0)` guard needed — backend never returns seasons with empty episodes arrays (episodes drive season grouping).
 
-- [ ] 5. Create `apps/frontend/src/app/show-detail/show-detail.component.css` (AC: UX-DR10, UX-DR11, consistency with movie-detail)
-  - [ ] 5.1 Implement component-scoped styles:
+- [x] 5. Create `apps/frontend/src/app/show-detail/show-detail.component.css` (AC: UX-DR10, UX-DR11, consistency with movie-detail)
+  - [x] 5.1 Implement component-scoped styles:
     ```css
     /* Back navigation button — matches movie-detail pattern */
     .back-link {
@@ -378,8 +378,8 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
     ```
     Critical: **No hover effects, no transitions, no animations** (UX-DR10). No `:hover`, `transition`, or `animation` rules anywhere in this file.
 
-- [ ] 6. Create `apps/frontend/src/app/show-detail/show-detail.component.spec.ts` (AC: unit tests)
-  - [ ] 6.1 Set up TestBed with mocked LibraryService and ActivatedRoute stub:
+- [x] 6. Create `apps/frontend/src/app/show-detail/show-detail.component.spec.ts` (AC: unit tests)
+  - [x] 6.1 Set up TestBed with mocked LibraryService and ActivatedRoute stub:
     ```typescript
     import { TestBed } from '@angular/core/testing';
     import { provideHttpClient } from '@angular/common/http';
@@ -422,7 +422,7 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       };
     }
     ```
-  - [ ] 6.2 Write standard component tests:
+  - [x] 6.2 Write standard component tests:
     ```typescript
     describe('ShowDetailComponent', () => {
       let mockLibraryService: Pick<LibraryService, 'getShowById'>;
@@ -495,7 +495,7 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       });
     });
     ```
-  - [ ] 6.3 Test `formatDuration` helper:
+  - [x] 6.3 Test `formatDuration` helper:
     ```typescript
     describe('formatDuration', () => {
       it('should format seconds to Xh Ym for long episodes', () => {
@@ -519,7 +519,7 @@ And the page uses semantic HTML and consistent styling with the movie detail pag
       });
     });
     ```
-  - [ ] 6.4 Test `formatRating` helper:
+  - [x] 6.4 Test `formatRating` helper:
     ```typescript
     describe('formatRating', () => {
       it('should format to one decimal', () => {
@@ -610,6 +610,22 @@ Fix from 4-3: Use `location.back()` (`inject(Location)`) to trigger true browser
 readonly location = inject(Location);
 // Template: <button type="button" class="back-link" (click)="location.back()">← Back to Library</button>
 ```
+
+### Review Findings
+
+- [x] [Review][Patch] Rating falsy check suppresses `rating === 0` — change `@if (s.rating)` to `@if (s.rating !== null)` [show-detail.component.html:23]
+- [x] [Review][Patch] Episode name `??` doesn't coalesce empty string `""` — change `ep.name ?? 'Episode ' + ep.episode_number` to `ep.name || 'Episode ' + ep.episode_number` [show-detail.component.html:40]
+- [x] [Review][Patch] Empty `seasons` array renders silently — add `@empty { <p class="detail-not-found">No seasons available.</p> }` inside the `@for (season of s.seasons …)` block [show-detail.component.html:33]
+- [x] [Review][Patch] Play links all have identical accessible text "Play" — add `aria-label="Play {{ ep.name || 'Episode ' + ep.episode_number }}"` to each `.episode__play` anchor [show-detail.component.html:46]
+- [x] [Review][Patch] `formatDuration()` called twice per episode — use `@let dur = formatDuration(ep.duration);` and reference `dur` in both `@if` and binding [show-detail.component.html:43-45]
+- [x] [Review][Patch] `formatDuration`/`formatRating` unit tests spin up full TestBed + repeated copy-paste provider setup — refactor to share a single `beforeEach` with TestBed config; pure-function calls need only `TestBed.createComponent` [show-detail.component.spec.ts]
+- [x] [Review][Patch] No test for `catchError` error path — add a spec where `getShowById` returns `throwError(...)` and assert "Show not found." renders [show-detail.component.spec.ts]
+- [x] [Review][Patch] No test for invalid/NaN route id — add a spec with `makeActivatedRouteStub('abc')` and assert show stays null without calling the API [show-detail.component.spec.ts]
+- [x] [Review][Defer] Route param snapshot stale on same-route navigation — spec explicitly mandated `snapshot.paramMap` to prevent "not found" flash (per Dev Notes: 4-3 fix); no in-app show→show navigation in current UI [show-detail.component.ts:21] — deferred, pre-existing
+- [x] [Review][Defer] Loading state flash — `initialValue: null` renders "Show not found." during in-flight fetch — spec-accepted trade-off; no loading indicator required [show-detail.component.html:51] — deferred, pre-existing
+- [x] [Review][Defer] Responsive breakpoint `600px` is a magic number — all other dimensions use `var(--*)` tokens; design-system gap [show-detail.component.css:143] — deferred, pre-existing
+- [x] [Review][Defer] `getDuration()` returns `0` as sentinel for unknown duration — pre-existing ProbeService behavior; fix belongs in ProbeService [library.service.ts EpisodeItem] — deferred, pre-existing
+- [x] [Review][Defer] `ShowDetail.id` = `tmdb_id` naming — pre-existing API contract; documented in Dev Notes [library.service.ts:ShowDetail] — deferred, pre-existing
 
 ### File Locations
 
@@ -711,4 +727,27 @@ Claude Sonnet 4.6 (GitHub Copilot)
 
 ### Completion Notes List
 
+- Added `EpisodeItem`, `SeasonInfo`, `ShowDetail` interfaces to `library.service.ts` after the existing `MovieDetail` interface.
+- Added `getShowById(id: number): Observable<ShowDetail>` method to `LibraryService`.
+- Registered lazy `show/:id` route in `app.routes.ts` — resolves deferred work item from 4-2 review.
+- Created `ShowDetailComponent` (standalone, OnPush) using `snapshot.paramMap` synchronous pattern from 4-3 to avoid "not found" flash.
+- `formatDuration(seconds)` handles seconds-based duration (FFprobe), including `0` sentinel guard.
+- Seasons rendered in backend order (latest-first via SQL `ORDER BY season_number DESC`); no client re-sort needed.
+- Back button uses `location.back()` for scroll-position restoration (UX-DR12), matching 4-3 pattern.
+- No hover/transition/animation CSS (UX-DR10).
+- 11 new tests; all 38 tests pass (0 regressions).
+
 ### File List
+
+- `apps/frontend/src/app/services/library.service.ts` (modified)
+- `apps/frontend/src/app/app.routes.ts` (modified)
+- `apps/frontend/src/app/show-detail/show-detail.component.ts` (created)
+- `apps/frontend/src/app/show-detail/show-detail.component.html` (created)
+- `apps/frontend/src/app/show-detail/show-detail.component.css` (created)
+- `apps/frontend/src/app/show-detail/show-detail.component.spec.ts` (created)
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-05-03 | Implemented story 4-4: TV show detail page with season/episode listings, route registration, interfaces, and tests |
