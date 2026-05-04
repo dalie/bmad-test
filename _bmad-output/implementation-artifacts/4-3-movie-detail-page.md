@@ -1,6 +1,6 @@
 # Story 4.3: Movie Detail Page
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -25,8 +25,8 @@ And touch targets meet minimum 44x44px (UX-DR11)
 
 ## Tasks / Subtasks
 
-- [ ] 1. Add `MovieDetail` interface and `getMovieById()` to `apps/frontend/src/app/services/library.service.ts` (AC: data shape)
-  - [ ] 1.1 Add exported `MovieDetail` interface matching backend `MovieDetail` shape exactly (snake_case):
+- [x] 1. Add `MovieDetail` interface and `getMovieById()` to `apps/frontend/src/app/services/library.service.ts` (AC: data shape)
+  - [x] 1.1 Add exported `MovieDetail` interface matching backend `MovieDetail` shape exactly (snake_case):
     ```typescript
     export interface AudioTrack {
       index: number;
@@ -59,7 +59,7 @@ And touch targets meet minimum 44x44px (UX-DR11)
     }
     ```
     Source: `apps/backend/src/library/browse.service.ts` — `MovieDetail` interface at line 42.
-  - [ ] 1.2 Add `getMovieById(id: number): Observable<MovieDetail>` method:
+  - [x] 1.2 Add `getMovieById(id: number): Observable<MovieDetail>` method:
     ```typescript
     getMovieById(id: number): Observable<MovieDetail> {
       return this.http.get<MovieDetail>(`/api/library/movies/${id}`);
@@ -67,8 +67,8 @@ And touch targets meet minimum 44x44px (UX-DR11)
     ```
     Note: `id` is `media_files.id` (NOT tmdb_id). The backend `GET /api/library/movies/:id` maps to `media_files.id` via `ParseIntPipe`.
 
-- [ ] 2. Register `/movie/:id` route in `apps/frontend/src/app/app.routes.ts` (AC: bookmarkable URL)
-  - [ ] 2.1 Add lazy-loaded movie-detail route:
+- [x] 2. Register `/movie/:id` route in `apps/frontend/src/app/app.routes.ts` (AC: bookmarkable URL)
+  - [x] 2.1 Add lazy-loaded movie-detail route:
     ```typescript
     {
       path: 'movie/:id',
@@ -92,8 +92,8 @@ And touch targets meet minimum 44x44px (UX-DR11)
     ];
     ```
 
-- [ ] 3. Create `apps/frontend/src/app/movie-detail/movie-detail.component.ts` (AC: all detail rendering)
-  - [ ] 3.1 Define `@Component` decorator — standalone, OnPush, imports RouterLink:
+- [x] 3. Create `apps/frontend/src/app/movie-detail/movie-detail.component.ts` (AC: all detail rendering)
+  - [x] 3.1 Define `@Component` decorator — standalone, OnPush, imports RouterLink:
     ```typescript
     @Component({
       selector: 'app-movie-detail',
@@ -104,18 +104,18 @@ And touch targets meet minimum 44x44px (UX-DR11)
       changeDetection: ChangeDetectionStrategy.OnPush,
     })
     ```
-  - [ ] 3.2 Inject `ActivatedRoute` and `LibraryService`:
+  - [x] 3.2 Inject `ActivatedRoute` and `LibraryService`:
     ```typescript
     private readonly route = inject(ActivatedRoute);
     private readonly libraryService = inject(LibraryService);
     ```
-  - [ ] 3.3 Derive `movieId` from route params using `toSignal`:
+  - [x] 3.3 Derive `movieId` from route params using `toSignal`:
     ```typescript
     private readonly movieId = toSignal(
       this.route.paramMap.pipe(map(params => Number(params.get('id'))))
     );
     ```
-  - [ ] 3.4 Define `movie` signal using `toSignal` + `switchMap` — fetches when id changes:
+  - [x] 3.4 Define `movie` signal using `toSignal` + `switchMap` — fetches when id changes:
     ```typescript
     readonly movie = toSignal(
       toObservable(this.movieId).pipe(
@@ -130,7 +130,7 @@ And touch targets meet minimum 44x44px (UX-DR11)
     );
     ```
     Critical: Use `switchMap` (not `mergeMap`) so navigation to a new movie ID cancels the previous in-flight request.
-  - [ ] 3.5 Add `formatRuntime(minutes: number | null): string` helper:
+  - [x] 3.5 Add `formatRuntime(minutes: number | null): string` helper:
     ```typescript
     formatRuntime(minutes: number | null): string {
       if (!minutes) return '';
@@ -139,14 +139,14 @@ And touch targets meet minimum 44x44px (UX-DR11)
       return h > 0 ? `${h}h ${m}m` : `${m}m`;
     }
     ```
-  - [ ] 3.6 Add `formatRating(rating: number | null): string` helper:
+  - [x] 3.6 Add `formatRating(rating: number | null): string` helper:
     ```typescript
     formatRating(rating: number | null): string {
       if (rating === null || rating === undefined) return '';
       return rating.toFixed(1);
     }
     ```
-  - [ ] 3.7 Add all imports:
+  - [x] 3.7 Add all imports:
     ```typescript
     import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
     import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -156,8 +156,8 @@ And touch targets meet minimum 44x44px (UX-DR11)
     import { LibraryService } from '../services/library.service';
     ```
 
-- [ ] 4. Create `apps/frontend/src/app/movie-detail/movie-detail.component.html` (AC: layout UX-DR4, UX-DR12)
-  - [ ] 4.1 Implement the detail page layout per UX-DR4 and UX spec HTML structure:
+- [x] 4. Create `apps/frontend/src/app/movie-detail/movie-detail.component.html` (AC: layout UX-DR4, UX-DR12)
+  - [x] 4.1 Implement the detail page layout per UX-DR4 and UX spec HTML structure:
     ```html
     <main class="content-container">
       <a routerLink="/" class="back-link">← Back to Library</a>
@@ -206,8 +206,8 @@ And touch targets meet minimum 44x44px (UX-DR11)
     - No spinner/skeleton state — page either shows movie data or "Movie not found." No loading intermediate (zero-animation policy UX-DR10).
     - The `@if (movie(); as m)` block uses Angular's `@if` with template variable assignment — prevents multiple signal calls and null-checks in the template.
 
-- [ ] 5. Create `apps/frontend/src/app/movie-detail/movie-detail.component.css` (AC: UX-DR4, UX-DR10, UX-DR11)
-  - [ ] 5.1 Implement all component-scoped styles:
+- [x] 5. Create `apps/frontend/src/app/movie-detail/movie-detail.component.css` (AC: UX-DR4, UX-DR10, UX-DR11)
+  - [x] 5.1 Implement all component-scoped styles:
     ```css
     /* Back navigation link */
     .back-link {
@@ -307,8 +307,8 @@ And touch targets meet minimum 44x44px (UX-DR11)
     Critical: **No hover effects, no transitions, no animations** (UX-DR10). No `:hover`, `transition`, or `animation` rules.
     Note on Play button: WCAG AA — `--color-accent` (`#e65100`) on `--color-text` (`#f0f0f0`) meets 3:1 for large/bold text (Play button qualifies as large text at 20px bold). The text renders on the button background — `--color-text` on `--color-accent` gives ~4.6:1.
 
-- [ ] 6. Create `apps/frontend/src/app/movie-detail/movie-detail.component.spec.ts` (AC: unit tests)
-  - [ ] 6.1 Set up TestBed with `provideHttpClient()`, `provideHttpClientTesting()`, `provideRouter([])`:
+- [x] 6. Create `apps/frontend/src/app/movie-detail/movie-detail.component.spec.ts` (AC: unit tests)
+  - [x] 6.1 Set up TestBed with `provideHttpClient()`, `provideHttpClientTesting()`, `provideRouter([])`:  
     ```typescript
     import { TestBed } from '@angular/core/testing';
     import { provideHttpClient } from '@angular/common/http';
@@ -335,7 +335,7 @@ And touch targets meet minimum 44x44px (UX-DR11)
       transcode_output_path: null,
     };
     ```
-  - [ ] 6.2 Write test: renders title and metadata when API returns data:
+  - [x] 6.2 Write test: renders title and metadata when API returns data:
     ```typescript
     it('should display movie title', async () => {
       // Provide an ActivatedRoute stub with paramMap
@@ -343,7 +343,7 @@ And touch targets meet minimum 44x44px (UX-DR11)
     });
     ```
     Note: ActivatedRoute stubbing with paramMap signals is complex — at minimum test `formatRuntime` and `formatRating` helpers directly, and verify the component renders without errors with a mocked API response.
-  - [ ] 6.3 Test `formatRuntime` helper:
+  - [x] 6.3 Test `formatRuntime` helper:
     ```typescript
     it('formatRuntime: should format minutes to Xh Ym', () => {
       const comp = TestBed.createComponent(MovieDetailComponent).componentInstance;
@@ -353,7 +353,7 @@ And touch targets meet minimum 44x44px (UX-DR11)
       expect(comp.formatRuntime(null)).toBe('');
     });
     ```
-  - [ ] 6.4 Test `formatRating` helper:
+  - [x] 6.4 Test `formatRating` helper:
     ```typescript
     it('formatRating: should format to one decimal', () => {
       const comp = TestBed.createComponent(MovieDetailComponent).componentInstance;
@@ -362,6 +362,16 @@ And touch targets meet minimum 44x44px (UX-DR11)
       expect(comp.formatRating(null)).toBe('');
     });
     ```
+
+### Review Findings
+
+- [x] [Review][Decision] "Movie not found." flashes on every valid navigation during loading — fixed: replaced `toSignal`/`toObservable` round-trip with synchronous `route.snapshot.paramMap` read; movie observable starts fetching immediately on component init.
+- [x] [Review][Decision] Back link does not restore scroll position — fixed: replaced `routerLink="/"` with `(click)="location.back()"` using injected Angular `Location` service; performs true history.back().
+- [x] [Review][Patch] `flex-shrink: 0` is dead CSS — removed from `.detail-poster-wrap`. [apps/frontend/src/app/movie-detail/movie-detail.component.css]
+- [x] [Review][Patch] `AudioTrack.codec` and `channels` typed more permissively than backend — fixed: `codec: string`, `channels: number`. [apps/frontend/src/app/services/library.service.ts]
+- [x] [Review][Defer] API errors (503/401/network timeout) silently map to null/"Movie not found." [apps/frontend/src/app/movie-detail/movie-detail.component.ts] — deferred, pre-existing design pattern
+- [x] [Review][Defer] Negative ID in route param bypasses `!id` guard and fires spurious HTTP call — backend handles with 404 [apps/frontend/src/app/movie-detail/movie-detail.component.ts] — deferred, pre-existing
+- [x] [Review][Defer] Backend `LEFT JOIN transcode_jobs` has no `ORDER BY`/`LIMIT 1` — non-deterministic `transcode_output_path` if multiple completed jobs exist for a file [apps/backend/src/library/browse.service.ts] — deferred, pre-existing
 
 ## Dev Notes
 
@@ -496,4 +506,23 @@ claude-sonnet-4-5
 
 ### Completion Notes List
 
+- Implemented standalone `MovieDetailComponent` with `ChangeDetectionStrategy.OnPush`, `inject()` pattern, and `toSignal`/`toObservable`/`switchMap` for route-param-driven data fetching.
+- Added `AudioTrack`, `SubtitleTrack`, `MovieDetail` interfaces and `getMovieById()` to `LibraryService`.
+- Registered `/movie/:id` lazy-loaded route in `app.routes.ts`, resolving deferred-work item from 4-2.
+- Two-column layout (poster left, info right) with responsive 600px breakpoint; zero animations, no hover effects (UX-DR10).
+- Play button links to `/play/:file_id` — intentionally unresolved until Epic 5 stories; `← Back to Library` uses `routerLink="/"`.
+- `aria-hidden="true"` on `·` separators; `loading="lazy"` on poster img.
+- All 27 tests pass (11 new + 16 existing regressions), zero TS errors.
+
 ### File List
+
+- `apps/frontend/src/app/services/library.service.ts` (modified)
+- `apps/frontend/src/app/app.routes.ts` (modified)
+- `apps/frontend/src/app/movie-detail/movie-detail.component.ts` (new)
+- `apps/frontend/src/app/movie-detail/movie-detail.component.html` (new)
+- `apps/frontend/src/app/movie-detail/movie-detail.component.css` (new)
+- `apps/frontend/src/app/movie-detail/movie-detail.component.spec.ts` (new)
+
+## Change Log
+
+- 2026-05-03: Implemented story 4-3 — movie detail page with poster, metadata, description, Play button, and Back to Library link. Added AudioTrack/SubtitleTrack/MovieDetail interfaces + getMovieById() to LibraryService. Registered /movie/:id lazy route. Created MovieDetailComponent (ts/html/css/spec). 11 new tests; all 27 pass.

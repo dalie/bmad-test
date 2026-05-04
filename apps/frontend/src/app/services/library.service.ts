@@ -34,6 +34,38 @@ export interface RecentItem {
   added_at: string;
 }
 
+export interface AudioTrack {
+  index: number;
+  codec: string;
+  language: string | null;
+  channels: number;
+}
+
+export interface SubtitleTrack {
+  id: number;
+  track_index: number | null;
+  type: string;
+  language: string | null;
+  codec: string | null;
+  webvtt_path: string | null;
+}
+
+export interface MovieDetail {
+  id: number;
+  title: string;
+  description: string | null;
+  year: number | null;
+  poster_url: string | null;
+  runtime: number | null;
+  rating: number | null;
+  content_rating: string | null;
+  audio_tracks: AudioTrack[];
+  subtitle_tracks: SubtitleTrack[];
+  file_id: number;
+  tier: number | null;
+  transcode_output_path: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LibraryService {
   private readonly http = inject(HttpClient);
@@ -48,5 +80,9 @@ export class LibraryService {
 
   getRecent(limit = 20): Observable<RecentItem[]> {
     return this.http.get<RecentItem[]>('/api/library/recent', { params: { limit } });
+  }
+
+  getMovieById(id: number): Observable<MovieDetail> {
+    return this.http.get<MovieDetail>(`/api/library/movies/${id}`);
   }
 }

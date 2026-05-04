@@ -1,0 +1,40 @@
+<main class="content-container">
+  <button type="button" class="back-link" (click)="location.back()">← Back to Library</button>
+
+  @if (movie(); as m) {
+    <div class="detail-layout">
+      <div class="detail-poster-wrap">
+        @if (m.poster_url) {
+          <img class="detail-poster"
+               [src]="m.poster_url"
+               [alt]="m.title"
+               loading="lazy" />
+        } @else {
+          <div class="detail-poster detail-poster--fallback"></div>
+        }
+      </div>
+
+      <div class="detail-info">
+        <h1 class="detail-title">{{ m.title }}</h1>
+
+        <p class="detail-meta">
+          @if (m.year) { <span>{{ m.year }}</span> }
+          @if (m.year && (m.runtime || m.rating || m.content_rating)) { <span aria-hidden="true"> · </span> }
+          @if (m.runtime) { <span>{{ formatRuntime(m.runtime) }}</span> }
+          @if (m.runtime && (m.rating || m.content_rating)) { <span aria-hidden="true"> · </span> }
+          @if (m.rating) { <span>★ {{ formatRating(m.rating) }}</span> }
+          @if (m.rating && m.content_rating) { <span aria-hidden="true"> · </span> }
+          @if (m.content_rating) { <span>{{ m.content_rating }}</span> }
+        </p>
+
+        @if (m.description) {
+          <p class="detail-description">{{ m.description }}</p>
+        }
+
+        <a class="play-button" [routerLink]="['/play', m.file_id]">Play</a>
+      </div>
+    </div>
+  } @else {
+    <p class="detail-not-found">Movie not found.</p>
+  }
+</main>

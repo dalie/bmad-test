@@ -1,0 +1,98 @@
+/* Back navigation link */
+.back-link {
+  display: inline-block;
+  margin-block-end: var(--space-lg);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  /* Min 44px touch target height via line-height + padding */
+  padding-block: var(--space-sm);
+  /* Button reset */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding-inline: 0;
+}
+
+/* Two-column layout: poster left, info right */
+.detail-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+/* Fixed-width poster container with 2:3 aspect ratio */
+.detail-poster-wrap {
+  width: 300px;
+  aspect-ratio: var(--poster-ratio);
+  background-color: var(--color-surface);
+}
+
+.detail-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-poster--fallback {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-surface-raised);
+}
+
+/* Title — --font-size-xl per UX-DR4 */
+.detail-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin-block-end: var(--space-sm);
+}
+
+/* Year · runtime · rating · content_rating in muted text per UX-DR4 */
+.detail-meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  margin-block-end: var(--space-md);
+}
+
+/* Description in base font size per UX-DR4 */
+.detail-description {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  margin-block-end: var(--space-lg);
+  max-width: 65ch;
+}
+
+/* Large deep orange Play button — minimum 44px touch target (UX-DR11) */
+.play-button {
+  display: inline-block;
+  background-color: var(--color-accent);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  padding: var(--space-sm) var(--space-xl);
+  min-height: 44px;
+  line-height: var(--line-height-tight);
+}
+
+/* Not-found message */
+.detail-not-found {
+  color: var(--color-text-muted);
+  margin-block-start: var(--space-xl);
+}
+
+/* Responsive: stack on narrow viewports */
+@media (max-width: 600px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-poster-wrap {
+    width: 100%;
+    max-width: 300px;
+  }
+}

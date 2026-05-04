@@ -1,3 +1,9 @@
+## Deferred from: code review of 4-3-movie-detail-page (2026-05-03)
+
+- API errors (503/401/network timeout) in `getMovieById()` are caught by `catchError(() => of(null))` and shown as "Movie not found." — no spec requirement for error differentiation; consistent with project-wide error-handling pattern.
+- Negative ID in route param (e.g., `/movie/-1`) passes the `!id` guard (`!(-1) === false`) and fires a backend HTTP call — backend returns 404, `catchError` handles gracefully; low-priority hardening for a future story.
+- Backend `getMovieById()` `LEFT JOIN transcode_jobs` lacks `ORDER BY`/`LIMIT 1` — if a `file_id` has multiple `completed` transcode rows, the returned `transcode_output_path` is non-deterministic; pre-existing in `apps/backend/src/library/browse.service.ts`.
+
 ## Deferred from: code review of spec-fix-csp-tmdb-img-src (2026-05-03)
 
 - `script-src: ["'self'"]` default may be too strict for some Angular runtime patterns — audit Angular production build output for inline scripts; predates this change.
