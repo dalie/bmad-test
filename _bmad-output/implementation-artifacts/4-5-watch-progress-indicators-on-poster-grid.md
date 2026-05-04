@@ -1,6 +1,6 @@
 # Story 4.5: Watch Progress Indicators on Poster Grid
 
-Status: in-progress
+Status: done
 
 ## Story
 
