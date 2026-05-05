@@ -2,17 +2,68 @@
   <button type="button" class="back-link" (click)="location.back()">← Back</button>
 
   @if (isTier2) {
-    <video
-      #videoEl
-      class="player-video"
-      [src]="videoSrc"
-      muted
-      autoplay
-      controls
-      preload="auto"
-    ></video>
+    <video #videoEl class="player-video" [src]="videoSrc" muted autoplay controls preload="auto">
+      @for (track of subtitleTracks(); track track.id) {
+        <track
+          kind="subtitles"
+          [src]="'/api/media/subtitles/' + track.id"
+          [srclang]="track.language || 'und'"
+          [label]="getTrackLabel(track)"
+        />
+      }
+    </video>
     <audio #audioEl [src]="audioSrc" preload="auto"></audio>
   } @else {
-    <video class="player-video" [src]="videoSrc" autoplay controls preload="auto"></video>
+    <video #videoEl class="player-video" [src]="videoSrc" autoplay controls preload="auto">
+      @for (track of subtitleTracks(); track track.id) {
+        <track
+          kind="subtitles"
+          [src]="'/api/media/subtitles/' + track.id"
+          [srclang]="track.language || 'und'"
+          [label]="getTrackLabel(track)"
+        />
+      }
+    </video>
+  }
+
+  @if (subtitleTracks().length > 0) {
+    <div class="subtitle-controls" #subtitleControls>
+      <button
+        type="button"
+        class="cc-button"
+        [class.cc-button--active]="activeSubtitleId() !== null"
+        (click)="toggleSubtitleMenu()"
+        aria-label="Subtitle selector"
+        [attr.aria-expanded]="subtitleMenuOpen()"
+      >
+        CC
+      </button>
+      @if (subtitleMenuOpen()) {
+        <div class="subtitle-menu" role="menu" (keydown)="onMenuKeydown($event)">
+          <button
+            type="button"
+            role="menuitemradio"
+            [attr.aria-checked]="activeSubtitleId() === null"
+            (click)="selectSubtitle(null)"
+            class="subtitle-menu__item"
+            [class.subtitle-menu__item--active]="activeSubtitleId() === null"
+          >
+            Off
+          </button>
+          @for (track of subtitleTracks(); track track.id) {
+            <button
+              type="button"
+              role="menuitemradio"
+              [attr.aria-checked]="activeSubtitleId() === track.id"
+              (click)="selectSubtitle(track.id)"
+              class="subtitle-menu__item"
+              [class.subtitle-menu__item--active]="activeSubtitleId() === track.id"
+            >
+              {{ getTrackLabel(track) }}
+            </button>
+          }
+        </div>
+      }
+    </div>
   }
 </main>

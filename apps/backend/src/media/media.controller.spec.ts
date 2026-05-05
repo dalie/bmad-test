@@ -17,6 +17,7 @@ describe("MediaController", () => {
       getFileInfo: jest.fn(),
       getAudioSidecarPath: jest.fn(),
       getSubtitleInfo: jest.fn(),
+      getSubtitlesForFile: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -252,6 +253,39 @@ describe("MediaController", () => {
       expect(() => controller.streamSubtitle(999, res)).toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  // ── GET /api/media/:fileId/subtitles ─────────────────────────────────────
+
+  describe("GET /media/:fileId/subtitles", () => {
+    it("should return array of available subtitle tracks", () => {
+      const tracks = [
+        { id: 1, language: "eng" },
+        { id: 2, language: "fra" },
+      ];
+      mediaService.getSubtitlesForFile.mockReturnValue(tracks);
+
+      const result = controller.getSubtitlesForFile(42);
+
+      expect(mediaService.getSubtitlesForFile).toHaveBeenCalledWith(42);
+      expect(result).toEqual(tracks);
+    });
+
+    it("should return empty array when no subtitles available", () => {
+      mediaService.getSubtitlesForFile.mockReturnValue([]);
+
+      const result = controller.getSubtitlesForFile(42);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array for non-existent fileId", () => {
+      mediaService.getSubtitlesForFile.mockReturnValue([]);
+
+      const result = controller.getSubtitlesForFile(999);
+
+      expect(result).toEqual([]);
     });
   });
 });

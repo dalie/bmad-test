@@ -127,6 +127,21 @@ export class MediaService {
     };
   }
 
+  getSubtitlesForFile(
+    fileId: number,
+  ): Array<{ id: number; language: string | null }> {
+    const db = this.database.getDatabase();
+    const rows = db
+      .prepare(
+        `SELECT id, language
+         FROM subtitles
+         WHERE media_file_id = ? AND webvtt_path IS NOT NULL
+         ORDER BY id ASC`,
+      )
+      .all(fileId) as Array<{ id: number; language: string | null }>;
+    return rows;
+  }
+
   private validatePath(filePath: string): void {
     if (filePath.includes("..")) {
       throw new NotFoundException(`Media file not found`);

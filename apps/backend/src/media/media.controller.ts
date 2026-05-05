@@ -53,6 +53,13 @@ export class MediaController {
     return new StreamableFile(stream);
   }
 
+  @Get(":fileId/subtitles")
+  getSubtitlesForFile(
+    @Param("fileId", ParseIntPipe) fileId: number,
+  ): Array<{ id: number; language: string | null }> {
+    return this.mediaService.getSubtitlesForFile(fileId);
+  }
+
   private streamFile(
     filePath: string,
     contentType: string,

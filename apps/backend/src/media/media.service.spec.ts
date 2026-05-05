@@ -75,12 +75,13 @@ describe("MediaService", () => {
   function insertSubtitle(
     mediaFileId: number,
     webvttPath: string | null = "/mnt/cache/subtitles/sub.vtt",
+    language: string = "eng",
   ): number {
     return db
       .prepare(
-        "INSERT INTO subtitles (media_file_id, type, language, webvtt_path) VALUES (?, 'embedded', 'eng', ?)",
+        "INSERT INTO subtitles (media_file_id, type, language, webvtt_path) VALUES (?, 'embedded', ?, ?)",
       )
-      .run(mediaFileId, webvttPath).lastInsertRowid as number;
+      .run(mediaFileId, language, webvttPath).lastInsertRowid as number;
   }
 
   // ── getFileInfo ──────────────────────────────────────────────────────────
@@ -285,6 +286,65 @@ describe("MediaService", () => {
 
       // The null webvtt_path means the query's WHERE clause excludes it
       expect(() => service.getSubtitleInfo(1)).toThrow(NotFoundException);
+    });
+  });
+
+  // ── getSubtitlesForFile ─────────────────────────────────────────────────
+
+  describe("getSubtitlesForFile", () => {
+    it("should return available subtitles for a file", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFile(
+        sourceId,
+        "/media/movies/movie.mp4",
+        "ready",
+        1,
+      );
+      insertSubtitle(fileId, "/mnt/cache/subtitles/en.vtt", "eng");
+      insertSubtitle(fileId, "/mnt/cache/subtitles/fr.vtt", "fra");
+
+      const result = service.getSubtitlesForFile(fileId);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty("id");
+      expect(result[0]).toHaveProperty("language", "eng");
+      expect(result[1]).toHaveProperty("language", "fra");
+    });
+
+    it("should return empty array when no subtitles exist", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFile(
+        sourceId,
+        "/media/movies/movie.mp4",
+        "ready",
+        1,
+      );
+
+      const result = service.getSubtitlesForFile(fileId);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should exclude subtitles where webvtt_path is NULL", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFile(
+        sourceId,
+        "/media/movies/movie.mp4",
+        "ready",
+        1,
+      );
+      insertSubtitle(fileId, null); // not ready
+      insertSubtitle(fileId, "/mnt/cache/subtitles/en.vtt"); // ready
+
+      const result = service.getSubtitlesForFile(fileId);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("should return empty array for non-existent fileId", () => {
+      const result = service.getSubtitlesForFile(999);
+
+      expect(result).toEqual([]);
     });
   });
 });

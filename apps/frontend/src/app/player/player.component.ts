@@ -6,9 +6,61 @@ import {
   OnDestroy,
   ViewChild,
   ElementRef,
+  signal,
+  HostListener,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+
+interface SubtitleTrackInfo {
+  id: number;
+  language: string | null;
+}
+
+const LANG_NAMES: Record<string, string> = {
+  en: 'English',
+  eng: 'English',
+  fr: 'French',
+  fre: 'French',
+  fra: 'French',
+  es: 'Spanish',
+  spa: 'Spanish',
+  de: 'German',
+  ger: 'German',
+  deu: 'German',
+  it: 'Italian',
+  ita: 'Italian',
+  ja: 'Japanese',
+  jpn: 'Japanese',
+  ko: 'Korean',
+  kor: 'Korean',
+  zh: 'Chinese',
+  chi: 'Chinese',
+  zho: 'Chinese',
+  pt: 'Portuguese',
+  por: 'Portuguese',
+  ru: 'Russian',
+  rus: 'Russian',
+  ar: 'Arabic',
+  ara: 'Arabic',
+  hi: 'Hindi',
+  hin: 'Hindi',
+  nl: 'Dutch',
+  dut: 'Dutch',
+  nld: 'Dutch',
+  sv: 'Swedish',
+  swe: 'Swedish',
+  no: 'Norwegian',
+  nor: 'Norwegian',
+  da: 'Danish',
+  dan: 'Danish',
+  fi: 'Finnish',
+  fin: 'Finnish',
+  pl: 'Polish',
+  pol: 'Polish',
+  und: 'Unknown',
+};
 
 @Component({
   selector: 'app-player',
@@ -21,14 +73,20 @@ import { Location } from '@angular/common';
 export class PlayerComponent implements AfterViewInit, OnDestroy {
   readonly location = inject(Location);
   private readonly route = inject(ActivatedRoute);
+  private readonly http = inject(HttpClient);
   readonly fileId = this.route.snapshot.paramMap.get('fileId');
   readonly isTier2 = this.route.snapshot.queryParamMap.get('tier') === '2';
 
   readonly videoSrc = `/api/media/stream/${this.fileId}`;
   readonly audioSrc = `/api/media/stream/${this.fileId}/audio`;
 
+  subtitleTracks = signal<SubtitleTrackInfo[]>([]);
+  activeSubtitleId = signal<number | null>(null);
+  subtitleMenuOpen = signal<boolean>(false);
+
   @ViewChild('videoEl') videoElRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('audioEl') audioElRef!: ElementRef<HTMLAudioElement>;
+  @ViewChild('subtitleControls') subtitleControlsRef?: ElementRef<HTMLElement>;
 
   private rafId: number | null = null;
   private videoReady = false;
@@ -37,6 +95,15 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   private isMirroring = false;
   private syncDisabled = false;
   private listeners: Array<[HTMLElement, string, EventListener]> = [];
+
+  constructor() {
+    if (this.fileId) {
+      this.http.get<SubtitleTrackInfo[]>(`/api/media/${this.fileId}/subtitles`).subscribe({
+        next: (tracks) => this.subtitleTracks.set(tracks),
+        error: () => this.subtitleTracks.set([]),
+      });
+    }
+  }
 
   ngAfterViewInit(): void {
     if (!this.isTier2) return;
@@ -158,6 +225,63 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
+    }
+  }
+
+  getTrackLabel(track: SubtitleTrackInfo): string {
+    if (track.language && LANG_NAMES[track.language]) {
+      return LANG_NAMES[track.language];
+    }
+    const index = this.subtitleTracks().indexOf(track);
+    return `Track ${index + 1}`;
+  }
+
+  toggleSubtitleMenu(): void {
+    this.subtitleMenuOpen.update((v) => !v);
+  }
+
+  selectSubtitle(trackId: number | null): void {
+    const video = this.videoElRef?.nativeElement;
+    if (!video) return;
+
+    const textTracks = video.textTracks;
+    for (let i = 0; i < textTracks.length; i++) {
+      textTracks[i].mode = 'disabled';
+    }
+
+    if (trackId !== null) {
+      const trackIndex = this.subtitleTracks().findIndex((t) => t.id === trackId);
+      if (trackIndex >= 0 && textTracks[trackIndex]) {
+        textTracks[trackIndex].mode = 'showing';
+      }
+    }
+
+    this.activeSubtitleId.set(trackId);
+    this.subtitleMenuOpen.set(false);
+  }
+
+  onMenuKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.subtitleMenuOpen.set(false);
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const items = (event.currentTarget as HTMLElement).querySelectorAll('[role="menuitemradio"]');
+      const focused = document.activeElement;
+      const currentIndex = Array.from(items).indexOf(focused as Element);
+      const next =
+        event.key === 'ArrowDown'
+          ? (currentIndex + 1) % items.length
+          : (currentIndex - 1 + items.length) % items.length;
+      (items[next] as HTMLElement).focus();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.subtitleMenuOpen() && this.subtitleControlsRef) {
+      if (!this.subtitleControlsRef.nativeElement.contains(event.target as Node)) {
+        this.subtitleMenuOpen.set(false);
+      }
     }
   }
 }
