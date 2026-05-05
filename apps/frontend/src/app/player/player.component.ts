@@ -214,6 +214,9 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     if (this.progressContext && this.fileId) {
       this.progressInterval = setInterval(() => this.saveProgress(), 5000);
     }
+
+    // Apply resume position LAST — after all listeners are registered
+    this.applyResumePosition();
   }
 
   ngOnDestroy(): void {
@@ -301,6 +304,41 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
       seasonNum: mediaType === 'tv' ? (isNaN(seasonRaw) ? undefined : seasonRaw) : undefined,
       episodeNum: mediaType === 'tv' ? (isNaN(episodeRaw) ? undefined : episodeRaw) : undefined,
     };
+  }
+
+  private applyResumePosition(): void {
+    if (!this.progressContext) return;
+    const ctx = this.progressContext;
+
+    // Guard: TV requires both seasonNum and episodeNum
+    if (ctx.mediaType === 'tv' && (ctx.seasonNum == null || ctx.episodeNum == null)) return;
+
+    const storageKey =
+      ctx.mediaType === 'movie'
+        ? `movie:${ctx.id}`
+        : `tv:${ctx.id}:s${ctx.seasonNum}:e${ctx.episodeNum}`;
+
+    const record = this.watchProgressService.readAll();
+    const entry = record[storageKey];
+
+    if (!entry || entry.duration <= 0 || entry.position <= 0) return;
+
+    // If within last 5% of duration, start from beginning
+    if (entry.position / entry.duration >= 0.95) return;
+
+    const video = this.videoElRef?.nativeElement;
+    if (!video) return;
+    const seekToPosition = (): void => {
+      video.currentTime = entry.position;
+    };
+
+    if (video.readyState >= 1) {
+      // Metadata already loaded — seek immediately
+      seekToPosition();
+    } else {
+      // Wait for metadata to load, then seek (one-shot, not tracked in this.listeners)
+      video.addEventListener('loadedmetadata', seekToPosition, { once: true });
+    }
   }
 
   private saveProgress(): void {

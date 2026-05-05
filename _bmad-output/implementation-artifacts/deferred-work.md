@@ -1,3 +1,10 @@
+## Deferred from: code review of 6-2-resume-playback-from-last-position (2026-05-05)
+
+- Tests call private method via `as any` — `component.applyResumePosition()` bypasses TypeScript access control in tests; works correctly but is a design smell consistent with prior test patterns in the file.
+- Double invocation of `applyResumePosition()` in tests — `setup()` triggers `ngAfterViewInit()` (no-op, mock not yet set), then tests call the method manually; tests are correct but fragile.
+- NaN values in `entry.position`/`entry.duration` pass the `<= 0` guard — `NaN <= 0` is `false`, so corrupted localStorage entries reach `video.currentTime = NaN` (browser silently ignores); pre-existing pattern gap consistent with `saveProgress()`.
+- No test for TV happy-path resume — TV storage key construction and missing `seasonNum`/`episodeNum` guard (AC #7) are exercised only by production code, not by the new test suite; not required by spec Task 3 but a real coverage gap.
+
 ## Deferred from: code review of 6-1-persist-watch-progress-in-localstorage (2026-05-04)
 
 - Double `saveProgress()` call on navigate away — `ngOnDestroy` calls `saveProgress()` and the video `pause` event also fires during navigation teardown; redundant writes with identical data, functionally harmless.

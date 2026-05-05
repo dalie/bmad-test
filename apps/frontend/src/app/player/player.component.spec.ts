@@ -815,4 +815,150 @@ describe('PlayerComponent', () => {
       expect(saveSpy).toHaveBeenCalled();
     });
   });
+
+  describe('Resume from saved position', () => {
+    const movieQueryParams = {
+      mediaType: 'movie',
+      mediaId: '42',
+      title: 'Test Movie',
+      year: '2024',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+    };
+
+    it('should seek video to saved position on load', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': { position: 300, duration: 3600, watched: false, updatedAt: Date.now(),
+          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
+          posterUrl: null, fileId: 42, tier: 1 }
+      });
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'readyState', { value: 1, configurable: true });
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      expect(video.currentTime).toBe(300);
+    });
+
+    it('should NOT seek when position is in last 5% of duration', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': { position: 3420, duration: 3600, watched: false, updatedAt: Date.now(),
+          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
+          posterUrl: null, fileId: 42, tier: 1 }
+      });
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'readyState', { value: 1, configurable: true });
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      // 3420/3600 = 0.95 → exactly at threshold → start from beginning
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('should NOT seek when no progress entry exists', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      // readAll returns {} by default (no entry for this title)
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('should NOT seek when progressContext is null (no mediaType param)', () => {
+      // setup with no extraQueryParams → progressContext is null
+      const fixture = setup('42', '1');
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('should NOT seek when entry.duration is 0', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': { position: 300, duration: 0, watched: false, updatedAt: Date.now(),
+          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
+          posterUrl: null, fileId: 42, tier: 1 }
+      });
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('should NOT seek when entry.position is 0', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': { position: 0, duration: 3600, watched: false, updatedAt: Date.now(),
+          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
+          posterUrl: null, fileId: 42, tier: 1 }
+      });
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('should attach loadedmetadata listener when readyState < 1', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': { position: 300, duration: 3600, watched: false, updatedAt: Date.now(),
+          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
+          posterUrl: null, fileId: 42, tier: 1 }
+      });
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'readyState', { value: 0, configurable: true });
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      // currentTime not yet changed (waiting for loadedmetadata)
+      expect(video.currentTime).toBe(0);
+
+      // Fire loadedmetadata → seek should happen
+      video.dispatchEvent(new Event('loadedmetadata'));
+      expect(video.currentTime).toBe(300);
+    });
+
+    it('should seek immediately when readyState >= 1', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': { position: 600, duration: 3600, watched: false, updatedAt: Date.now(),
+          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
+          posterUrl: null, fileId: 42, tier: 1 }
+      });
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'readyState', { value: 2, configurable: true });
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+
+      const component = fixture.componentInstance as any;
+      component.applyResumePosition();
+
+      expect(video.currentTime).toBe(600);
+    });
+  });
 });
