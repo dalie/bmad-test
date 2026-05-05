@@ -97,8 +97,8 @@ development_status:
   epic-6-retrospective: optional
 
   # Epic 7: Admin Panel & LAN-Only Access
-  epic-7: backlog
-  7-1-lan-detection-and-admin-route-guard: backlog
+  epic-7: in-progress
+  7-1-lan-detection-and-admin-route-guard: ready-for-dev
   7-2-admin-dashboard-with-library-statistics: backlog
   7-3-import-and-transcode-monitoring-with-error-details: backlog
   7-4-manual-library-rescan-trigger: backlog
