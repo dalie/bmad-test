@@ -93,7 +93,7 @@ development_status:
   epic-6: in-progress
   6-1-persist-watch-progress-in-localstorage: done
   6-2-resume-playback-from-last-position: done
-  6-3-auto-mark-titles-as-watched: ready-for-dev
+  6-3-auto-mark-titles-as-watched: done
   epic-6-retrospective: optional
 
   # Epic 7: Admin Panel & LAN-Only Access

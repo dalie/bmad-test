@@ -15,9 +15,15 @@ interface AudioTrackInfo {
   channels: number;
 }
 
-function makeActivatedRouteStub(fileId: string, tier?: string, extraQueryParams: Record<string, string> = {}) {
+function makeActivatedRouteStub(
+  fileId: string,
+  tier?: string,
+  extraQueryParams: Record<string, string> = {},
+) {
   const paramMap = convertToParamMap({ fileId });
-  const queryParamMap = convertToParamMap(tier ? { tier, ...extraQueryParams } : { ...extraQueryParams });
+  const queryParamMap = convertToParamMap(
+    tier ? { tier, ...extraQueryParams } : { ...extraQueryParams },
+  );
   return {
     snapshot: { paramMap, queryParamMap },
     paramMap: of(paramMap),
@@ -45,7 +51,10 @@ describe('PlayerComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: makeActivatedRouteStub(fileId, tier, extraQueryParams) },
+        {
+          provide: ActivatedRoute,
+          useValue: makeActivatedRouteStub(fileId, tier, extraQueryParams),
+        },
         { provide: Location, useValue: mockLocation },
         { provide: WatchProgressService, useValue: watchProgressMock },
       ],
@@ -475,9 +484,12 @@ describe('PlayerComponent', () => {
     });
 
     it('should hide AUDIO button when only 1 audio track available', () => {
-      const fixture = setup('42', undefined, [], [
-        { index: 0, language: 'eng', codec: 'aac', channels: 2 },
-      ]);
+      const fixture = setup(
+        '42',
+        undefined,
+        [],
+        [{ index: 0, language: 'eng', codec: 'aac', channels: 2 }],
+      );
       const audioButton = fixture.nativeElement.querySelector('.audio-button');
       expect(audioButton).toBeNull();
     });
@@ -701,8 +713,16 @@ describe('PlayerComponent', () => {
       duration: number,
     ): HTMLVideoElement {
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
-      Object.defineProperty(video, 'currentTime', { value: currentTime, writable: true, configurable: true });
-      Object.defineProperty(video, 'duration', { value: duration, writable: true, configurable: true });
+      Object.defineProperty(video, 'currentTime', {
+        value: currentTime,
+        writable: true,
+        configurable: true,
+      });
+      Object.defineProperty(video, 'duration', {
+        value: duration,
+        writable: true,
+        configurable: true,
+      });
       return video;
     }
 
@@ -829,9 +849,19 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', '1', [], [], movieQueryParams);
       const watchSvc = TestBed.inject(WatchProgressService) as any;
       watchSvc.readAll.mockReturnValue({
-        'movie:42': { position: 300, duration: 3600, watched: false, updatedAt: Date.now(),
-          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
-          posterUrl: null, fileId: 42, tier: 1 }
+        'movie:42': {
+          position: 300,
+          duration: 3600,
+          watched: false,
+          updatedAt: Date.now(),
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          year: 2024,
+          posterUrl: null,
+          fileId: 42,
+          tier: 1,
+        },
       });
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
       Object.defineProperty(video, 'readyState', { value: 1, configurable: true });
@@ -847,9 +877,19 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', '1', [], [], movieQueryParams);
       const watchSvc = TestBed.inject(WatchProgressService) as any;
       watchSvc.readAll.mockReturnValue({
-        'movie:42': { position: 3420, duration: 3600, watched: false, updatedAt: Date.now(),
-          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
-          posterUrl: null, fileId: 42, tier: 1 }
+        'movie:42': {
+          position: 3420,
+          duration: 3600,
+          watched: false,
+          updatedAt: Date.now(),
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          year: 2024,
+          posterUrl: null,
+          fileId: 42,
+          tier: 1,
+        },
       });
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
       Object.defineProperty(video, 'readyState', { value: 1, configurable: true });
@@ -890,9 +930,19 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', '1', [], [], movieQueryParams);
       const watchSvc = TestBed.inject(WatchProgressService) as any;
       watchSvc.readAll.mockReturnValue({
-        'movie:42': { position: 300, duration: 0, watched: false, updatedAt: Date.now(),
-          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
-          posterUrl: null, fileId: 42, tier: 1 }
+        'movie:42': {
+          position: 300,
+          duration: 0,
+          watched: false,
+          updatedAt: Date.now(),
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          year: 2024,
+          posterUrl: null,
+          fileId: 42,
+          tier: 1,
+        },
       });
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
       Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
@@ -907,9 +957,19 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', '1', [], [], movieQueryParams);
       const watchSvc = TestBed.inject(WatchProgressService) as any;
       watchSvc.readAll.mockReturnValue({
-        'movie:42': { position: 0, duration: 3600, watched: false, updatedAt: Date.now(),
-          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
-          posterUrl: null, fileId: 42, tier: 1 }
+        'movie:42': {
+          position: 0,
+          duration: 3600,
+          watched: false,
+          updatedAt: Date.now(),
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          year: 2024,
+          posterUrl: null,
+          fileId: 42,
+          tier: 1,
+        },
       });
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
       Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
@@ -924,9 +984,19 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', '1', [], [], movieQueryParams);
       const watchSvc = TestBed.inject(WatchProgressService) as any;
       watchSvc.readAll.mockReturnValue({
-        'movie:42': { position: 300, duration: 3600, watched: false, updatedAt: Date.now(),
-          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
-          posterUrl: null, fileId: 42, tier: 1 }
+        'movie:42': {
+          position: 300,
+          duration: 3600,
+          watched: false,
+          updatedAt: Date.now(),
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          year: 2024,
+          posterUrl: null,
+          fileId: 42,
+          tier: 1,
+        },
       });
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
       Object.defineProperty(video, 'readyState', { value: 0, configurable: true });
@@ -947,9 +1017,19 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', '1', [], [], movieQueryParams);
       const watchSvc = TestBed.inject(WatchProgressService) as any;
       watchSvc.readAll.mockReturnValue({
-        'movie:42': { position: 600, duration: 3600, watched: false, updatedAt: Date.now(),
-          mediaType: 'movie', id: 42, title: 'Test Movie', year: 2024,
-          posterUrl: null, fileId: 42, tier: 1 }
+        'movie:42': {
+          position: 600,
+          duration: 3600,
+          watched: false,
+          updatedAt: Date.now(),
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          year: 2024,
+          posterUrl: null,
+          fileId: 42,
+          tier: 1,
+        },
       });
       const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
       Object.defineProperty(video, 'readyState', { value: 2, configurable: true });
@@ -959,6 +1039,433 @@ describe('PlayerComponent', () => {
       component.applyResumePosition();
 
       expect(video.currentTime).toBe(600);
+    });
+  });
+
+  describe('Auto-mark as watched', () => {
+    const movieQueryParams = {
+      mediaType: 'movie',
+      mediaId: '42',
+      title: 'Test Movie',
+      year: '2024',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+    };
+
+    const tvQueryParams = {
+      mediaType: 'tv',
+      mediaId: '7',
+      season: '2',
+      episode: '3',
+      title: 'Test Show',
+      year: '2022',
+      posterUrl: '',
+    };
+
+    function setupVideoState(
+      fixture: ReturnType<typeof setup>,
+      currentTime: number,
+      duration: number,
+    ): HTMLVideoElement {
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', {
+        value: currentTime,
+        writable: true,
+        configurable: true,
+      });
+      Object.defineProperty(video, 'duration', {
+        value: duration,
+        writable: true,
+        configurable: true,
+      });
+      return video;
+    }
+
+    it('should set watched: true when position/duration >= 0.90', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 3240, 3600); // 90%
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ watched: true }),
+      );
+    });
+
+    it('should set watched: false when position/duration < 0.90', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 3239, 3600); // just below 90%
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ watched: false }),
+      );
+    });
+
+    it('should mark watched: true at exactly 0.90 threshold', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 900, 1000); // exactly 0.90
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ watched: true }),
+      );
+    });
+
+    it('should mark watched: false at 0.899', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 899, 1000); // 0.899
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ watched: false }),
+      );
+    });
+
+    it('should set watched: true for TV episodes at 90% threshold', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 3240, 3600);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s2:e3',
+        expect.objectContaining({ watched: true }),
+      );
+    });
+  });
+
+  describe('TV rewatch clearing', () => {
+    const tvQueryParams = {
+      mediaType: 'tv',
+      mediaId: '7',
+      season: '2',
+      episode: '3',
+      title: 'Test Show',
+      year: '2022',
+      posterUrl: '',
+    };
+
+    it('should clear watched status of later episodes when starting a watched TV episode', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      watchSvc.readAll.mockReturnValue({
+        'tv:7:s2:e3': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 1000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 99,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 3,
+        },
+        'tv:7:s2:e4': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 2000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 100,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 4,
+        },
+        'tv:7:s3:e1': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 3000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 101,
+          tier: null,
+          seasonNum: 3,
+          episodeNum: 1,
+        },
+      });
+
+      component.clearLaterEpisodesWatched();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s2:e4',
+        expect.objectContaining({ watched: false }),
+      );
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s3:e1',
+        expect.objectContaining({ watched: false }),
+      );
+    });
+
+    it('should NOT clear earlier episodes watched status', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      watchSvc.readAll.mockReturnValue({
+        'tv:7:s2:e2': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 500,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 98,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 2,
+        },
+        'tv:7:s2:e3': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 1000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 99,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 3,
+        },
+        'tv:7:s2:e4': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 2000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 100,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 4,
+        },
+      });
+
+      component.clearLaterEpisodesWatched();
+
+      // Should clear e4 (later) but NOT e2 (earlier)
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s2:e4',
+        expect.objectContaining({ watched: false }),
+      );
+      expect(watchSvc.saveEntry).not.toHaveBeenCalledWith('tv:7:s2:e2', expect.anything());
+    });
+
+    it('should treat same-season higher episode number as later', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      watchSvc.readAll.mockReturnValue({
+        'tv:7:s2:e3': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 1000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 99,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 3,
+        },
+        'tv:7:s2:e5': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 2000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 102,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 5,
+        },
+      });
+
+      component.clearLaterEpisodesWatched();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s2:e5',
+        expect.objectContaining({ watched: false }),
+      );
+    });
+
+    it('should treat higher season (any episode) as later', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      watchSvc.readAll.mockReturnValue({
+        'tv:7:s2:e3': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 1000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 99,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 3,
+        },
+        'tv:7:s4:e1': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 3000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 110,
+          tier: null,
+          seasonNum: 4,
+          episodeNum: 1,
+        },
+      });
+
+      component.clearLaterEpisodesWatched();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s4:e1',
+        expect.objectContaining({ watched: false }),
+      );
+    });
+
+    it('should be a no-op when current episode is NOT already watched', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      watchSvc.readAll.mockReturnValue({
+        'tv:7:s2:e3': {
+          position: 1000,
+          duration: 3600,
+          watched: false,
+          updatedAt: 1000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 99,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 3,
+        },
+        'tv:7:s2:e4': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 2000,
+          mediaType: 'tv',
+          id: 7,
+          title: 'Test Show',
+          posterUrl: null,
+          year: 2022,
+          fileId: 100,
+          tier: null,
+          seasonNum: 2,
+          episodeNum: 4,
+        },
+      });
+
+      component.clearLaterEpisodesWatched();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op for movies', () => {
+      const movieParams = {
+        mediaType: 'movie',
+        mediaId: '42',
+        title: 'Test Movie',
+        year: '2024',
+        posterUrl: '',
+      };
+      const fixture = setup('42', '1', [], [], movieParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      watchSvc.readAll.mockReturnValue({
+        'movie:42': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: 1000,
+          mediaType: 'movie',
+          id: 42,
+          title: 'Test Movie',
+          posterUrl: null,
+          year: 2024,
+          fileId: 42,
+          tier: null,
+        },
+      });
+
+      component.clearLaterEpisodesWatched();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op when progressContext is null', () => {
+      const fixture = setup('42', '1'); // no query params → null progressContext
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+
+      component.clearLaterEpisodesWatched();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
     });
   });
 });

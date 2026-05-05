@@ -169,6 +169,10 @@ export class HomeComponent {
       const latestByTitle = new Map<string, WatchProgressEntry>();
       for (const entry of Object.values(record)) {
         if (!this.isValidProgressEntry(entry)) continue;
+
+        // For TV: skip watched episodes — only consider unwatched ones for Continue Watching
+        if (entry.mediaType === 'tv' && entry.watched) continue;
+
         const key = `${entry.mediaType}:${entry.id}`;
         const existing = latestByTitle.get(key);
         if (!existing || entry.updatedAt > existing.updatedAt) {

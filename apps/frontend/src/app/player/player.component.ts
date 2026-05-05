@@ -217,6 +217,9 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
 
     // Apply resume position LAST — after all listeners are registered
     this.applyResumePosition();
+
+    // Clear watched status from later episodes if rewatching a TV episode
+    this.clearLaterEpisodesWatched();
   }
 
   ngOnDestroy(): void {
@@ -341,6 +344,38 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private clearLaterEpisodesWatched(): void {
+    if (!this.progressContext) return;
+    const ctx = this.progressContext;
+    if (ctx.mediaType !== 'tv') return;
+    if (ctx.seasonNum == null || ctx.episodeNum == null) return;
+
+    const record = this.watchProgressService.readAll();
+
+    const currentKey = `tv:${ctx.id}:s${ctx.seasonNum}:e${ctx.episodeNum}`;
+    const currentEntry = record[currentKey];
+
+    if (!currentEntry || !currentEntry.watched) return;
+
+    for (const [key, entry] of Object.entries(record)) {
+      if (entry.mediaType !== 'tv' || entry.id !== ctx.id) continue;
+      if (entry.seasonNum == null || entry.episodeNum == null) continue;
+      if (!entry.watched) continue;
+
+      const isLater =
+        entry.seasonNum! > ctx.seasonNum! ||
+        (entry.seasonNum === ctx.seasonNum && entry.episodeNum! > ctx.episodeNum!);
+
+      if (isLater) {
+        this.watchProgressService.saveEntry(key, {
+          ...entry,
+          watched: false,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+  }
+
   private saveProgress(): void {
     if (!this.progressContext) return;
     const video = this.videoElRef?.nativeElement;
@@ -364,7 +399,7 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     const entry: WatchProgressEntry = {
       position,
       duration,
-      watched: false,
+      watched: position / duration >= 0.9,
       updatedAt: Date.now(),
       mediaType: ctx.mediaType,
       id: ctx.id,
@@ -457,22 +492,26 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
       audio.src = trackUrl;
       audio.load();
       // Seek and resume inside loadedmetadata — synchronous assignment after load() is discarded by browsers
-      audio.addEventListener('loadedmetadata', () => {
-        audio.currentTime = savedTime;
-        if (wasPlaying) {
-          audio.play().catch((e) => {
-            if (e?.name !== 'AbortError') {
-              this.syncDisabled = true;
-              video.muted = false;
-              this.cancelSync();
+      audio.addEventListener(
+        'loadedmetadata',
+        () => {
+          audio.currentTime = savedTime;
+          if (wasPlaying) {
+            audio.play().catch((e) => {
+              if (e?.name !== 'AbortError') {
+                this.syncDisabled = true;
+                video.muted = false;
+                this.cancelSync();
+              }
+            });
+            // Restart sync loop if it was previously cancelled by an error
+            if (this.rafId === null) {
+              this.syncLoop();
             }
-          });
-          // Restart sync loop if it was previously cancelled by an error
-          if (this.rafId === null) {
-            this.syncLoop();
           }
-        }
-      }, { once: true });
+        },
+        { once: true },
+      );
     } else {
       const video = this.videoElRef?.nativeElement;
       if (!video) return;

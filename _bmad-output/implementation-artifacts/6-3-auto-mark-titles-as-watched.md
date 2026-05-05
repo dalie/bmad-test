@@ -1,6 +1,6 @@
 # Story 6.3: Auto-Mark Titles as Watched
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -20,49 +20,49 @@ so that I can see what I've already seen at a glance.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Modify `saveProgress()` to auto-mark watched at 90% threshold (AC: #1, #2, #3)
-  - [ ] In `apps/frontend/src/app/player/player.component.ts`, modify `saveProgress()`
-  - [ ] Change `watched: false` to a computed value: `position / duration >= 0.90`
-  - [ ] This is the ONLY change needed in `saveProgress()` — the entry structure, key format, and save mechanism all remain identical
+- [x] Task 1: Modify `saveProgress()` to auto-mark watched at 90% threshold (AC: #1, #2, #3)
+  - [x] In `apps/frontend/src/app/player/player.component.ts`, modify `saveProgress()`
+  - [x] Change `watched: false` to a computed value: `position / duration >= 0.90`
+  - [x] This is the ONLY change needed in `saveProgress()` — the entry structure, key format, and save mechanism all remain identical
 
-- [ ] Task 2: Add `clearLaterEpisodesWatched()` for TV rewatch logic (AC: #4)
-  - [ ] In `apps/frontend/src/app/player/player.component.ts`, add private method `clearLaterEpisodesWatched(): void`
-  - [ ] Method guards: returns early if `!this.progressContext`, if `mediaType !== 'tv'`, or if `seasonNum`/`episodeNum` are null
-  - [ ] Method reads all entries via `this.watchProgressService.readAll()`
-  - [ ] Method checks if the CURRENT episode's entry exists AND has `watched: true`
-  - [ ] If so, iterates all entries in the record, finds entries matching the same show ID (`mediaType === 'tv'` AND same `id`) that are "later" (higher season, OR same season + higher episode)
-  - [ ] For each later episode with `watched: true`, calls `this.watchProgressService.saveEntry(key, { ...entry, watched: false, updatedAt: Date.now() })`
-  - [ ] Call `clearLaterEpisodesWatched()` at the end of `ngAfterViewInit()`, AFTER `applyResumePosition()`
+- [x] Task 2: Add `clearLaterEpisodesWatched()` for TV rewatch logic (AC: #4)
+  - [x] In `apps/frontend/src/app/player/player.component.ts`, add private method `clearLaterEpisodesWatched(): void`
+  - [x] Method guards: returns early if `!this.progressContext`, if `mediaType !== 'tv'`, or if `seasonNum`/`episodeNum` are null
+  - [x] Method reads all entries via `this.watchProgressService.readAll()`
+  - [x] Method checks if the CURRENT episode's entry exists AND has `watched: true`
+  - [x] If so, iterates all entries in the record, finds entries matching the same show ID (`mediaType === 'tv'` AND same `id`) that are "later" (higher season, OR same season + higher episode)
+  - [x] For each later episode with `watched: true`, calls `this.watchProgressService.saveEntry(key, { ...entry, watched: false, updatedAt: Date.now() })`
+  - [x] Call `clearLaterEpisodesWatched()` at the end of `ngAfterViewInit()`, AFTER `applyResumePosition()`
 
-- [ ] Task 3: Modify `readContinueWatchingFromStorage()` in home component (AC: #6, #7)
-  - [ ] In `apps/frontend/src/app/home/home.component.ts`, modify `readContinueWatchingFromStorage()`
-  - [ ] During the grouping loop, skip TV entries that have `watched: true` — only group unwatched TV episodes for Continue Watching selection
-  - [ ] Movies remain unchanged — group by latest updatedAt, then filter by `!e.watched` at the end
-  - [ ] Result: for TV shows, the Continue Watching section shows the latest UNWATCHED episode per show; fully watched shows (all episodes watched) don't appear
+- [x] Task 3: Modify `readContinueWatchingFromStorage()` in home component (AC: #6, #7)
+  - [x] In `apps/frontend/src/app/home/home.component.ts`, modify `readContinueWatchingFromStorage()`
+  - [x] During the grouping loop, skip TV entries that have `watched: true` — only group unwatched TV episodes for Continue Watching selection
+  - [x] Movies remain unchanged — group by latest updatedAt, then filter by `!e.watched` at the end
+  - [x] Result: for TV shows, the Continue Watching section shows the latest UNWATCHED episode per show; fully watched shows (all episodes watched) don't appear
 
-- [ ] Task 4: Write unit tests for auto-mark watched behavior (AC: #1–#3)
-  - [ ] In `apps/frontend/src/app/player/player.component.spec.ts`, add `describe('Auto-mark as watched')`
-  - [ ] Test: `saveProgress()` sets `watched: true` when position/duration >= 0.90
-  - [ ] Test: `saveProgress()` sets `watched: false` when position/duration < 0.90
-  - [ ] Test: threshold boundary — exactly 0.90 → `watched: true`
-  - [ ] Test: just below threshold (0.899) → `watched: false`
+- [x] Task 4: Write unit tests for auto-mark watched behavior (AC: #1–#3)
+  - [x] In `apps/frontend/src/app/player/player.component.spec.ts`, add `describe('Auto-mark as watched')`
+  - [x] Test: `saveProgress()` sets `watched: true` when position/duration >= 0.90
+  - [x] Test: `saveProgress()` sets `watched: false` when position/duration < 0.90
+  - [x] Test: threshold boundary — exactly 0.90 → `watched: true`
+  - [x] Test: just below threshold (0.899) → `watched: false`
 
-- [ ] Task 5: Write unit tests for TV rewatch clearing logic (AC: #4)
-  - [ ] In `apps/frontend/src/app/player/player.component.spec.ts`, add `describe('TV rewatch clearing')`
-  - [ ] Test: when starting a watched TV episode, later episodes' watched status is cleared
-  - [ ] Test: earlier episodes' watched status is NOT cleared
-  - [ ] Test: same-season higher episode number is treated as "later"
-  - [ ] Test: higher season (any episode) is treated as "later"
-  - [ ] Test: no-op when current episode is NOT already watched
-  - [ ] Test: no-op for movies (only TV triggers clearing)
-  - [ ] Test: no-op when progressContext is null
+- [x] Task 5: Write unit tests for TV rewatch clearing logic (AC: #4)
+  - [x] In `apps/frontend/src/app/player/player.component.spec.ts`, add `describe('TV rewatch clearing')`
+  - [x] Test: when starting a watched TV episode, later episodes' watched status is cleared
+  - [x] Test: earlier episodes' watched status is NOT cleared
+  - [x] Test: same-season higher episode number is treated as "later"
+  - [x] Test: higher season (any episode) is treated as "later"
+  - [x] Test: no-op when current episode is NOT already watched
+  - [x] Test: no-op for movies (only TV triggers clearing)
+  - [x] Test: no-op when progressContext is null
 
-- [ ] Task 6: Write unit tests for home component Continue Watching TV behavior (AC: #7)
-  - [ ] In `apps/frontend/src/app/home/home.component.spec.ts`, add tests to existing Continue Watching describe block
-  - [ ] Test: when latest TV episode is watched but an older one is unwatched, the unwatched one appears in Continue Watching
-  - [ ] Test: when ALL TV episodes for a show are watched, the show does NOT appear in Continue Watching
-  - [ ] Test: watched movies are excluded from Continue Watching (existing behavior preserved)
-  - [ ] Test: unwatched TV episode with progress still appears normally
+- [x] Task 6: Write unit tests for home component Continue Watching TV behavior (AC: #7)
+  - [x] In `apps/frontend/src/app/home/home.component.spec.ts`, add tests to existing Continue Watching describe block
+  - [x] Test: when latest TV episode is watched but an older one is unwatched, the unwatched one appears in Continue Watching
+  - [x] Test: when ALL TV episodes for a show are watched, the show does NOT appear in Continue Watching
+  - [x] Test: watched movies are excluded from Continue Watching (existing behavior preserved)
+  - [x] Test: unwatched TV episode with progress still appears normally
 
 ## Dev Notes
 
@@ -307,10 +307,30 @@ Home component tests use Angular testing utilities with `TestBed`. The `WatchPro
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+No issues encountered.
 
 ### Completion Notes List
 
+- Modified `saveProgress()` to compute `watched: position / duration >= 0.90` instead of hardcoded `false`
+- Added `clearLaterEpisodesWatched()` private method with proper guards for TV-only, null checks, and "later" episode detection logic
+- Called `clearLaterEpisodesWatched()` at end of `ngAfterViewInit()` after `applyResumePosition()`
+- Modified home component `readContinueWatchingFromStorage()` to skip watched TV episodes during grouping loop — only unwatched TV episodes are candidates for Continue Watching
+- Added 5 tests in "Auto-mark as watched" describe block (threshold boundary testing)
+- Added 7 tests in "TV rewatch clearing" describe block (later/earlier detection, guards)
+- Added 4 tests in "Continue Watching TV watched behavior" describe block (TV watched filtering)
+- All 150 frontend tests pass with no regressions
+
 ### File List
 
+- `apps/frontend/src/app/player/player.component.ts` — MODIFIED (saveProgress watched computation, clearLaterEpisodesWatched method, ngAfterViewInit call)
+- `apps/frontend/src/app/home/home.component.ts` — MODIFIED (readContinueWatchingFromStorage TV watched skip)
+- `apps/frontend/src/app/player/player.component.spec.ts` — MODIFIED (auto-mark + TV rewatch clearing tests)
+- `apps/frontend/src/app/home/home.component.spec.ts` — MODIFIED (Continue Watching TV behavior tests)
+
 ## Change Log
+
+- 2026-05-05: Implemented story 6-3 — auto-mark titles as watched at 90% threshold, TV rewatch clearing logic, and Continue Watching TV filtering. All ACs satisfied. 16 new tests added, 150 total passing.

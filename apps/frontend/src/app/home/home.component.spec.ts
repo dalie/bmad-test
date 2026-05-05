@@ -753,4 +753,169 @@ describe('HomeComponent', () => {
     expect(mockLibraryService.getShows).toHaveBeenCalled();
     expect(mockLibraryService.getRecent).toHaveBeenCalled();
   });
+
+  describe('Continue Watching TV watched behavior', () => {
+    it('should show latest unwatched TV episode when latest is watched', async () => {
+      const now = Date.now();
+      const record: Record<string, WatchProgressEntry> = {
+        'tv:100:s1:e3': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: now,
+          mediaType: 'tv',
+          id: 100,
+          title: 'My Show',
+          posterUrl: null,
+          year: 2024,
+          fileId: 30,
+          tier: null,
+          seasonNum: 1,
+          episodeNum: 3,
+        },
+        'tv:100:s1:e2': {
+          position: 1200,
+          duration: 3600,
+          watched: false,
+          updatedAt: now - 5000,
+          mediaType: 'tv',
+          id: 100,
+          title: 'My Show',
+          posterUrl: null,
+          year: 2024,
+          fileId: 20,
+          tier: null,
+          seasonNum: 1,
+          episodeNum: 2,
+        },
+      };
+      localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(record));
+
+      await TestBed.configureTestingModule({
+        imports: [HomeComponent],
+        providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+
+      const cwSection = Array.from(el.querySelectorAll('section.library-section')).find((s) =>
+        s.querySelector('h2')?.textContent?.includes('Continue Watching'),
+      );
+      expect(cwSection).toBeTruthy();
+      const anchor = cwSection!.querySelector('a.poster-grid__item') as HTMLAnchorElement;
+      expect(anchor.getAttribute('href')).toContain('/play/20');
+    });
+
+    it('should NOT show TV show in Continue Watching when ALL episodes are watched', async () => {
+      const now = Date.now();
+      const record: Record<string, WatchProgressEntry> = {
+        'tv:100:s1:e1': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: now - 10000,
+          mediaType: 'tv',
+          id: 100,
+          title: 'My Show',
+          posterUrl: null,
+          year: 2024,
+          fileId: 10,
+          tier: null,
+          seasonNum: 1,
+          episodeNum: 1,
+        },
+        'tv:100:s1:e2': {
+          position: 3400,
+          duration: 3600,
+          watched: true,
+          updatedAt: now,
+          mediaType: 'tv',
+          id: 100,
+          title: 'My Show',
+          posterUrl: null,
+          year: 2024,
+          fileId: 20,
+          tier: null,
+          seasonNum: 1,
+          episodeNum: 2,
+        },
+      };
+      localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(record));
+
+      await TestBed.configureTestingModule({
+        imports: [HomeComponent],
+        providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+
+      const cwSection = Array.from(el.querySelectorAll('section.library-section')).find((s) =>
+        s.querySelector('h2')?.textContent?.includes('Continue Watching'),
+      );
+      expect(cwSection).toBeFalsy();
+    });
+
+    it('should exclude watched movies from Continue Watching (existing behavior preserved)', async () => {
+      localStorage.setItem(
+        WATCH_PROGRESS_KEY,
+        JSON.stringify(makeMovieProgress(1, 'Watched Movie', 3400, 3600, true)),
+      );
+
+      await TestBed.configureTestingModule({
+        imports: [HomeComponent],
+        providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+
+      const cwSection = Array.from(el.querySelectorAll('section.library-section')).find((s) =>
+        s.querySelector('h2')?.textContent?.includes('Continue Watching'),
+      );
+      expect(cwSection).toBeFalsy();
+    });
+
+    it('should show unwatched TV episode with progress normally', async () => {
+      const now = Date.now();
+      const record: Record<string, WatchProgressEntry> = {
+        'tv:200:s1:e1': {
+          position: 1800,
+          duration: 3600,
+          watched: false,
+          updatedAt: now,
+          mediaType: 'tv',
+          id: 200,
+          title: 'Another Show',
+          posterUrl: null,
+          year: 2024,
+          fileId: 50,
+          tier: null,
+          seasonNum: 1,
+          episodeNum: 1,
+        },
+      };
+      localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(record));
+
+      await TestBed.configureTestingModule({
+        imports: [HomeComponent],
+        providers: [{ provide: LibraryService, useValue: mockLibraryService }, provideRouter([])],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+
+      const cwSection = Array.from(el.querySelectorAll('section.library-section')).find((s) =>
+        s.querySelector('h2')?.textContent?.includes('Continue Watching'),
+      );
+      expect(cwSection).toBeTruthy();
+      const anchor = cwSection!.querySelector('a.poster-grid__item') as HTMLAnchorElement;
+      expect(anchor.getAttribute('href')).toContain('/play/50');
+    });
+  });
 });
