@@ -1,6 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AccessController, AdminController } from "./admin.controller";
 import { AdminStatsService, AdminStats } from "./admin-stats.service";
+import {
+  AdminJobsService,
+  FailedJobSummary,
+  JobDetail,
+  PipelineMonitorStatus,
+} from "./admin-jobs.service";
 import { LanDetectionService } from "./lan-detection.service";
 import { LanGuard } from "./lan.guard";
 import { ForbiddenException } from "@nestjs/common";
@@ -65,6 +71,7 @@ describe("AccessController", () => {
 describe("AdminController", () => {
   let controller: AdminController;
   let adminStatsService: jest.Mocked<AdminStatsService>;
+  let adminJobsService: jest.Mocked<AdminJobsService>;
 
   beforeEach(async () => {
     const lanDetectionService = {
@@ -77,11 +84,44 @@ describe("AdminController", () => {
       getStats: jest.fn().mockReturnValue(mockStats),
     } as any;
 
+    adminJobsService = {
+      getPipelineStatus: jest.fn().mockReturnValue({
+        transcode: { queued: 2, processing: 1, completed: 10, failed: 3 },
+        scanErrors: 5,
+        probeFailures: 2,
+        matchFailures: 1,
+      }),
+      getFailedJobs: jest.fn().mockReturnValue([
+        {
+          id: "1",
+          filename: "test.mkv",
+          stage: "transcode",
+          errorMessage: "ffmpeg error",
+          timestamp: "2026-05-05T10:00:00",
+          retryable: true,
+        },
+      ]),
+      getJobDetails: jest.fn().mockReturnValue({
+        id: "1",
+        filename: "test.mkv",
+        filePath: "/media/test.mkv",
+        stage: "transcode",
+        tier: 3,
+        status: "failed",
+        errorMessage: "ffmpeg error",
+        errorDetails: "full stack trace",
+        createdAt: "2026-05-05T09:00:00",
+        updatedAt: "2026-05-05T10:00:00",
+      }),
+      retryJob: jest.fn().mockReturnValue({ success: true }),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminController],
       providers: [
         { provide: LanDetectionService, useValue: lanDetectionService },
         { provide: AdminStatsService, useValue: adminStatsService },
+        { provide: AdminJobsService, useValue: adminJobsService },
         LanGuard,
       ],
     }).compile();
@@ -94,6 +134,42 @@ describe("AdminController", () => {
       const result = controller.getStats();
       expect(result).toEqual(mockStats);
       expect(adminStatsService.getStats).toHaveBeenCalled();
+    });
+  });
+
+  describe("GET /admin/pipeline", () => {
+    it("should return pipeline status counts", () => {
+      const result = controller.getPipelineStatus();
+      expect(result.transcode.queued).toBe(2);
+      expect(result.transcode.failed).toBe(3);
+      expect(result.scanErrors).toBe(5);
+      expect(adminJobsService.getPipelineStatus).toHaveBeenCalled();
+    });
+  });
+
+  describe("GET /admin/jobs", () => {
+    it("should return jobs list", () => {
+      const result = controller.getFailedJobs();
+      expect(result).toHaveLength(1);
+      expect(result[0].filename).toBe("test.mkv");
+      expect(adminJobsService.getFailedJobs).toHaveBeenCalled();
+    });
+  });
+
+  describe("GET /admin/jobs/:id", () => {
+    it("should return job details", () => {
+      const result = controller.getJobDetails("1");
+      expect(result.filename).toBe("test.mkv");
+      expect(result.errorDetails).toBe("full stack trace");
+      expect(adminJobsService.getJobDetails).toHaveBeenCalledWith("1");
+    });
+  });
+
+  describe("POST /admin/jobs/:id/retry", () => {
+    it("should return success", () => {
+      const result = controller.retryJob(1);
+      expect(result).toEqual({ success: true });
+      expect(adminJobsService.retryJob).toHaveBeenCalledWith(1);
     });
   });
 

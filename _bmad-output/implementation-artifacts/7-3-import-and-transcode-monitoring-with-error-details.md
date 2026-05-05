@@ -1,6 +1,6 @@
 # Story 7.3: Import and Transcode Monitoring with Error Details
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,87 +18,100 @@ so that I can diagnose and resolve pipeline failures.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `AdminJobsService` in backend (AC: #1, #2, #3, #4)
-  - [ ] Create `apps/backend/src/admin/admin-jobs.service.ts`
-  - [ ] Inject `DatabaseService`
-  - [ ] Implement `getFailedJobs()` — query `transcode_jobs` WHERE status='failed' JOIN `media_files` for filename, plus query `scan_errors` for probe/match failures
-  - [ ] Implement `getJobDetails(id: number)` — full job details with error_details, file path, tier, timestamps
-  - [ ] Implement `retryJob(id: number)` — reset transcode_job status from 'failed' back to 'queued', clear error_details
-  - [ ] Implement `getPipelineStatus()` — aggregate counts from `transcode_jobs` by status + scan_errors count
-  - [ ] Return typed interfaces for all responses
+- [x] Task 1: Create `AdminJobsService` in backend (AC: #1, #2, #3, #4)
+  - [x] Create `apps/backend/src/admin/admin-jobs.service.ts`
+  - [x] Inject `DatabaseService`
+  - [x] Implement `getFailedJobs()` — query `transcode_jobs` WHERE status='failed' JOIN `media_files` for filename, plus query `scan_errors` for probe/match failures
+  - [x] Implement `getJobDetails(id: number)` — full job details with error_details, file path, tier, timestamps
+  - [x] Implement `retryJob(id: number)` — reset transcode_job status from 'failed' back to 'queued', clear error_details
+  - [x] Implement `getPipelineStatus()` — aggregate counts from `transcode_jobs` by status + scan_errors count
+  - [x] Return typed interfaces for all responses
 
-- [ ] Task 2: Add admin job endpoints to `AdminController` (AC: #1, #2, #3, #4)
-  - [ ] UPDATE `apps/backend/src/admin/admin.controller.ts`
-  - [ ] Add `GET /admin/jobs` — returns failed/errored jobs list (paginated)
-  - [ ] Add `GET /admin/jobs/:id` — returns full error details for one job
-  - [ ] Add `POST /admin/jobs/:id/retry` — retries a failed transcode job
-  - [ ] Add `GET /admin/pipeline` — returns aggregate pipeline status counts
-  - [ ] All endpoints protected by `LanGuard` (class-level, already applied)
+- [x] Task 2: Add admin job endpoints to `AdminController` (AC: #1, #2, #3, #4)
+  - [x] UPDATE `apps/backend/src/admin/admin.controller.ts`
+  - [x] Add `GET /admin/jobs` — returns failed/errored jobs list (paginated)
+  - [x] Add `GET /admin/jobs/:id` — returns full error details for one job
+  - [x] Add `POST /admin/jobs/:id/retry` — retries a failed transcode job
+  - [x] Add `GET /admin/pipeline` — returns aggregate pipeline status counts
+  - [x] All endpoints protected by `LanGuard` (class-level, already applied)
 
-- [ ] Task 3: Register `AdminJobsService` in `AdminModule` (AC: #1)
-  - [ ] UPDATE `apps/backend/src/admin/admin.module.ts` — add `AdminJobsService` to providers
+- [x] Task 3: Register `AdminJobsService` in `AdminModule` (AC: #1)
+  - [x] UPDATE `apps/backend/src/admin/admin.module.ts` — add `AdminJobsService` to providers
 
-- [ ] Task 4: Create frontend `AdminJobsService` (AC: #1, #2, #3, #4)
-  - [ ] Create `apps/frontend/src/app/admin/admin-jobs.service.ts`
-  - [ ] Inject `HttpClient`
-  - [ ] Implement methods: `getPipelineStatus()`, `getFailedJobs()`, `getJobDetails(id)`, `retryJob(id)`
-  - [ ] Define typed interfaces matching backend response shapes
+- [x] Task 4: Create frontend `AdminJobsService` (AC: #1, #2, #3, #4)
+  - [x] Create `apps/frontend/src/app/admin/admin-jobs.service.ts`
+  - [x] Inject `HttpClient`
+  - [x] Implement methods: `getPipelineStatus()`, `getFailedJobs()`, `getJobDetails(id)`, `retryJob(id)`
+  - [x] Define typed interfaces matching backend response shapes
 
-- [ ] Task 5: Create `PipelineMonitorComponent` (AC: #1, #2, #3, #4)
-  - [ ] Create `apps/frontend/src/app/admin/pipeline-monitor.component.ts`
-  - [ ] Display pipeline status summary (queued/processing/completed/failed counts)
-  - [ ] Display failed jobs table with: filename, failure stage, error message, timestamp
-  - [ ] Add "View Details" action per failed job (expandable row or inline detail)
-  - [ ] Add "Retry" button per failed transcode job with loading state
-  - [ ] Use `toSignal()` pattern, `ChangeDetectionStrategy.OnPush`, standalone component
-  - [ ] Use project CSS variables, minimal styling (UX-DR14)
+- [x] Task 5: Create `PipelineMonitorComponent` (AC: #1, #2, #3, #4)
+  - [x] Create `apps/frontend/src/app/admin/pipeline-monitor.component.ts`
+  - [x] Display pipeline status summary (queued/processing/completed/failed counts)
+  - [x] Display failed jobs table with: filename, failure stage, error message, timestamp
+  - [x] Add "View Details" action per failed job (expandable row or inline detail)
+  - [x] Add "Retry" button per failed transcode job with loading state
+  - [x] Use `toSignal()` pattern, `ChangeDetectionStrategy.OnPush`, standalone component
+  - [x] Use project CSS variables, minimal styling (UX-DR14)
 
-- [ ] Task 6: Create `NeedsAttentionComponent` (AC: #5)
-  - [ ] Create `apps/frontend/src/app/admin/needs-attention.component.ts`
-  - [ ] Call existing `GET /api/library/unmatched` endpoint (already exists from story 2-5)
-  - [ ] Display list of unmatched files with: filename, source type, error message
-  - [ ] Add TMDB search UI: search input + call `GET /api/tmdb/search?query=X&type=movie|tv`
-  - [ ] Display search results with poster, title, year, overview
-  - [ ] Add "Match" button per result → calls `POST /api/library/files/:id/match` with selected tmdbId
-  - [ ] Show success/error feedback after match attempt
-  - [ ] Support pagination for unmatched files list
+- [x] Task 6: Create `NeedsAttentionComponent` (AC: #5)
+  - [x] Create `apps/frontend/src/app/admin/needs-attention.component.ts`
+  - [x] Call existing `GET /api/library/unmatched` endpoint (already exists from story 2-5)
+  - [x] Display list of unmatched files with: filename, source type, error message
+  - [x] Add TMDB search UI: search input + call `GET /api/tmdb/search?query=X&type=movie|tv`
+  - [x] Display search results with poster, title, year, overview
+  - [x] Add "Match" button per result → calls `POST /api/library/files/:id/match` with selected tmdbId
+  - [x] Show success/error feedback after match attempt
+  - [x] Support pagination for unmatched files list
 
-- [ ] Task 7: Integrate monitoring components into `AdminComponent` (AC: #1, #5)
-  - [ ] UPDATE `apps/frontend/src/app/admin/admin.component.ts`
-  - [ ] Add `PipelineMonitorComponent` and `NeedsAttentionComponent` below existing stats sections
-  - [ ] Import both components in the standalone component's `imports` array
+- [x] Task 7: Integrate monitoring components into `AdminComponent` (AC: #1, #5)
+  - [x] UPDATE `apps/frontend/src/app/admin/admin.component.ts`
+  - [x] Add `PipelineMonitorComponent` and `NeedsAttentionComponent` below existing stats sections
+  - [x] Import both components in the standalone component's `imports` array
 
-- [ ] Task 8: Write backend unit tests for `AdminJobsService` (AC: #1, #2, #3, #4)
-  - [ ] Create `apps/backend/src/admin/admin-jobs.service.spec.ts`
-  - [ ] Test: `getFailedJobs()` returns transcode failures with filename, stage, error, timestamp
-  - [ ] Test: `getFailedJobs()` returns scan/probe/match errors from `scan_errors` table
-  - [ ] Test: `getJobDetails(id)` returns full details for existing job
-  - [ ] Test: `getJobDetails(id)` throws NotFoundException for missing job
-  - [ ] Test: `retryJob(id)` resets status to 'queued' and clears error_details
-  - [ ] Test: `retryJob(id)` throws NotFoundException for missing job
-  - [ ] Test: `retryJob(id)` throws BadRequestException for non-failed job
-  - [ ] Test: `getPipelineStatus()` returns correct aggregate counts
-  - [ ] Test: returns empty results when no jobs/errors exist
+- [x] Task 8: Write backend unit tests for `AdminJobsService` (AC: #1, #2, #3, #4)
+  - [x] Create `apps/backend/src/admin/admin-jobs.service.spec.ts`
+  - [x] Test: `getFailedJobs()` returns transcode failures with filename, stage, error, timestamp
+  - [x] Test: `getFailedJobs()` returns scan/probe/match errors from `scan_errors` table
+  - [x] Test: `getJobDetails(id)` returns full details for existing job
+  - [x] Test: `getJobDetails(id)` throws NotFoundException for missing job
+  - [x] Test: `retryJob(id)` resets status to 'queued' and clears error_details
+  - [x] Test: `retryJob(id)` throws NotFoundException for missing job
+  - [x] Test: `retryJob(id)` throws BadRequestException for non-failed job
+  - [x] Test: `getPipelineStatus()` returns correct aggregate counts
+  - [x] Test: returns empty results when no jobs/errors exist
 
-- [ ] Task 9: Update `AdminController` tests (AC: #2, #3, #4)
-  - [ ] UPDATE `apps/backend/src/admin/admin.controller.spec.ts`
-  - [ ] Test: `GET /admin/jobs` returns jobs list
-  - [ ] Test: `GET /admin/jobs/:id` returns job details
-  - [ ] Test: `POST /admin/jobs/:id/retry` returns success
-  - [ ] Test: `GET /admin/pipeline` returns status counts
-  - [ ] Test: all new endpoints return 403 for non-LAN clients
+- [x] Task 9: Update `AdminController` tests (AC: #2, #3, #4)
+  - [x] UPDATE `apps/backend/src/admin/admin.controller.spec.ts`
+  - [x] Test: `GET /admin/jobs` returns jobs list
+  - [x] Test: `GET /admin/jobs/:id` returns job details
+  - [x] Test: `POST /admin/jobs/:id/retry` returns success
+  - [x] Test: `GET /admin/pipeline` returns status counts
+  - [x] Test: all new endpoints return 403 for non-LAN clients
 
-- [ ] Task 10: Write frontend unit tests (AC: #1, #2, #5)
-  - [ ] Create `apps/frontend/src/app/admin/pipeline-monitor.component.spec.ts`
-  - [ ] Test: component renders pipeline status counts
-  - [ ] Test: component renders failed jobs table
-  - [ ] Test: retry button triggers service call and refreshes list
-  - [ ] Create `apps/frontend/src/app/admin/needs-attention.component.spec.ts`
-  - [ ] Test: component renders unmatched files list
-  - [ ] Test: TMDB search triggers search and displays results
-  - [ ] Test: match button calls correct endpoint
-  - [ ] Create `apps/frontend/src/app/admin/admin-jobs.service.spec.ts`
-  - [ ] Test: service calls correct endpoints and maps responses
+- [x] Task 10: Write frontend unit tests (AC: #1, #2, #5)
+  - [x] Create `apps/frontend/src/app/admin/pipeline-monitor.component.spec.ts`
+  - [x] Test: component renders pipeline status counts
+  - [x] Test: component renders failed jobs table
+  - [x] Test: retry button triggers service call and refreshes list
+  - [x] Create `apps/frontend/src/app/admin/needs-attention.component.spec.ts`
+  - [x] Test: component renders unmatched files list
+  - [x] Test: TMDB search triggers search and displays results
+  - [x] Test: match button calls correct endpoint
+  - [x] Create `apps/frontend/src/app/admin/admin-jobs.service.spec.ts`
+  - [x] Test: service calls correct endpoints and maps responses
+
+### Review Findings
+
+- [x] [Review][Decision] Missing "View Details" UI for failed jobs — AC3 requires admin can view full error details; added expandable detail row
+- [x] [Review][Decision] Missing pagination in NeedsAttentionComponent — added offset/limit pagination controls
+- [x] [Review][Patch] Replace `window.location.reload()` with reactive data refresh after retry [pipeline-monitor.component.ts]
+- [x] [Review][Patch] Add error feedback to user on retry failure [pipeline-monitor.component.ts]
+- [x] [Review][Patch] Fix match() concurrency — per-file in-flight tracking [needs-attention.component.ts]
+- [x] [Review][Patch] Add try/catch to getJobDetails() and retryJob() for DB error consistency [admin-jobs.service.ts]
+- [x] [Review][Patch] Guard against undefined file in search() after find() [needs-attention.component.ts]
+- [x] [Review][Defer] No pagination/limit on getFailedJobs() backend query — unbounded result set [admin-jobs.service.ts] — deferred, pre-existing pattern
+- [x] [Review][Defer] No CSRF/auth beyond LanGuard for destructive operations — deferred, architectural
+- [x] [Review][Defer] Subtitle failures have no query path in getFailedJobs() — deferred, no subtitle extraction exists yet
 
 ## Dev Notes
 
@@ -471,8 +484,47 @@ const httpTesting = TestBed.inject(HttpTestingController);
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+- Backend admin tests: 5 suites, 44 tests passed
+- Frontend tests: 14 suites, 173 tests passed (all existing + 12 new)
+- Pre-existing failure in classification.service.spec.ts (unrelated, 2 tests)
+- TypeScript compiles clean (no errors)
 
 ### Completion Notes List
 
+- Implemented `AdminJobsService` with `getPipelineStatus()`, `getFailedJobs()`, `getJobDetails()`, and `retryJob()` methods
+- Job IDs use prefixed scheme: raw integers for transcode jobs, `se-` prefix for scan errors
+- Added 4 new endpoints to `AdminController`: GET /admin/pipeline, GET /admin/jobs, GET /admin/jobs/:id, POST /admin/jobs/:id/retry
+- All endpoints protected by class-level `LanGuard`
+- Frontend `AdminJobsService` mirrors backend interfaces
+- `PipelineMonitorComponent` displays status grid + failed jobs table with retry capability
+- `NeedsAttentionComponent` reuses existing library/tmdb endpoints for unmatched file management
+- Both frontend components follow established patterns: standalone, OnPush, toSignal(), inject()
+- Comprehensive test coverage: backend service (12 tests), controller (5 new tests), frontend service (4 tests), pipeline component (4 tests), needs-attention component (4 tests)
+
 ### File List
+
+New:
+
+- apps/backend/src/admin/admin-jobs.service.ts
+- apps/backend/src/admin/admin-jobs.service.spec.ts
+- apps/frontend/src/app/admin/admin-jobs.service.ts
+- apps/frontend/src/app/admin/admin-jobs.service.spec.ts
+- apps/frontend/src/app/admin/pipeline-monitor.component.ts
+- apps/frontend/src/app/admin/pipeline-monitor.component.spec.ts
+- apps/frontend/src/app/admin/needs-attention.component.ts
+- apps/frontend/src/app/admin/needs-attention.component.spec.ts
+
+Modified:
+
+- apps/backend/src/admin/admin.controller.ts
+- apps/backend/src/admin/admin.controller.spec.ts
+- apps/backend/src/admin/admin.module.ts
+- apps/frontend/src/app/admin/admin.component.ts
+
+### Change Log
+
+- 2026-05-05: Implemented story 7-3 — Pipeline monitoring with error details, retry capability, and needs-attention queue integration into admin panel

@@ -100,6 +100,6 @@ development_status:
   epic-7: in-progress
   7-1-lan-detection-and-admin-route-guard: done
   7-2-admin-dashboard-with-library-statistics: done
-  7-3-import-and-transcode-monitoring-with-error-details: ready-for-dev
+  7-3-import-and-transcode-monitoring-with-error-details: done
   7-4-manual-library-rescan-trigger: backlog
   epic-7-retrospective: optional

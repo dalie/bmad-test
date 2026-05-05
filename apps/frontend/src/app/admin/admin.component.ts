@@ -2,10 +2,13 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AdminStatsService } from './admin-stats.service';
+import { PipelineMonitorComponent } from './pipeline-monitor.component';
+import { NeedsAttentionComponent } from './needs-attention.component';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
+  imports: [PipelineMonitorComponent, NeedsAttentionComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h1>Admin Panel</h1>
@@ -112,6 +115,8 @@ import { AdminStatsService } from './admin-stats.service';
     } @else {
       <p>Loading statistics...</p>
     }
+    <app-pipeline-monitor />
+    <app-needs-attention />
   `,
   styles: [
     `

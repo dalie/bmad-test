@@ -1,3 +1,9 @@
+## Deferred from: code review of 7-3-import-and-transcode-monitoring-with-error-details (2026-05-05)
+
+- No pagination/limit on `getFailedJobs()` backend query — both transcode_jobs and scan_errors are queried with no LIMIT clause; unbounded result set risk if historical failures accumulate.
+- No CSRF/auth beyond LanGuard for destructive operations — `POST /admin/jobs/:id/retry` mutates DB state with only IP-based LAN guard; any LAN device can trigger retries.
+- Subtitle failures have no query path in `getFailedJobs()` — the `"subtitle"` stage exists in the type union but no DB table currently stores subtitle extraction failures; once subtitle extraction (story 3-4) stores errors, this query will need updating.
+
 ## Deferred from: code review of 7-2-admin-dashboard-with-library-statistics (2026-05-05)
 
 - Duplicated `AdminStats` interface across frontend/backend with no shared contract — the interface is copy-pasted in two places; any schema drift silently breaks the API contract with no compile-time safety. Pre-existing monorepo pattern (no shared types package yet).
