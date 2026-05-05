@@ -99,7 +99,7 @@ development_status:
   # Epic 7: Admin Panel & LAN-Only Access
   epic-7: in-progress
   7-1-lan-detection-and-admin-route-guard: done
-  7-2-admin-dashboard-with-library-statistics: backlog
+  7-2-admin-dashboard-with-library-statistics: ready-for-dev
   7-3-import-and-transcode-monitoring-with-error-details: backlog
   7-4-manual-library-rescan-trigger: backlog
   epic-7-retrospective: optional
