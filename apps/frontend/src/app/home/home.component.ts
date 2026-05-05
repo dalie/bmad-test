@@ -4,8 +4,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { LibraryService } from '../services/library.service';
+import {
+  WatchProgressService,
+  WatchProgressEntry,
+  WatchProgressRecord,
+  WATCH_PROGRESS_KEY,
+} from '../services/watch-progress.service';
 
-export const WATCH_PROGRESS_KEY = 'cineplex_progress';
+export type { WatchProgressEntry, WatchProgressRecord } from '../services/watch-progress.service';
+export { WATCH_PROGRESS_KEY } from '../services/watch-progress.service';
 
 export interface LibraryItem {
   id: number;
@@ -15,27 +22,13 @@ export interface LibraryItem {
   mediaType: 'movie' | 'tv';
 }
 
-export interface WatchProgressEntry {
-  position: number;
-  duration: number;
-  watched: boolean;
-  updatedAt: number;
-  mediaType: 'movie' | 'tv';
-  id: number;
-  title: string;
-  posterUrl: string | null;
-  year: number | null;
-  fileId: number;
-  tier?: number | null;
-}
-
-export type WatchProgressRecord = Record<string, WatchProgressEntry>;
-
 export interface ContinueWatchingItem extends LibraryItem {
   progressPercent: number;
   watched: boolean;
   playFileId: number;
   tier: number | null;
+  seasonNum?: number;
+  episodeNum?: number;
 }
 
 @Component({
@@ -48,6 +41,7 @@ export interface ContinueWatchingItem extends LibraryItem {
 })
 export class HomeComponent {
   private readonly libraryService = inject(LibraryService);
+  private readonly watchProgressService = inject(WatchProgressService);
 
   readonly searchQuery = signal('');
 
@@ -152,9 +146,7 @@ export class HomeComponent {
 
   private buildProgressData(): Map<string, WatchProgressEntry> {
     try {
-      const raw = localStorage.getItem(WATCH_PROGRESS_KEY);
-      if (!raw) return new Map();
-      const record = JSON.parse(raw) as WatchProgressRecord;
+      const record = this.watchProgressService.readAll();
       const latest = new Map<string, WatchProgressEntry>();
       for (const entry of Object.values(record)) {
         if (!this.isValidProgressEntry(entry)) continue;
@@ -172,9 +164,7 @@ export class HomeComponent {
 
   private readContinueWatchingFromStorage(): ContinueWatchingItem[] {
     try {
-      const raw = localStorage.getItem(WATCH_PROGRESS_KEY);
-      if (!raw) return [];
-      const record = JSON.parse(raw) as WatchProgressRecord;
+      const record = this.watchProgressService.readAll();
 
       const latestByTitle = new Map<string, WatchProgressEntry>();
       for (const entry of Object.values(record)) {
@@ -200,6 +190,8 @@ export class HomeComponent {
           watched: false,
           playFileId: e.fileId,
           tier: e.tier ?? null,
+          seasonNum: e.seasonNum,
+          episodeNum: e.episodeNum,
         }));
     } catch {
       return [];

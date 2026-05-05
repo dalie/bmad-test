@@ -7,7 +7,16 @@
           <a
             class="poster-grid__item"
             [routerLink]="['/play', item.playFileId]"
-            [queryParams]="{ tier: item.tier }"
+            [queryParams]="{
+              tier: item.tier,
+              mediaType: item.mediaType,
+              mediaId: item.id,
+              season: item.seasonNum,
+              episode: item.episodeNum,
+              title: item.title,
+              year: item.year,
+              posterUrl: item.posterUrl
+            }"
           >
             <div class="poster-grid__image-wrap">
               @if (item.posterUrl) {

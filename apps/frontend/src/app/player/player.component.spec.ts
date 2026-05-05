@@ -6,6 +6,7 @@ import { Location } from '@angular/common';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { PlayerComponent } from './player.component';
+import { WatchProgressService } from '../services/watch-progress.service';
 
 interface AudioTrackInfo {
   index: number;
@@ -14,9 +15,9 @@ interface AudioTrackInfo {
   channels: number;
 }
 
-function makeActivatedRouteStub(fileId: string, tier?: string) {
+function makeActivatedRouteStub(fileId: string, tier?: string, extraQueryParams: Record<string, string> = {}) {
   const paramMap = convertToParamMap({ fileId });
-  const queryParamMap = convertToParamMap(tier ? { tier } : {});
+  const queryParamMap = convertToParamMap(tier ? { tier, ...extraQueryParams } : { ...extraQueryParams });
   return {
     snapshot: { paramMap, queryParamMap },
     paramMap: of(paramMap),
@@ -33,8 +34,10 @@ describe('PlayerComponent', () => {
     tier?: string,
     subtitleTracks: Array<{ id: number; language: string | null }> = [],
     audioTracks: AudioTrackInfo[] = [],
+    extraQueryParams: Record<string, string> = {},
   ) {
     mockLocation = { back: vi.fn() };
+    const watchProgressMock = { saveEntry: vi.fn(), readAll: vi.fn().mockReturnValue({}) };
 
     TestBed.configureTestingModule({
       imports: [PlayerComponent],
@@ -42,8 +45,9 @@ describe('PlayerComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: makeActivatedRouteStub(fileId, tier) },
+        { provide: ActivatedRoute, useValue: makeActivatedRouteStub(fileId, tier, extraQueryParams) },
         { provide: Location, useValue: mockLocation },
+        { provide: WatchProgressService, useValue: watchProgressMock },
       ],
     });
 
@@ -669,6 +673,146 @@ describe('PlayerComponent', () => {
         expect(nativeTracks[0].enabled).toBe(false);
         expect(nativeTracks[1].enabled).toBe(true);
       });
+    });
+  });
+
+  describe('Progress saving', () => {
+    const movieQueryParams = {
+      mediaType: 'movie',
+      mediaId: '42',
+      title: 'Test Movie',
+      year: '2024',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+    };
+
+    const tvQueryParams = {
+      mediaType: 'tv',
+      mediaId: '7',
+      season: '2',
+      episode: '3',
+      title: 'Test Show',
+      year: '2022',
+      posterUrl: null as unknown as string,
+    };
+
+    function setupVideoState(
+      fixture: ReturnType<typeof setup>,
+      currentTime: number,
+      duration: number,
+    ): HTMLVideoElement {
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', { value: currentTime, writable: true, configurable: true });
+      Object.defineProperty(video, 'duration', { value: duration, writable: true, configurable: true });
+      return video;
+    }
+
+    it('should save entry with movie key when mediaType is movie', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, 3600);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ mediaType: 'movie', id: 42, fileId: 42 }),
+      );
+    });
+
+    it('should save entry with tv key when mediaType is tv', () => {
+      const fixture = setup('99', '1', [], [], tvQueryParams as Record<string, string>);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 300, 3600);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'tv:7:s2:e3',
+        expect.objectContaining({ mediaType: 'tv', id: 7, seasonNum: 2, episodeNum: 3 }),
+      );
+    });
+
+    it('should be a no-op when progressContext is null (missing mediaType param)', () => {
+      const fixture = setup('42', '1');
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, 3600);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op when video duration is 0', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, 0);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op when video duration is NaN', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, NaN);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op when video currentTime is 0', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 0, 3600);
+
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).not.toHaveBeenCalled();
+    });
+
+    it('should clear interval in ngOnDestroy', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const clearSpy = vi.spyOn(globalThis, 'clearInterval');
+
+      // Manually set a fake interval so we can verify it gets cleared
+      component.progressInterval = 999;
+      fixture.destroy();
+
+      expect(clearSpy).toHaveBeenCalledWith(999);
+      clearSpy.mockRestore();
+    });
+
+    it('should call saveProgress on video pause event (non-Tier 2)', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const saveSpy = vi.spyOn(component, 'saveProgress');
+      setupVideoState(fixture, 120, 3600);
+
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      video.dispatchEvent(new Event('pause'));
+
+      expect(saveSpy).toHaveBeenCalled();
+    });
+
+    it('should call saveProgress on video pause event (Tier 2)', () => {
+      const fixture = setup('42', '2', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const saveSpy = vi.spyOn(component, 'saveProgress');
+      setupVideoState(fixture, 120, 3600);
+
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      video.dispatchEvent(new Event('pause'));
+
+      expect(saveSpy).toHaveBeenCalled();
     });
   });
 });

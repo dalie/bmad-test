@@ -42,7 +42,17 @@
           <p class="detail-description">{{ m.description }}</p>
         }
 
-        <a class="play-button" [routerLink]="['/play', m.file_id]" [queryParams]="{ tier: m.tier }"
+        <a
+          class="play-button"
+          [routerLink]="['/play', m.file_id]"
+          [queryParams]="{
+            tier: m.tier,
+            mediaType: 'movie',
+            mediaId: m.id,
+            title: m.title,
+            year: m.year,
+            posterUrl: m.poster_url
+          }"
           >Play</a
         >
       </div>

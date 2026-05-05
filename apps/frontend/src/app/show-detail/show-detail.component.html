@@ -48,7 +48,16 @@
                 <a
                   class="episode__play"
                   [routerLink]="['/play', ep.file_id]"
-                  [queryParams]="{ tier: ep.tier }"
+                  [queryParams]="{
+                    tier: ep.tier,
+                    mediaType: 'tv',
+                    mediaId: s.id,
+                    season: season.season_number,
+                    episode: ep.episode_number,
+                    title: s.title,
+                    year: s.year,
+                    posterUrl: s.poster_url
+                  }"
                   [attr.aria-label]="'Play ' + (ep.name || 'Episode ' + ep.episode_number)"
                   >Play</a
                 >

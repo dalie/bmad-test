@@ -12,6 +12,18 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { WatchProgressService, WatchProgressEntry } from '../services/watch-progress.service';
+
+interface ProgressContext {
+  mediaType: 'movie' | 'tv';
+  id: number;
+  title: string;
+  year: number | null;
+  posterUrl: string | null;
+  tier: number | null;
+  seasonNum?: number;
+  episodeNum?: number;
+}
 
 interface SubtitleTrackInfo {
   id: number;
@@ -81,6 +93,7 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   readonly location = inject(Location);
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
+  private readonly watchProgressService = inject(WatchProgressService);
   readonly fileId = this.route.snapshot.paramMap.get('fileId');
   readonly isTier2 = this.route.snapshot.queryParamMap.get('tier') === '2';
 
@@ -107,6 +120,8 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   private isMirroring = false;
   private syncDisabled = false;
   private listeners: Array<[HTMLElement, string, EventListener]> = [];
+  private progressInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly progressContext: ProgressContext | null = this.buildProgressContext();
 
   constructor() {
     if (this.fileId) {
@@ -125,73 +140,88 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    if (!this.isTier2) return;
-
     const video = this.videoElRef.nativeElement;
-    const audio = this.audioElRef.nativeElement;
 
-    this.addListener(video, 'canplay', () => {
-      this.videoReady = true;
-      this.tryStartSync();
-    });
+    if (this.isTier2) {
+      const audio = this.audioElRef.nativeElement;
 
-    this.addListener(audio, 'canplay', () => {
-      this.audioReady = true;
-      this.tryStartSync();
-    });
+      this.addListener(video, 'canplay', () => {
+        this.videoReady = true;
+        this.tryStartSync();
+      });
 
-    // Seek sync
-    this.addListener(video, 'seeking', () => {
-      if (this.syncDisabled) return;
-      audio.pause();
-    });
-    this.addListener(video, 'seeked', () => {
-      if (this.syncDisabled) return;
-      audio.currentTime = video.currentTime;
-      if (!video.paused) audio.play().catch(() => {});
-    });
+      this.addListener(audio, 'canplay', () => {
+        this.audioReady = true;
+        this.tryStartSync();
+      });
 
-    // Play/pause sync
-    this.addListener(video, 'play', () => {
-      if (this.syncDisabled || !this.audioReady) return;
-      audio.currentTime = video.currentTime;
-      audio.play().catch(() => {});
-    });
-    this.addListener(video, 'pause', () => {
-      if (this.syncDisabled) return;
-      audio.pause();
-    });
+      // Seek sync
+      this.addListener(video, 'seeking', () => {
+        if (this.syncDisabled) return;
+        audio.pause();
+      });
+      this.addListener(video, 'seeked', () => {
+        if (this.syncDisabled) return;
+        audio.currentTime = video.currentTime;
+        if (!video.paused) audio.play().catch(() => {});
+      });
 
-    // Volume mirror
-    this.addListener(video, 'volumechange', () => {
-      if (this.syncDisabled || this.isMirroring) return;
-      this.isMirroring = true;
-      audio.volume = video.volume;
-      if (!video.muted) {
-        video.muted = true;
+      // Play/pause sync
+      this.addListener(video, 'play', () => {
+        if (this.syncDisabled || !this.audioReady) return;
+        audio.currentTime = video.currentTime;
+        audio.play().catch(() => {});
+      });
+      this.addListener(video, 'pause', () => {
+        this.saveProgress();
+        if (this.syncDisabled) return;
+        audio.pause();
+      });
+
+      // Volume mirror
+      this.addListener(video, 'volumechange', () => {
+        if (this.syncDisabled || this.isMirroring) return;
+        this.isMirroring = true;
+        audio.volume = video.volume;
+        if (!video.muted) {
+          video.muted = true;
+        }
+        audio.muted = false;
+        this.isMirroring = false;
+      });
+
+      // Audio error fallback — if sidecar fails, let video play unmuted
+      this.addListener(audio, 'error', () => {
+        this.syncDisabled = true;
+        video.muted = false;
+        this.cancelSync();
+      });
+
+      // Fallback: if media already loaded before listeners attached
+      if (video.readyState >= 3) {
+        this.videoReady = true;
       }
-      audio.muted = false;
-      this.isMirroring = false;
-    });
-
-    // Audio error fallback — if sidecar fails, let video play unmuted
-    this.addListener(audio, 'error', () => {
-      this.syncDisabled = true;
-      video.muted = false;
-      this.cancelSync();
-    });
-
-    // Fallback: if media already loaded before listeners attached
-    if (video.readyState >= 3) {
-      this.videoReady = true;
+      if (audio.readyState >= 3) {
+        this.audioReady = true;
+      }
+      this.tryStartSync();
+    } else {
+      // Non-Tier 2: save progress on pause
+      this.addListener(video, 'pause', () => this.saveProgress());
     }
-    if (audio.readyState >= 3) {
-      this.audioReady = true;
+
+    // Start periodic progress saving for ALL tiers
+    if (this.progressContext && this.fileId) {
+      this.progressInterval = setInterval(() => this.saveProgress(), 5000);
     }
-    this.tryStartSync();
   }
 
   ngOnDestroy(): void {
+    this.saveProgress();
+    if (this.progressInterval !== null) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
     this.cancelSync();
     for (const [el, event, handler] of this.listeners) {
       el.removeEventListener(event, handler);
@@ -245,6 +275,71 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
+  }
+
+  private buildProgressContext(): ProgressContext | null {
+    const qp = this.route.snapshot.queryParamMap;
+    const mediaType = qp.get('mediaType') as 'movie' | 'tv' | null;
+    if (mediaType !== 'movie' && mediaType !== 'tv') return null;
+
+    const mediaId = parseInt(qp.get('mediaId') ?? '', 10);
+    if (isNaN(mediaId)) return null;
+
+    const tier = parseInt(qp.get('tier') ?? '', 10);
+
+    const yearRaw = parseInt(qp.get('year') ?? '', 10);
+    const seasonRaw = parseInt(qp.get('season') ?? '', 10);
+    const episodeRaw = parseInt(qp.get('episode') ?? '', 10);
+
+    return {
+      mediaType,
+      id: mediaId,
+      title: qp.get('title') ?? 'Unknown',
+      year: isNaN(yearRaw) ? null : yearRaw,
+      posterUrl: qp.get('posterUrl'),
+      tier: isNaN(tier) ? null : tier,
+      seasonNum: mediaType === 'tv' ? (isNaN(seasonRaw) ? undefined : seasonRaw) : undefined,
+      episodeNum: mediaType === 'tv' ? (isNaN(episodeRaw) ? undefined : episodeRaw) : undefined,
+    };
+  }
+
+  private saveProgress(): void {
+    if (!this.progressContext) return;
+    const video = this.videoElRef?.nativeElement;
+    if (!video) return;
+    const duration = video.duration;
+    const position = video.currentTime;
+    if (!duration || !isFinite(duration) || duration <= 0) return;
+    if (position <= 0) return;
+
+    const ctx = this.progressContext;
+    const fileId = parseInt(this.fileId ?? '', 10);
+    if (isNaN(fileId)) return;
+
+    if (ctx.mediaType === 'tv' && (ctx.seasonNum == null || ctx.episodeNum == null)) return;
+
+    const storageKey =
+      ctx.mediaType === 'movie'
+        ? `movie:${ctx.id}`
+        : `tv:${ctx.id}:s${ctx.seasonNum}:e${ctx.episodeNum}`;
+
+    const entry: WatchProgressEntry = {
+      position,
+      duration,
+      watched: false,
+      updatedAt: Date.now(),
+      mediaType: ctx.mediaType,
+      id: ctx.id,
+      title: ctx.title,
+      posterUrl: ctx.posterUrl,
+      year: ctx.year,
+      fileId,
+      tier: ctx.tier,
+      seasonNum: ctx.seasonNum,
+      episodeNum: ctx.episodeNum,
+    };
+
+    this.watchProgressService.saveEntry(storageKey, entry);
   }
 
   getTrackLabel(track: SubtitleTrackInfo): string {

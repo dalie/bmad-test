@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
-import { HomeComponent, WATCH_PROGRESS_KEY, WatchProgressEntry } from './home.component';
+import { HomeComponent } from './home.component';
+import { WATCH_PROGRESS_KEY, WatchProgressEntry } from '../services/watch-progress.service';
 import { LibraryService } from '../services/library.service';
 
 function makeMovieItem(id: number, title: string, poster_url: string | null = null) {
@@ -80,6 +81,7 @@ function makeMovieProgress(
       posterUrl,
       year: 2024,
       fileId: mediaFilesId,
+      tier: null,
     },
   };
 }
@@ -104,6 +106,7 @@ function makeTvProgress(
       posterUrl: null,
       year: 2024,
       fileId,
+      tier: null,
     },
   };
 }
@@ -333,6 +336,7 @@ describe('HomeComponent', () => {
         posterUrl: null,
         year: 2011,
         fileId: 10,
+        tier: null,
       },
       'tv:1399:20': {
         position: 600,
@@ -345,6 +349,7 @@ describe('HomeComponent', () => {
         posterUrl: null,
         year: 2011,
         fileId: 20,
+        tier: null,
       },
     };
     localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(record));

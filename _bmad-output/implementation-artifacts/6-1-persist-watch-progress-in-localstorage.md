@@ -1,6 +1,6 @@
 # Story 6.1: Persist Watch Progress in localStorage
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -25,24 +25,24 @@ so that I never lose my place even if I close the browser.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `WatchProgressService` (AC: #9)
-  - [ ] Create `apps/frontend/src/app/services/watch-progress.service.ts`
-  - [ ] Move `WATCH_PROGRESS_KEY = 'cineplex_progress'`, `WatchProgressEntry`, and `WatchProgressRecord` from `home.component.ts` into the service as exports
-  - [ ] Add `saveEntry(storageKey: string, entry: WatchProgressEntry): void` method — reads existing record, merges entry, writes back; wraps in try/catch (localStorage may be unavailable)
-  - [ ] Add `readAll(): WatchProgressRecord` method — reads, parses, and returns the full record; returns `{}` on any error
-  - [ ] Extend `WatchProgressEntry` to add optional `seasonNum?: number` and `episodeNum?: number` fields (needed for TV episode keys and Continue Watching navigation)
-  - [ ] Write unit tests: `saveEntry` writes correct key, `readAll` returns parsed data, both handle localStorage errors gracefully
+- [x] Task 1: Create `WatchProgressService` (AC: #9)
+  - [x] Create `apps/frontend/src/app/services/watch-progress.service.ts`
+  - [x] Move `WATCH_PROGRESS_KEY = 'cineplex_progress'`, `WatchProgressEntry`, and `WatchProgressRecord` from `home.component.ts` into the service as exports
+  - [x] Add `saveEntry(storageKey: string, entry: WatchProgressEntry): void` method — reads existing record, merges entry, writes back; wraps in try/catch (localStorage may be unavailable)
+  - [x] Add `readAll(): WatchProgressRecord` method — reads, parses, and returns the full record; returns `{}` on any error
+  - [x] Extend `WatchProgressEntry` to add optional `seasonNum?: number` and `episodeNum?: number` fields (needed for TV episode keys and Continue Watching navigation)
+  - [x] Write unit tests: `saveEntry` writes correct key, `readAll` returns parsed data, both handle localStorage errors gracefully
 
-- [ ] Task 2: Refactor `home.component.ts` to use `WatchProgressService` (AC: #10, #12)
-  - [ ] Remove the local definitions of `WATCH_PROGRESS_KEY`, `WatchProgressEntry`, `WatchProgressRecord` from `home.component.ts`; import them from `WatchProgressService`
-  - [ ] Inject `WatchProgressService` and replace direct `localStorage` calls in `buildProgressData()` and `readContinueWatchingFromStorage()` with `watchProgressService.readAll()`
-  - [ ] Extend `ContinueWatchingItem` with optional `seasonNum?: number` and `episodeNum?: number`
-  - [ ] In `readContinueWatchingFromStorage()`, map `e.seasonNum` and `e.episodeNum` into each `ContinueWatchingItem`
-  - [ ] Keep `LibraryItem`, `ContinueWatchingItem` exports in `home.component.ts` (home-specific view models)
-  - [ ] Update home tests: replace any direct `localStorage` mock with `WatchProgressService` mock
+- [x] Task 2: Refactor `home.component.ts` to use `WatchProgressService` (AC: #10, #12)
+  - [x] Remove the local definitions of `WATCH_PROGRESS_KEY`, `WatchProgressEntry`, `WatchProgressRecord` from `home.component.ts`; import them from `WatchProgressService`
+  - [x] Inject `WatchProgressService` and replace direct `localStorage` calls in `buildProgressData()` and `readContinueWatchingFromStorage()` with `watchProgressService.readAll()`
+  - [x] Extend `ContinueWatchingItem` with optional `seasonNum?: number` and `episodeNum?: number`
+  - [x] In `readContinueWatchingFromStorage()`, map `e.seasonNum` and `e.episodeNum` into each `ContinueWatchingItem`
+  - [x] Keep `LibraryItem`, `ContinueWatchingItem` exports in `home.component.ts` (home-specific view models)
+  - [x] Update home tests: replace any direct `localStorage` mock with `WatchProgressService` mock
 
-- [ ] Task 3: Update `home.component.html` Continue Watching play links (AC: #12)
-  - [ ] Change the Continue Watching `[queryParams]` from `{ tier: item.tier }` to include the full context needed by the player:
+- [x] Task 3: Update `home.component.html` Continue Watching play links (AC: #12)
+  - [x] Change the Continue Watching `[queryParams]` from `{ tier: item.tier }` to include the full context needed by the player:
     - `mediaType: item.mediaType`
     - `mediaId: item.id` (serves as movieId for movies or showId for TV — same `id` field)
     - `season: item.seasonNum` (undefined for movies, number for TV)
@@ -52,16 +52,16 @@ so that I never lose my place even if I close the browser.
     - `posterUrl: item.posterUrl`
     - `tier: item.tier`
 
-- [ ] Task 4: Update `movie-detail.component.html` play link (AC: #6, #11)
-  - [ ] Extend the existing `[queryParams]="{ tier: m.tier }"` on the Play `<a>` to also pass:
+- [x] Task 4: Update `movie-detail.component.html` play link (AC: #6, #11)
+  - [x] Extend the existing `[queryParams]="{ tier: m.tier }"` on the Play `<a>` to also pass:
     - `mediaType: 'movie'`
     - `mediaId: m.id`
     - `title: m.title`
     - `year: m.year`
     - `posterUrl: m.poster_url`
 
-- [ ] Task 5: Update `show-detail.component.html` episode play links (AC: #6, #11)
-  - [ ] Extend the existing `[queryParams]="{ tier: ep.tier }"` on each episode's Play `<a>` to also pass:
+- [x] Task 5: Update `show-detail.component.html` episode play links (AC: #6, #11)
+  - [x] Extend the existing `[queryParams]="{ tier: ep.tier }"` on each episode's Play `<a>` to also pass:
     - `mediaType: 'tv'`
     - `mediaId: show().id` (the show's library/tmdb_id, same as `ShowDetail.id`)
     - `season: s.season_number`
@@ -70,9 +70,9 @@ so that I never lose my place even if I close the browser.
     - `year: show().year`
     - `posterUrl: show().poster_url`
 
-- [ ] Task 6: Add progress-saving logic to `PlayerComponent` (AC: #1–#8)
-  - [ ] Inject `WatchProgressService` into `PlayerComponent`
-  - [ ] Read context query params from `ActivatedRoute.snapshot.queryParamMap`:
+- [x] Task 6: Add progress-saving logic to `PlayerComponent` (AC: #1–#8)
+  - [x] Inject `WatchProgressService` into `PlayerComponent`
+  - [x] Read context query params from `ActivatedRoute.snapshot.queryParamMap`:
     - `mediaType`: `'movie' | 'tv'` (string, may be absent)
     - `mediaId`: number (movie ID or show ID)
     - `season`: number (TV only)
@@ -80,27 +80,36 @@ so that I never lose my place even if I close the browser.
     - `title`: string
     - `year`: number | null
     - `posterUrl`: string | null
-  - [ ] Build a `readonly progressContext` property from these params; set to `null` if `mediaType` is absent or `mediaId` is NaN
-  - [ ] Derive the storage key:
+  - [x] Build a `readonly progressContext` property from these params; set to `null` if `mediaType` is absent or `mediaId` is NaN
+  - [x] Derive the storage key:
     - Movies: `movie:${mediaId}`
     - TV: `tv:${mediaId}:s${season}:e${episode}`
-  - [ ] Add `private progressInterval: ReturnType<typeof setInterval> | null = null`
-  - [ ] Add `private saveProgress(): void` — reads `video.currentTime` and `video.duration`; skips if `!progressContext`, `duration <= 0`, or `currentTime <= 0`; builds `WatchProgressEntry`; calls `watchProgressService.saveEntry(key, entry)`
-  - [ ] Start the interval in `ngAfterViewInit` with `setInterval(() => this.saveProgress(), 5000)`
-  - [ ] In the existing `'pause'` event listener on the video element, call `this.saveProgress()` after the sync logic (so position is captured on pause for BOTH Tier 2 and non-Tier 2)
-  - [ ] For non-Tier 2 (standard video), add a separate `'pause'` listener in `ngAfterViewInit` that calls `this.saveProgress()` (the existing Tier 2 pause listener is inside the `if (this.isTier2)` block)
-  - [ ] In `ngOnDestroy`, call `this.saveProgress()` then `this.stopProgressSave()` (save final position before teardown)
-  - [ ] Write unit tests (see Testing Requirements below)
+  - [x] Add `private progressInterval: ReturnType<typeof setInterval> | null = null`
+  - [x] Add `private saveProgress(): void` — reads `video.currentTime` and `video.duration`; skips if `!progressContext`, `duration <= 0`, or `currentTime <= 0`; builds `WatchProgressEntry`; calls `watchProgressService.saveEntry(key, entry)`
+  - [x] Start the interval in `ngAfterViewInit` with `setInterval(() => this.saveProgress(), 5000)`
+  - [x] In the existing `'pause'` event listener on the video element, call `this.saveProgress()` after the sync logic (so position is captured on pause for BOTH Tier 2 and non-Tier 2)
+  - [x] For non-Tier 2 (standard video), add a separate `'pause'` listener in `ngAfterViewInit` that calls `this.saveProgress()` (the existing Tier 2 pause listener is inside the `if (this.isTier2)` block)
+  - [x] In `ngOnDestroy`, call `this.saveProgress()` then `this.stopProgressSave()` (save final position before teardown)
+  - [x] Write unit tests (see Testing Requirements below)
 
-- [ ] Task 7: Write unit tests for PlayerComponent progress logic (AC: #1–#8)
-  - [ ] Test: `saveProgress()` writes entry to `WatchProgressService` when context and duration are valid
-  - [ ] Test: `saveProgress()` uses key `movie:${mediaId}` for movies
-  - [ ] Test: `saveProgress()` uses key `tv:${mediaId}:s${season}:e${episode}` for TV
-  - [ ] Test: `saveProgress()` is a no-op when `progressContext` is null (missing params)
-  - [ ] Test: `saveProgress()` is a no-op when `video.duration` is 0 or NaN
-  - [ ] Test: `saveProgress()` is a no-op when `video.currentTime` is 0
-  - [ ] Test: interval is cleared in `ngOnDestroy`
-  - [ ] Test: `saveProgress()` is called on video `pause` event
+- [x] Task 7: Write unit tests for PlayerComponent progress logic (AC: #1–#8)
+  - [x] Test: `saveProgress()` writes entry to `WatchProgressService` when context and duration are valid
+  - [x] Test: `saveProgress()` uses key `movie:${mediaId}` for movies
+  - [x] Test: `saveProgress()` uses key `tv:${mediaId}:s${season}:e${episode}` for TV
+  - [x] Test: `saveProgress()` is a no-op when `progressContext` is null (missing params)
+  - [x] Test: `saveProgress()` is a no-op when `video.duration` is 0 or NaN
+  - [x] Test: `saveProgress()` is a no-op when `video.currentTime` is 0
+  - [x] Test: interval is cleared in `ngOnDestroy`
+  - [x] Test: `saveProgress()` is called on video `pause` event
+
+### Review Findings
+
+- [x] [Review][Patch] Tier 2 pause `saveProgress()` skipped when `syncDisabled=true` [apps/frontend/src/app/player/player.component.ts] — AC7 violated: `syncDisabled` early-return in the `'pause'` listener prevents `saveProgress()` from firing when the audio sidecar has errored; fix: move `this.saveProgress()` before the `if (this.syncDisabled) return` guard, or add a separate unconditional pause listener for progress
+- [x] [Review][Patch] TV storage key emits `sundefined:eundefined` when `seasonNum`/`episodeNum` is absent or season/episode=0 [apps/frontend/src/app/player/player.component.ts:buildProgressContext] — `|| undefined` falsy coercion drops TMDB season/episode 0 (Specials) and any missing param; `saveProgress()` has no guard before building the key string; fix: use `isNaN(n) ? undefined : n` and guard TV saves when `seasonNum`/`episodeNum` are undefined
+- [x] [Review][Patch] Falsy coercion `|| null` / `|| undefined` on all parsed integers — `year`, `season`, `episode` use `parseInt(...) || null/undefined`; this misclassifies value `0` as absent; fix: `const y = parseInt(..., 10); year: isNaN(y) ? null : y` (same pattern for season/episode)
+- [x] [Review][Patch] `readAll()` and `saveEntry()` do not validate parsed JSON is a plain object [apps/frontend/src/app/services/watch-progress.service.ts] — if stored value is an array or scalar, `Object.values()` in callers behaves incorrectly; fix: add `if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};` after JSON.parse in both methods
+- [x] [Review][Defer] Double `saveProgress()` call on navigate away (ngOnDestroy + preceding video `pause` event) [apps/frontend/src/app/player/player.component.ts] — deferred, pre-existing
+- [x] [Review][Defer] `readAll()` called twice per home load in `buildProgressData()` and `readContinueWatchingFromStorage()` [apps/frontend/src/app/home/home.component.ts] — deferred, pre-existing
 
 ## Dev Notes
 
@@ -442,4 +451,31 @@ Claude Sonnet 4.6 (GitHub Copilot)
 
 ### Completion Notes List
 
+- Created `WatchProgressService` as single source of truth for localStorage progress schema (`WATCH_PROGRESS_KEY`, `WatchProgressEntry`, `WatchProgressRecord`, `saveEntry()`, `readAll()`)
+- Refactored `home.component.ts` to inject and use `WatchProgressService`; re-exports types for backward compatibility
+- Extended `WatchProgressEntry` with optional `seasonNum`/`episodeNum` fields; extended `ContinueWatchingItem` likewise
+- Updated `home.component.html` Continue Watching links to pass full context query params
+- Updated `movie-detail.component.html` Play link with `mediaType`, `mediaId`, `title`, `year`, `posterUrl` params
+- Updated `show-detail.component.html` episode Play links with TV context params using outer `@if (show(); as s)` variable
+- Added `buildProgressContext()` and `saveProgress()` to `PlayerComponent`; wired periodic interval (5s) and pause events for both Tier 2 and non-Tier 2
+- Restructured `ngAfterViewInit` to handle both Tier 2 and non-Tier 2 code paths (removed early return)
+- `ngOnDestroy` calls `saveProgress()` before teardown to capture final position
+- 126 frontend tests pass (8 new service tests + 10 new player progress tests; all existing tests green)
+
 ### File List
+
+- apps/frontend/src/app/services/watch-progress.service.ts (created)
+- apps/frontend/src/app/services/watch-progress.service.spec.ts (created)
+- apps/frontend/src/app/home/home.component.ts (updated)
+- apps/frontend/src/app/home/home.component.html (updated)
+- apps/frontend/src/app/home/home.component.spec.ts (updated)
+- apps/frontend/src/app/player/player.component.ts (updated)
+- apps/frontend/src/app/player/player.component.spec.ts (updated)
+- apps/frontend/src/app/movie-detail/movie-detail.component.html (updated)
+- apps/frontend/src/app/show-detail/show-detail.component.html (updated)
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-05-05 | Implemented story 6-1: WatchProgressService created; home/player/detail templates updated; progress interval and pause saving added to PlayerComponent |

@@ -1,3 +1,8 @@
+## Deferred from: code review of 6-1-persist-watch-progress-in-localstorage (2026-05-04)
+
+- Double `saveProgress()` call on navigate away — `ngOnDestroy` calls `saveProgress()` and the video `pause` event also fires during navigation teardown; redundant writes with identical data, functionally harmless.
+- `readAll()` called twice per home load — `buildProgressData()` and `readContinueWatchingFromStorage()` each call `watchProgressService.readAll()` independently; two localStorage reads per home page load; pre-existing design choice.
+
 ## Deferred from: code review of 5-5-audio-track-selection-during-playback (2026-05-04)
 
 - Float/partial strings pass trackIndex validation (`parseInt("1.5")` silently returns 1) — benign because the frontend always sends integers; pre-existing parseInt pattern.
