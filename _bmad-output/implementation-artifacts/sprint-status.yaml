@@ -90,8 +90,8 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Watch Progress & Resume
-  epic-6: backlog
-  6-1-persist-watch-progress-in-localstorage: backlog
+  epic-6: in-progress
+  6-1-persist-watch-progress-in-localstorage: ready-for-dev
   6-2-resume-playback-from-last-position: backlog
   6-3-auto-mark-titles-as-watched: backlog
   epic-6-retrospective: optional
