@@ -1,3 +1,8 @@
+## Deferred from: code review of 7-2-admin-dashboard-with-library-statistics (2026-05-05)
+
+- Duplicated `AdminStats` interface across frontend/backend with no shared contract — the interface is copy-pasted in two places; any schema drift silently breaks the API contract with no compile-time safety. Pre-existing monorepo pattern (no shared types package yet).
+- No caching or rate-limiting on `GET /api/admin/stats` — every request fires 5 DB queries. LAN-guarded and admin-only, so practical risk is minimal, but a TTL cache would be appropriate if usage grows.
+
 ## Deferred from: code review of 7-1-lan-detection-and-admin-route-guard (2026-05-05)
 
 - X-Forwarded-For spoofable when TRUST_PROXY=true — When enabled, any client can spoof XFF header to gain admin access. Operational risk mitigated by TRUST_PROXY being off by default; users who enable it must ensure only trusted proxies reach the app.

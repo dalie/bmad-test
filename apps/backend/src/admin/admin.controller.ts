@@ -1,4 +1,5 @@
 import { Controller, Get, Req, UseGuards } from "@nestjs/common";
+import { AdminStats, AdminStatsService } from "./admin-stats.service";
 import { LanDetectionService } from "./lan-detection.service";
 import { LanGuard } from "./lan.guard";
 
@@ -15,8 +16,10 @@ export class AccessController {
 @Controller("admin")
 @UseGuards(LanGuard)
 export class AdminController {
+  constructor(private readonly adminStatsService: AdminStatsService) {}
+
   @Get("stats")
-  getStats(): Record<string, never> {
-    return {};
+  getStats(): AdminStats {
+    return this.adminStatsService.getStats();
   }
 }

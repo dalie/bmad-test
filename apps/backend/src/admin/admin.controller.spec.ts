@@ -1,8 +1,24 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AccessController, AdminController } from "./admin.controller";
+import { AdminStatsService, AdminStats } from "./admin-stats.service";
 import { LanDetectionService } from "./lan-detection.service";
 import { LanGuard } from "./lan.guard";
 import { ForbiddenException } from "@nestjs/common";
+
+const mockStats: AdminStats = {
+  library: { totalTitles: 20, movieCount: 15, tvShowCount: 5 },
+  transcode: {
+    byTier: { tier1: 10, tier2: 7, tier3: 3 },
+    byStatus: { ready: 0, queued: 4, processing: 2, failed: 1, completed: 8 },
+  },
+  pipeline: {
+    discovered: 3,
+    probed: 2,
+    matched: 12,
+    unmatched: 1,
+    totalErrors: 2,
+  },
+};
 
 describe("AccessController", () => {
   let controller: AccessController;
@@ -48,6 +64,7 @@ describe("AccessController", () => {
 
 describe("AdminController", () => {
   let controller: AdminController;
+  let adminStatsService: jest.Mocked<AdminStatsService>;
 
   beforeEach(async () => {
     const lanDetectionService = {
@@ -56,10 +73,15 @@ describe("AdminController", () => {
       getClientIp: jest.fn(),
     } as any;
 
+    adminStatsService = {
+      getStats: jest.fn().mockReturnValue(mockStats),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminController],
       providers: [
         { provide: LanDetectionService, useValue: lanDetectionService },
+        { provide: AdminStatsService, useValue: adminStatsService },
         LanGuard,
       ],
     }).compile();
@@ -68,8 +90,10 @@ describe("AdminController", () => {
   });
 
   describe("GET /admin/stats (protected)", () => {
-    it("should return {} when accessed", () => {
-      expect(controller.getStats()).toEqual({});
+    it("should return full stats object", () => {
+      const result = controller.getStats();
+      expect(result).toEqual(mockStats);
+      expect(adminStatsService.getStats).toHaveBeenCalled();
     });
   });
 

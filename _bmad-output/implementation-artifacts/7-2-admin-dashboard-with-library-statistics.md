@@ -1,6 +1,6 @@
 # Story 7.2: Admin Dashboard with Library Statistics
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,51 +18,59 @@ so that I know the state of my library without digging through files.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `AdminStatsService` in backend (AC: #1, #2, #3)
-  - [ ] Create `apps/backend/src/admin/admin-stats.service.ts`
-  - [ ] Inject `DatabaseService`
-  - [ ] Implement `getStats()` method that runs SQL queries against `media_files`, `metadata`, `transcode_jobs`, and `scan_errors` tables
-  - [ ] Return a typed `AdminStats` interface with library totals, transcode breakdown, and import pipeline summary
+- [x] Task 1: Create `AdminStatsService` in backend (AC: #1, #2, #3)
+  - [x] Create `apps/backend/src/admin/admin-stats.service.ts`
+  - [x] Inject `DatabaseService`
+  - [x] Implement `getStats()` method that runs SQL queries against `media_files`, `metadata`, `transcode_jobs`, and `scan_errors` tables
+  - [x] Return a typed `AdminStats` interface with library totals, transcode breakdown, and import pipeline summary
 
-- [ ] Task 2: Implement `GET /admin/stats` endpoint with real data (AC: #4)
-  - [ ] Modify `apps/backend/src/admin/admin.controller.ts` — update `AdminController.getStats()` to inject and call `AdminStatsService.getStats()`
-  - [ ] Return typed response (replaces the current empty `{}` placeholder)
-  - [ ] Endpoint remains protected by `LanGuard` (already applied at class level)
+- [x] Task 2: Implement `GET /admin/stats` endpoint with real data (AC: #4)
+  - [x] Modify `apps/backend/src/admin/admin.controller.ts` — update `AdminController.getStats()` to inject and call `AdminStatsService.getStats()`
+  - [x] Return typed response (replaces the current empty `{}` placeholder)
+  - [x] Endpoint remains protected by `LanGuard` (already applied at class level)
 
-- [ ] Task 3: Register `AdminStatsService` in `AdminModule` (AC: #4)
-  - [ ] Update `apps/backend/src/admin/admin.module.ts` to import `DatabaseModule` and register `AdminStatsService` as a provider
+- [x] Task 3: Register `AdminStatsService` in `AdminModule` (AC: #4)
+  - [x] Update `apps/backend/src/admin/admin.module.ts` to import `DatabaseModule` and register `AdminStatsService` as a provider
 
-- [ ] Task 4: Create Angular `AdminStatsService` on frontend (AC: #1, #2, #3)
-  - [ ] Create `apps/frontend/src/app/admin/admin-stats.service.ts`
-  - [ ] Inject `HttpClient`, call `GET /api/admin/stats`
-  - [ ] Return typed observable matching the backend response shape
+- [x] Task 4: Create Angular `AdminStatsService` on frontend (AC: #1, #2, #3)
+  - [x] Create `apps/frontend/src/app/admin/admin-stats.service.ts`
+  - [x] Inject `HttpClient`, call `GET /api/admin/stats`
+  - [x] Return typed observable matching the backend response shape
 
-- [ ] Task 5: Update `AdminComponent` with dashboard UI (AC: #1, #2, #3, #5)
-  - [ ] Replace placeholder template in `apps/frontend/src/app/admin/admin.component.ts`
-  - [ ] Display three stat sections: Library Totals, Transcode Status, Import Pipeline
-  - [ ] Use `toSignal()` pattern for async data (matches existing `AdminAccessService` pattern)
-  - [ ] Add component-scoped CSS for simple grid/table layout using project CSS variables
+- [x] Task 5: Update `AdminComponent` with dashboard UI (AC: #1, #2, #3, #5)
+  - [x] Replace placeholder template in `apps/frontend/src/app/admin/admin.component.ts`
+  - [x] Display three stat sections: Library Totals, Transcode Status, Import Pipeline
+  - [x] Use `toSignal()` pattern for async data (matches existing `AdminAccessService` pattern)
+  - [x] Add component-scoped CSS for simple grid/table layout using project CSS variables
 
-- [ ] Task 6: Write backend unit tests for `AdminStatsService` (AC: #1, #2, #3)
-  - [ ] Create `apps/backend/src/admin/admin-stats.service.spec.ts`
-  - [ ] Test: returns correct library totals (movies vs TV via `metadata.media_type`)
-  - [ ] Test: returns correct transcode breakdown by tier and status
-  - [ ] Test: returns correct import pipeline counts by `media_files.status`
-  - [ ] Test: returns scan_errors count
-  - [ ] Test: returns zeros when database is empty
+- [x] Task 6: Write backend unit tests for `AdminStatsService` (AC: #1, #2, #3)
+  - [x] Create `apps/backend/src/admin/admin-stats.service.spec.ts`
+  - [x] Test: returns correct library totals (movies vs TV via `metadata.media_type`)
+  - [x] Test: returns correct transcode breakdown by tier and status
+  - [x] Test: returns correct import pipeline counts by `media_files.status`
+  - [x] Test: returns scan_errors count
+  - [x] Test: returns zeros when database is empty
 
-- [ ] Task 7: Update `AdminController` tests (AC: #4)
-  - [ ] Update `apps/backend/src/admin/admin.controller.spec.ts`
-  - [ ] Test: `GET /admin/stats` returns full stats object
-  - [ ] Test: endpoint still returns 403 for non-LAN clients
+- [x] Task 7: Update `AdminController` tests (AC: #4)
+  - [x] Update `apps/backend/src/admin/admin.controller.spec.ts`
+  - [x] Test: `GET /admin/stats` returns full stats object
+  - [x] Test: endpoint still returns 403 for non-LAN clients
 
-- [ ] Task 8: Write frontend unit tests (AC: #1, #5)
-  - [ ] Create `apps/frontend/src/app/admin/admin.component.spec.ts`
-  - [ ] Test: component renders library statistics when data loads
-  - [ ] Test: component shows transcode breakdown
-  - [ ] Test: component shows import pipeline summary
-  - [ ] Create `apps/frontend/src/app/admin/admin-stats.service.spec.ts`
-  - [ ] Test: service calls correct endpoint and maps response
+- [x] Task 8: Write frontend unit tests (AC: #1, #5)
+  - [x] Create `apps/frontend/src/app/admin/admin.component.spec.ts`
+  - [x] Test: component renders library statistics when data loads
+  - [x] Test: component shows transcode breakdown
+  - [x] Test: component shows import pipeline summary
+  - [x] Create `apps/frontend/src/app/admin/admin-stats.service.spec.ts`
+  - [x] Test: service calls correct endpoint and maps response
+
+### Review Findings
+
+- [x] [Review][Decision] `probe_failed` status silently ignored in pipeline stats — resolved: count toward `totalErrors`
+- [x] [Review][Patch] No error handling in backend `getStats()` — DB exceptions propagate as raw 500 [admin-stats.service.ts:34]
+- [x] [Review][Patch] No error handling in frontend — HTTP errors crash the component via `toSignal()` with no `catchError` [admin.component.ts:185]
+- [x] [Review][Defer] Duplicated `AdminStats` interface across frontend/backend with no shared contract — deferred, pre-existing pattern
+- [x] [Review][Defer] No caching or rate-limiting on the stats endpoint — deferred, pre-existing (admin-only, LAN-guarded)
 
 ## Dev Notes
 
@@ -294,6 +302,40 @@ Claude Opus 4.6 (GitHub Copilot)
 
 ### Debug Log References
 
+No issues encountered during implementation.
+
 ### Completion Notes List
 
+- Created `AdminStatsService` backend service with typed `AdminStats` interface and SQL queries against `media_files`, `metadata`, `transcode_jobs`, and `scan_errors` tables
+- TV show counting uses `COUNT(DISTINCT tmdb_id)` to count shows not episodes
+- `totalTitles` = `movieCount + tvShowCount` (distinct titles)
+- Transcode breakdown: `byTier` from `media_files.tier`, `byStatus` from `transcode_jobs.status`
+- Pipeline counts aggregate matched statuses (matched, classified, ready, completed)
+- Updated `AdminController.getStats()` to delegate to `AdminStatsService`
+- Updated `AdminModule` to import `DatabaseModule` and register `AdminStatsService`
+- Frontend uses `toSignal()` pattern with `inject()` DI
+- Dashboard shows 3 sections: Library (stat cards), Transcode Status (cards + table), Import Pipeline (table)
+- CSS uses project variables (`--color-surface`, `--color-bg`, `--color-accent`, `--color-text-muted`) with CSS Grid layout
+- All backend tests pass (26 admin tests); pre-existing failure in classification.service.spec.ts is unrelated
+- All frontend tests pass (161 tests across 11 suites)
+
+### Change Log
+
+- 2026-05-05: Implemented admin dashboard with library statistics (Story 7-2)
+
 ### File List
+
+**New:**
+
+- `apps/backend/src/admin/admin-stats.service.ts`
+- `apps/backend/src/admin/admin-stats.service.spec.ts`
+- `apps/frontend/src/app/admin/admin-stats.service.ts`
+- `apps/frontend/src/app/admin/admin-stats.service.spec.ts`
+- `apps/frontend/src/app/admin/admin.component.spec.ts`
+
+**Modified:**
+
+- `apps/backend/src/admin/admin.controller.ts`
+- `apps/backend/src/admin/admin.module.ts`
+- `apps/backend/src/admin/admin.controller.spec.ts`
+- `apps/frontend/src/app/admin/admin.component.ts`
