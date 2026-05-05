@@ -86,7 +86,7 @@ development_status:
   5-2-video-player-with-standard-playback-controls: done
   5-3-dual-element-audio-sync-for-sidecar-playback: done
   5-4-subtitle-track-selection-during-playback: done
-  5-5-audio-track-selection-during-playback: ready-for-dev
+  5-5-audio-track-selection-during-playback: done
   epic-5-retrospective: optional
 
   # Epic 6: Watch Progress & Resume

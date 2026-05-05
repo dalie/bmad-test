@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Query,
   Req,
   Res,
   StreamableFile,
@@ -33,8 +34,17 @@ export class MediaController {
     @Param("fileId", ParseIntPipe) fileId: number,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @Query("trackIndex") trackIndexStr?: string,
   ): StreamableFile {
-    const sidecarPath = this.mediaService.getAudioSidecarPath(fileId);
+    const trackIndex =
+      trackIndexStr !== undefined ? parseInt(trackIndexStr, 10) : 0;
+    if (isNaN(trackIndex) || trackIndex < 0) {
+      throw new HttpException("Invalid trackIndex", HttpStatus.BAD_REQUEST);
+    }
+    const sidecarPath = this.mediaService.getAudioSidecarPath(
+      fileId,
+      trackIndex,
+    );
     return this.streamFile(sidecarPath, "audio/aac", req, res);
   }
 
@@ -58,6 +68,13 @@ export class MediaController {
     @Param("fileId", ParseIntPipe) fileId: number,
   ): Array<{ id: number; language: string | null }> {
     return this.mediaService.getSubtitlesForFile(fileId);
+  }
+
+  @Get(":fileId/audio-tracks")
+  getAudioTracksForFile(
+    @Param("fileId", ParseIntPipe) fileId: number,
+  ): Array<{ index: number; language: string | null; codec: string; channels: number }> {
+    return this.mediaService.getAudioTracksForFile(fileId);
   }
 
   private streamFile(

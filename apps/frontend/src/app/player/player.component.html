@@ -66,4 +66,35 @@
       }
     </div>
   }
+
+  @if (audioTracks().length > 1) {
+    <div class="audio-controls" #audioControls>
+      <button
+        type="button"
+        class="audio-button"
+        [class.audio-button--active]="activeAudioIndex() !== null"
+        (click)="toggleAudioMenu()"
+        aria-label="Audio track selector"
+        [attr.aria-expanded]="audioMenuOpen()"
+      >
+        AUDIO
+      </button>
+      @if (audioMenuOpen()) {
+        <div class="audio-menu" role="menu" (keydown)="onAudioMenuKeydown($event)">
+          @for (track of audioTracks(); track track.index) {
+            <button
+              type="button"
+              role="menuitemradio"
+              [attr.aria-checked]="activeAudioIndex() === track.index"
+              (click)="selectAudioTrack(track)"
+              class="audio-menu__item"
+              [class.audio-menu__item--active]="activeAudioIndex() === track.index"
+            >
+              {{ getAudioTrackLabel(track) }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
 </main>

@@ -7,6 +7,13 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { PlayerComponent } from './player.component';
 
+interface AudioTrackInfo {
+  index: number;
+  language: string | null;
+  codec: string;
+  channels: number;
+}
+
 function makeActivatedRouteStub(fileId: string, tier?: string) {
   const paramMap = convertToParamMap({ fileId });
   const queryParamMap = convertToParamMap(tier ? { tier } : {});
@@ -25,6 +32,7 @@ describe('PlayerComponent', () => {
     fileId = '42',
     tier?: string,
     subtitleTracks: Array<{ id: number; language: string | null }> = [],
+    audioTracks: AudioTrackInfo[] = [],
   ) {
     mockLocation = { back: vi.fn() };
 
@@ -43,9 +51,13 @@ describe('PlayerComponent', () => {
     const fixture = TestBed.createComponent(PlayerComponent);
     fixture.detectChanges();
 
-    // Respond to subtitle fetch
-    const req = httpTesting.expectOne(`/api/media/${fileId}/subtitles`);
-    req.flush(subtitleTracks);
+    // Must flush both requests in constructor order: subtitles first, then audio tracks
+    const subReq = httpTesting.expectOne(`/api/media/${fileId}/subtitles`);
+    subReq.flush(subtitleTracks);
+
+    const audioReq = httpTesting.expectOne(`/api/media/${fileId}/audio-tracks`);
+    audioReq.flush(audioTracks);
+
     fixture.detectChanges();
 
     return fixture;
@@ -291,8 +303,9 @@ describe('PlayerComponent', () => {
       const fixture = TestBed.createComponent(PlayerComponent);
       fixture.detectChanges();
 
-      // No HTTP request should have been made (fileId is empty string which is falsy)
+      // No HTTP requests should have been made (fileId is empty string which is falsy)
       httpTesting.expectNone((req) => req.url.includes('/subtitles'));
+      httpTesting.expectNone((req) => req.url.includes('/audio-tracks'));
     });
 
     it('should handle subtitle fetch error gracefully', () => {
@@ -315,6 +328,10 @@ describe('PlayerComponent', () => {
 
       const req = httpTesting.expectOne('/api/media/42/subtitles');
       req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+
+      const audioReq = httpTesting.expectOne('/api/media/42/audio-tracks');
+      audioReq.flush([]);
+
       fixture.detectChanges();
 
       const ccButton = fixture.nativeElement.querySelector('.cc-button');
@@ -438,6 +455,220 @@ describe('PlayerComponent', () => {
       video.dispatchEvent(new Event('volumechange'));
       expect(video.muted).toBe(true);
       expect(audio.muted).toBe(false);
+    });
+  });
+
+  describe('Audio track selection', () => {
+    const AUDIO_TRACKS: AudioTrackInfo[] = [
+      { index: 0, language: 'jpn', codec: 'ac3', channels: 6 },
+      { index: 1, language: 'eng', codec: 'ac3', channels: 2 },
+    ];
+
+    it('should hide AUDIO button when 0 audio tracks available', () => {
+      const fixture = setup('42', undefined, [], []);
+      const audioButton = fixture.nativeElement.querySelector('.audio-button');
+      expect(audioButton).toBeNull();
+    });
+
+    it('should hide AUDIO button when only 1 audio track available', () => {
+      const fixture = setup('42', undefined, [], [
+        { index: 0, language: 'eng', codec: 'aac', channels: 2 },
+      ]);
+      const audioButton = fixture.nativeElement.querySelector('.audio-button');
+      expect(audioButton).toBeNull();
+    });
+
+    it('should show AUDIO button when 2+ audio tracks available', () => {
+      const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+      const audioButton = fixture.nativeElement.querySelector('.audio-button');
+      expect(audioButton).toBeTruthy();
+    });
+
+    it('should open dropdown on AUDIO button click', () => {
+      const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+      const audioButton = fixture.nativeElement.querySelector('.audio-button') as HTMLButtonElement;
+      audioButton.click();
+      fixture.detectChanges();
+      const menu = fixture.nativeElement.querySelector('.audio-menu');
+      expect(menu).toBeTruthy();
+    });
+
+    it('should render correct track labels in dropdown', () => {
+      const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+      const audioButton = fixture.nativeElement.querySelector('.audio-button') as HTMLButtonElement;
+      audioButton.click();
+      fixture.detectChanges();
+      const items = fixture.nativeElement.querySelectorAll('.audio-menu__item');
+      expect(items.length).toBe(2);
+      expect(items[0].textContent.trim()).toBe('Japanese');
+      expect(items[1].textContent.trim()).toBe('English');
+    });
+
+    it('should use "Track N" fallback label when language is null', () => {
+      const tracks: AudioTrackInfo[] = [
+        { index: 0, language: null, codec: 'aac', channels: 2 },
+        { index: 1, language: null, codec: 'aac', channels: 2 },
+      ];
+      const fixture = setup('42', undefined, [], tracks);
+      const component = fixture.componentInstance;
+      expect(component.getAudioTrackLabel(tracks[0])).toBe('Track 1');
+      expect(component.getAudioTrackLabel(tracks[1])).toBe('Track 2');
+    });
+
+    it('should close dropdown after track selection', () => {
+      const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+      const component = fixture.componentInstance;
+      component.audioMenuOpen.set(true);
+      component.selectAudioTrack(AUDIO_TRACKS[0]);
+      expect(component.audioMenuOpen()).toBe(false);
+    });
+
+    it('should update activeAudioIndex after track selection', () => {
+      const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+      const component = fixture.componentInstance;
+      component.selectAudioTrack(AUDIO_TRACKS[1]);
+      expect(component.activeAudioIndex()).toBe(1);
+    });
+
+    it('should close dropdown on Escape key', () => {
+      const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+      const component = fixture.componentInstance;
+      component.audioMenuOpen.set(true);
+      fixture.detectChanges();
+
+      const menu = fixture.nativeElement.querySelector('.audio-menu') as HTMLElement;
+      const event = new KeyboardEvent('keydown', { key: 'Escape' });
+      menu.dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(component.audioMenuOpen()).toBe(false);
+    });
+
+    it('should handle audio fetch error gracefully (no AUDIO button shown)', () => {
+      mockLocation = { back: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [PlayerComponent],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          { provide: ActivatedRoute, useValue: makeActivatedRouteStub('42', undefined) },
+          { provide: Location, useValue: mockLocation },
+        ],
+      });
+
+      httpTesting = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(PlayerComponent);
+      fixture.detectChanges();
+
+      const subReq = httpTesting.expectOne('/api/media/42/subtitles');
+      subReq.flush([]);
+
+      const audioReq = httpTesting.expectOne('/api/media/42/audio-tracks');
+      audioReq.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+
+      fixture.detectChanges();
+
+      const audioButton = fixture.nativeElement.querySelector('.audio-button');
+      expect(audioButton).toBeNull();
+      expect(fixture.componentInstance.audioTracks()).toEqual([]);
+    });
+
+    it('should not fetch audio tracks when fileId is missing', () => {
+      mockLocation = { back: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [PlayerComponent],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          { provide: ActivatedRoute, useValue: makeActivatedRouteStub('', undefined) },
+          { provide: Location, useValue: mockLocation },
+        ],
+      });
+
+      httpTesting = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(PlayerComponent);
+      fixture.detectChanges();
+
+      httpTesting.expectNone((req) => req.url.includes('/audio-tracks'));
+    });
+
+    describe('Tier 2 mode track switching', () => {
+      it('should change audio element src when selecting a non-primary track in Tier 2 mode', () => {
+        const fixture = setup('42', '2', [], AUDIO_TRACKS);
+        const component = fixture.componentInstance;
+        const audio = fixture.nativeElement.querySelector('audio') as HTMLAudioElement;
+
+        const savedSrc = audio.src;
+        component.selectAudioTrack(AUDIO_TRACKS[1]);
+
+        expect(audio.src).toContain('/api/media/stream/42/audio?trackIndex=1');
+        expect(audio.src).not.toBe(savedSrc);
+      });
+
+      it('should use base sidecar URL (no trackIndex param) for track 0 in Tier 2 mode', () => {
+        const fixture = setup('42', '2', [], AUDIO_TRACKS);
+        const component = fixture.componentInstance;
+        const audio = fixture.nativeElement.querySelector('audio') as HTMLAudioElement;
+
+        // Set to a different src first
+        audio.src = '/some/other/url';
+        component.selectAudioTrack(AUDIO_TRACKS[0]);
+
+        expect(audio.src).toContain('/api/media/stream/42/audio');
+        expect(audio.src).not.toContain('trackIndex');
+      });
+
+      it('should preserve currentTime when switching tracks in Tier 2 mode', () => {
+        const fixture = setup('42', '2', [], AUDIO_TRACKS);
+        const component = fixture.componentInstance;
+        const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+        const audio = fixture.nativeElement.querySelector('audio') as HTMLAudioElement;
+
+        Object.defineProperty(video, 'currentTime', { value: 45.5, writable: true });
+        Object.defineProperty(audio, 'currentTime', { value: 0, writable: true });
+
+        component.selectAudioTrack(AUDIO_TRACKS[1]);
+
+        // Simulate browser firing loadedmetadata once new audio source is ready
+        audio.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(audio.currentTime).toBe(45.5);
+      });
+    });
+
+    describe('Standard mode (Tier 1/3) track switching', () => {
+      it('should no-op gracefully when native audioTracks API is not available', () => {
+        const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+        const component = fixture.componentInstance;
+        const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+
+        // Simulate no native audioTracks API
+        Object.defineProperty(video, 'audioTracks', { value: undefined, configurable: true });
+
+        expect(() => component.selectAudioTrack(AUDIO_TRACKS[0])).not.toThrow();
+        expect(component.activeAudioIndex()).toBe(0);
+      });
+
+      it('should enable selected native track and disable others when API is available', () => {
+        const fixture = setup('42', undefined, [], AUDIO_TRACKS);
+        const component = fixture.componentInstance;
+        const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+
+        const nativeTracks = [{ enabled: true }, { enabled: false }];
+        Object.defineProperty(video, 'audioTracks', {
+          value: { length: 2, 0: nativeTracks[0], 1: nativeTracks[1] },
+          configurable: true,
+        });
+
+        component.selectAudioTrack(AUDIO_TRACKS[1]);
+
+        expect(nativeTracks[0].enabled).toBe(false);
+        expect(nativeTracks[1].enabled).toBe(true);
+      });
     });
   });
 });

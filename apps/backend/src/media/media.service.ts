@@ -75,7 +75,7 @@ export class MediaService {
     return { id: row.id, path: filePath, tier, contentType };
   }
 
-  getAudioSidecarPath(fileId: number): string {
+  getAudioSidecarPath(fileId: number, trackIndex: number = 0): string {
     const db = this.database.getDatabase();
     const row = db
       .prepare(
@@ -100,8 +100,47 @@ export class MediaService {
       throw new NotFoundException(`Audio sidecar not ready`);
     }
 
-    this.validatePath(row.output_path);
-    return row.output_path;
+    let sidecarPath: string;
+    if (trackIndex === 0) {
+      sidecarPath = row.output_path;
+    } else {
+      // Derive per-track sidecar: /data/sidecars/42.m4a → /data/sidecars/42_track_1.m4a
+      const ext = path.extname(row.output_path);
+      const base = row.output_path.slice(0, -ext.length);
+      sidecarPath = `${base}_track_${trackIndex}${ext}`;
+    }
+
+    this.validatePath(sidecarPath);
+    return sidecarPath;
+  }
+
+  getAudioTracksForFile(
+    fileId: number,
+  ): Array<{ index: number; language: string | null; codec: string; channels: number }> {
+    const db = this.database.getDatabase();
+    const row = db
+      .prepare(`SELECT probe_data FROM media_files WHERE id = ?`)
+      .get(fileId) as { probe_data: string | null } | undefined;
+
+    if (!row) {
+      throw new NotFoundException(`Media file not found`);
+    }
+
+    if (!row.probe_data) return [];
+
+    try {
+      const probe = JSON.parse(row.probe_data) as {
+        audioTracks?: Array<{ index: number; codec: string; channels: number; language?: string }>;
+      };
+      return (probe.audioTracks ?? []).map((t) => ({
+        index: t.index,
+        language: t.language ?? null,
+        codec: t.codec ?? 'unknown',
+        channels: t.channels ?? 0,
+      }));
+    } catch {
+      return [];
+    }
   }
 
   getSubtitleInfo(subtitleId: number): SubtitleInfo {

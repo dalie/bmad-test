@@ -1,3 +1,12 @@
+## Deferred from: code review of 5-5-audio-track-selection-during-playback (2026-05-04)
+
+- Float/partial strings pass trackIndex validation (`parseInt("1.5")` silently returns 1) — benign because the frontend always sends integers; pre-existing parseInt pattern.
+- /audio-tracks endpoint exposes codec and channel metadata without auth — pre-existing unauthed endpoint design consistent with all other media endpoints; LAN-only deployment.
+- syncStarted not explicitly reset on audio src change — syncLoop keeps running; `video.play` listener re-establishes sync on next user play action; practical impact negligible.
+- ArrowUp from no-focus position skips last menu item in audio track dropdown — same bug exists in subtitle menu's `onMenuKeydown`; pre-existing mirrored pattern.
+- No upper bound on trackIndex query param — `validatePath()` prevents traversal; LAN-only; pre-existing service pattern.
+- Out-of-bounds trackIndex returns 404 not 400 — spec-intended behavior (non-existent sidecar naturally 404s); syncDisabled fallback handles gracefully.
+
 ## Deferred from: code review of 5-3-dual-element-audio-sync-for-sidecar-playback (2026-05-04)
 
 - iOS Safari blocks `audio.play()` without user gesture — programmatic `audio.play()` from `canplay` callback is rejected on iOS Safari. Needs platform-specific handling (e.g., resume audio on first user tap). Low priority for LAN-only deployment.

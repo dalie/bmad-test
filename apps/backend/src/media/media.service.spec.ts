@@ -216,6 +216,46 @@ describe("MediaService", () => {
       expect(result).toBe("/mnt/cache/sidecars/audio.aac");
     });
 
+    it("should return primary sidecar when trackIndex=0", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFile(
+        sourceId,
+        "/media/movies/movie.mkv",
+        "ready",
+        2,
+      );
+      insertTranscodeJob(
+        fileId,
+        2,
+        "completed",
+        "/mnt/cache/sidecars/42.m4a",
+      );
+
+      const result = service.getAudioSidecarPath(fileId, 0);
+
+      expect(result).toBe("/mnt/cache/sidecars/42.m4a");
+    });
+
+    it("should derive per-track sidecar path for trackIndex > 0", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFile(
+        sourceId,
+        "/media/movies/movie.mkv",
+        "ready",
+        2,
+      );
+      insertTranscodeJob(
+        fileId,
+        2,
+        "completed",
+        "/mnt/cache/sidecars/42.m4a",
+      );
+
+      const result = service.getAudioSidecarPath(fileId, 1);
+
+      expect(result).toBe("/mnt/cache/sidecars/42_track_1.m4a");
+    });
+
     it("should throw NotFoundException for non-Tier-2 file", () => {
       const sourceId = insertSource();
       const fileId = insertMediaFile(
@@ -343,6 +383,97 @@ describe("MediaService", () => {
 
     it("should return empty array for non-existent fileId", () => {
       const result = service.getSubtitlesForFile(999);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  // ── getAudioTracksForFile ────────────────────────────────────────────────
+
+  describe("getAudioTracksForFile", () => {
+    function insertMediaFileWithProbe(
+      sourceId: number,
+      filePath: string,
+      probeData: object | null,
+    ): number {
+      const filename = filePath.split("/").pop()!;
+      return db
+        .prepare(
+          "INSERT INTO media_files (path, filename, source_id, status, tier, probe_data) VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        .run(
+          filePath,
+          filename,
+          sourceId,
+          "ready",
+          1,
+          probeData ? JSON.stringify(probeData) : null,
+        ).lastInsertRowid as number;
+    }
+
+    it("should return audio tracks from probe_data", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/multi.mkv", {
+        audioTracks: [
+          { index: 0, codec: "ac3", channels: 6, language: "jpn" },
+          { index: 1, codec: "ac3", channels: 2, language: "eng" },
+        ],
+      });
+
+      const result = service.getAudioTracksForFile(fileId);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({ index: 0, language: "jpn", codec: "ac3", channels: 6 });
+      expect(result[1]).toEqual({ index: 1, language: "eng", codec: "ac3", channels: 2 });
+    });
+
+    it("should return empty array when probe_data is null", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/movie.mkv", null);
+
+      const result = service.getAudioTracksForFile(fileId);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array when audioTracks is missing from probe_data", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/movie.mkv", {
+        format: { container: "mkv", duration: 100, bitrate: 5000 },
+      });
+
+      const result = service.getAudioTracksForFile(fileId);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return null for language when language field is missing", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/movie.mkv", {
+        audioTracks: [{ index: 0, codec: "aac", channels: 2 }],
+      });
+
+      const result = service.getAudioTracksForFile(fileId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].language).toBeNull();
+    });
+
+    it("should throw NotFoundException for non-existent fileId", () => {
+      expect(() => service.getAudioTracksForFile(999)).toThrow(NotFoundException);
+    });
+
+    it("should return empty array when probe_data is invalid JSON", () => {
+      const sourceId = insertSource();
+      const filename = "bad.mkv";
+      const fileId = db
+        .prepare(
+          "INSERT INTO media_files (path, filename, source_id, status, tier, probe_data) VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        .run("/media/movies/bad.mkv", filename, sourceId, "ready", 1, "not-valid-json")
+        .lastInsertRowid as number;
+
+      const result = service.getAudioTracksForFile(fileId);
 
       expect(result).toEqual([]);
     });

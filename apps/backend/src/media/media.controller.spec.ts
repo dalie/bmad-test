@@ -18,6 +18,7 @@ describe("MediaController", () => {
       getAudioSidecarPath: jest.fn(),
       getSubtitleInfo: jest.fn(),
       getSubtitlesForFile: jest.fn(),
+      getAudioTracksForFile: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -180,7 +181,7 @@ describe("MediaController", () => {
   // ── GET /api/media/stream/:fileId/audio ────────────────────────────────
 
   describe("GET /media/stream/:fileId/audio", () => {
-    it("should stream audio sidecar for Tier 2 file", () => {
+    it("should stream audio sidecar for Tier 2 file (no trackIndex)", () => {
       mediaService.getAudioSidecarPath.mockReturnValue(
         "/mnt/cache/sidecars/audio.aac",
       );
@@ -190,14 +191,40 @@ describe("MediaController", () => {
       const req = mockRequest(undefined);
       const res = mockResponse();
 
-      const result = controller.streamAudio(1, req, res);
+      const result = controller.streamAudio(1, req, res, undefined);
 
+      expect(mediaService.getAudioSidecarPath).toHaveBeenCalledWith(1, 0);
       expect(res.set).toHaveBeenCalledWith({
         "Content-Length": 5000,
         "Content-Type": "audio/aac",
         "Accept-Ranges": "bytes",
       });
       expect(result).toBeDefined();
+    });
+
+    it("should stream per-track sidecar when trackIndex=1 is provided", () => {
+      mediaService.getAudioSidecarPath.mockReturnValue(
+        "/mnt/cache/sidecars/42_track_1.m4a",
+      );
+      mockFs.statSync.mockReturnValue({ size: 3000 } as any);
+      mockFs.createReadStream.mockReturnValue({ pipe: jest.fn() } as any);
+
+      const req = mockRequest(undefined);
+      const res = mockResponse();
+
+      const result = controller.streamAudio(42, req, res, "1");
+
+      expect(mediaService.getAudioSidecarPath).toHaveBeenCalledWith(42, 1);
+      expect(result).toBeDefined();
+    });
+
+    it("should throw 400 for invalid trackIndex", () => {
+      const req = mockRequest();
+      const res = mockResponse();
+
+      expect(() => controller.streamAudio(1, req, res, "abc")).toThrow(
+        HttpException,
+      );
     });
 
     it("should throw NotFoundException for non-Tier-2 file", () => {
@@ -210,7 +237,7 @@ describe("MediaController", () => {
       const req = mockRequest();
       const res = mockResponse();
 
-      expect(() => controller.streamAudio(1, req, res)).toThrow(
+      expect(() => controller.streamAudio(1, req, res, undefined)).toThrow(
         NotFoundException,
       );
     });
@@ -286,6 +313,41 @@ describe("MediaController", () => {
       const result = controller.getSubtitlesForFile(999);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  // ── GET /api/media/:fileId/audio-tracks ─────────────────────────────────
+
+  describe("GET /media/:fileId/audio-tracks", () => {
+    it("should return array of available audio tracks", () => {
+      const tracks = [
+        { index: 0, language: "jpn", codec: "ac3", channels: 6 },
+        { index: 1, language: "eng", codec: "ac3", channels: 2 },
+      ];
+      mediaService.getAudioTracksForFile.mockReturnValue(tracks);
+
+      const result = controller.getAudioTracksForFile(42);
+
+      expect(mediaService.getAudioTracksForFile).toHaveBeenCalledWith(42);
+      expect(result).toEqual(tracks);
+    });
+
+    it("should return empty array when no audio tracks available", () => {
+      mediaService.getAudioTracksForFile.mockReturnValue([]);
+
+      const result = controller.getAudioTracksForFile(42);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should throw NotFoundException for non-existent fileId", () => {
+      mediaService.getAudioTracksForFile.mockImplementation(() => {
+        throw new NotFoundException("Media file not found");
+      });
+
+      expect(() => controller.getAudioTracksForFile(999)).toThrow(
+        NotFoundException,
+      );
     });
   });
 });
