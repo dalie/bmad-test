@@ -1,3 +1,4 @@
+import { AdminModule } from "./admin/admin.module";
 import { LibraryModule } from "./library/library.module";
 import { MediaModule } from "./media/media.module";
 import { Module } from "@nestjs/common";
@@ -30,6 +31,7 @@ import { HealthController } from "./health/health.controller";
     ConfigModule,
     LibraryModule,
     MediaModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })

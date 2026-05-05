@@ -7,6 +7,10 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      # Set to your LAN subnet for admin access (required for Docker deployments)
+      # ADMIN_SUBNET: 192.168.1.0/24
+      - ADMIN_SUBNET=${ADMIN_SUBNET:-}
     volumes:
       - ~/media/movies:/mnt/media/movies:ro
       - ~/media/tv:/mnt/media/tv:ro

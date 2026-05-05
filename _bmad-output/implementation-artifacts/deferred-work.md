@@ -1,3 +1,8 @@
+## Deferred from: code review of 7-1-lan-detection-and-admin-route-guard (2026-05-05)
+
+- X-Forwarded-For spoofable when TRUST_PROXY=true — When enabled, any client can spoof XFF header to gain admin access. Operational risk mitigated by TRUST_PROXY being off by default; users who enable it must ensure only trusted proxies reach the app.
+- No IPv6 subnet matching support — LanDetectionService only handles IPv4 subnets. Pure IPv6 clients (not IPv4-mapped) will never match and are denied admin access. Fails closed; no security impact but IPv6-only LAN clients cannot get admin.
+
 ## Deferred from: code review of 6-2-resume-playback-from-last-position (2026-05-05)
 
 - Tests call private method via `as any` — `component.applyResumePosition()` bypasses TypeScript access control in tests; works correctly but is a design smell consistent with prior test patterns in the file.

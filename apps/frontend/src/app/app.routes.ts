@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
   {
@@ -18,5 +19,10 @@ export const routes: Routes = [
   {
     path: 'play/:fileId',
     loadComponent: () => import('./player/player.component').then((m) => m.PlayerComponent),
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./admin/admin.component').then((m) => m.AdminComponent),
+    canActivate: [adminGuard],
   },
 ];

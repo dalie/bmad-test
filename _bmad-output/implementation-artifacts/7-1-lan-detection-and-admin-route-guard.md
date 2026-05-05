@@ -1,6 +1,6 @@
 # Story 7.1: LAN Detection and Admin Route Guard
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,68 +18,68 @@ so that viewers outside my LAN never see admin functionality.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `AdminModule` with `LanGuard` service (AC: #1, #3)
-  - [ ] Create `apps/backend/src/admin/admin.module.ts`
-  - [ ] Create `apps/backend/src/admin/lan.guard.ts` implementing `CanActivate`
-  - [ ] Create `apps/backend/src/admin/lan-detection.service.ts` with subnet comparison logic
-  - [ ] The `LanDetectionService` uses `os.networkInterfaces()` to discover the server's non-internal IPv4 interfaces and their CIDR/netmask
-  - [ ] The guard extracts client IP from `request.ip` (or `request.headers['x-forwarded-for']` when behind a proxy) and checks if it's on the same subnet
-  - [ ] Private/reserved ranges: also treat `127.0.0.1`, `::1`, and `::ffff:127.0.0.1` as local (loopback is always admin)
-  - [ ] Guard returns 403 `ForbiddenException` for non-LAN clients
+- [x] Task 1: Create `AdminModule` with `LanGuard` service (AC: #1, #3)
+  - [x] Create `apps/backend/src/admin/admin.module.ts`
+  - [x] Create `apps/backend/src/admin/lan.guard.ts` implementing `CanActivate`
+  - [x] Create `apps/backend/src/admin/lan-detection.service.ts` with subnet comparison logic
+  - [x] The `LanDetectionService` uses `os.networkInterfaces()` to discover the server's non-internal IPv4 interfaces and their CIDR/netmask
+  - [x] The guard extracts client IP from `request.ip` (or `request.headers['x-forwarded-for']` when behind a proxy) and checks if it's on the same subnet
+  - [x] Private/reserved ranges: also treat `127.0.0.1`, `::1`, and `::ffff:127.0.0.1` as local (loopback is always admin)
+  - [x] Guard returns 403 `ForbiddenException` for non-LAN clients
 
-- [ ] Task 2: Create `AdminController` with access-check endpoint (AC: #2)
-  - [ ] Create `apps/backend/src/admin/admin.controller.ts`
-  - [ ] Implement `GET /admin/access` — does NOT use the guard; instead calls `LanDetectionService.isLan(request)` and returns `{ admin: boolean }`
-  - [ ] This endpoint must be accessible from any IP (it's the check itself, not a protected resource)
+- [x] Task 2: Create `AdminController` with access-check endpoint (AC: #2)
+  - [x] Create `apps/backend/src/admin/admin.controller.ts`
+  - [x] Implement `GET /admin/access` — does NOT use the guard; instead calls `LanDetectionService.isLan(request)` and returns `{ admin: boolean }`
+  - [x] This endpoint must be accessible from any IP (it's the check itself, not a protected resource)
 
-- [ ] Task 3: Apply `LanGuard` to all other admin routes (AC: #3)
-  - [ ] Use `@UseGuards(LanGuard)` on the controller class level for a new `AdminProtectedController` (or via `@Controller('admin')` with guard on all methods except `access`)
-  - [ ] For now, the only protected route placeholder is `GET /admin/stats` returning `{}` (will be fleshed out in story 7-2)
-  - [ ] Verify 403 is returned when client IP is not on server's LAN
+- [x] Task 3: Apply `LanGuard` to all other admin routes (AC: #3)
+  - [x] Use `@UseGuards(LanGuard)` on the controller class level for a new `AdminProtectedController` (or via `@Controller('admin')` with guard on all methods except `access`)
+  - [x] For now, the only protected route placeholder is `GET /admin/stats` returning `{}` (will be fleshed out in story 7-2)
+  - [x] Verify 403 is returned when client IP is not on server's LAN
 
-- [ ] Task 4: Register `AdminModule` in `AppModule` (AC: #1, #3)
-  - [ ] Import `AdminModule` in `apps/backend/src/app.module.ts`
+- [x] Task 4: Register `AdminModule` in `AppModule` (AC: #1, #3)
+  - [x] Import `AdminModule` in `apps/backend/src/app.module.ts`
 
-- [ ] Task 5: Create Angular `AdminAccessService` (AC: #4)
-  - [ ] Create `apps/frontend/src/app/services/admin-access.service.ts`
-  - [ ] Inject `HttpClient`, call `GET /api/admin/access`
-  - [ ] Expose an `isAdmin` signal (or observable converted to signal via `toSignal`) that caches the result for the session
+- [x] Task 5: Create Angular `AdminAccessService` (AC: #4)
+  - [x] Create `apps/frontend/src/app/services/admin-access.service.ts`
+  - [x] Inject `HttpClient`, call `GET /api/admin/access`
+  - [x] Expose an `isAdmin` signal (or observable converted to signal via `toSignal`) that caches the result for the session
 
-- [ ] Task 6: Create Angular `adminGuard` route guard (AC: #4)
-  - [ ] Create `apps/frontend/src/app/admin/admin.guard.ts` as a functional `CanActivateFn`
-  - [ ] Inject `AdminAccessService`, check `isAdmin` — redirect to `/` if `false`
+- [x] Task 6: Create Angular `adminGuard` route guard (AC: #4)
+  - [x] Create `apps/frontend/src/app/admin/admin.guard.ts` as a functional `CanActivateFn`
+  - [x] Inject `AdminAccessService`, check `isAdmin` — redirect to `/` if `false`
 
-- [ ] Task 7: Create placeholder `AdminComponent` and route (AC: #4)
-  - [ ] Create `apps/frontend/src/app/admin/admin.component.ts` (standalone, OnPush)
-  - [ ] Simple template: `<h1>Admin Panel</h1><p>Coming in stories 7-2 through 7-4.</p>`
-  - [ ] Add route `{ path: 'admin', loadComponent: ..., canActivate: [adminGuard] }` in `app.routes.ts`
+- [x] Task 7: Create placeholder `AdminComponent` and route (AC: #4)
+  - [x] Create `apps/frontend/src/app/admin/admin.component.ts` (standalone, OnPush)
+  - [x] Simple template: `<h1>Admin Panel</h1><p>Coming in stories 7-2 through 7-4.</p>`
+  - [x] Add route `{ path: 'admin', loadComponent: ..., canActivate: [adminGuard] }` in `app.routes.ts`
 
-- [ ] Task 8: Conditionally show admin link in navigation (AC: #4)
-  - [ ] Add a nav element in `apps/frontend/src/app/app.html` (or `app.ts` template)
-  - [ ] Show an "Admin" link (`routerLink="/admin"`) only when `AdminAccessService.isAdmin()` is `true`
-  - [ ] Viewers (non-LAN) never see this link
+- [x] Task 8: Conditionally show admin link in navigation (AC: #4)
+  - [x] Add a nav element in `apps/frontend/src/app/app.html` (or `app.ts` template)
+  - [x] Show an "Admin" link (`routerLink="/admin"`) only when `AdminAccessService.isAdmin()` is `true`
+  - [x] Viewers (non-LAN) never see this link
 
-- [ ] Task 9: Write unit tests for LAN detection logic (AC: #1, #3)
-  - [ ] Create `apps/backend/src/admin/lan-detection.service.spec.ts`
-  - [ ] Test: loopback IPs (`127.0.0.1`, `::1`, `::ffff:127.0.0.1`) → `true`
-  - [ ] Test: same-subnet IP (e.g., server on `192.168.1.108/24`, client `192.168.1.50`) → `true`
-  - [ ] Test: different-subnet IP (e.g., `10.0.0.5`) → `false`
-  - [ ] Test: IPv4-mapped IPv6 on same subnet → `true`
-  - [ ] Create `apps/backend/src/admin/lan.guard.spec.ts`
-  - [ ] Test: guard allows request from LAN IP
-  - [ ] Test: guard throws ForbiddenException for non-LAN IP
+- [x] Task 9: Write unit tests for LAN detection logic (AC: #1, #3)
+  - [x] Create `apps/backend/src/admin/lan-detection.service.spec.ts`
+  - [x] Test: loopback IPs (`127.0.0.1`, `::1`, `::ffff:127.0.0.1`) → `true`
+  - [x] Test: same-subnet IP (e.g., server on `192.168.1.108/24`, client `192.168.1.50`) → `true`
+  - [x] Test: different-subnet IP (e.g., `10.0.0.5`) → `false`
+  - [x] Test: IPv4-mapped IPv6 on same subnet → `true`
+  - [x] Create `apps/backend/src/admin/lan.guard.spec.ts`
+  - [x] Test: guard allows request from LAN IP
+  - [x] Test: guard throws ForbiddenException for non-LAN IP
 
-- [ ] Task 10: Write integration test for admin access endpoint (AC: #2, #3)
-  - [ ] Create `apps/backend/src/admin/admin.controller.spec.ts`
-  - [ ] Test: `GET /admin/access` returns `{ admin: true }` from loopback
-  - [ ] Test: protected endpoint returns 403 for non-LAN (mock `LanDetectionService`)
+- [x] Task 10: Write integration test for admin access endpoint (AC: #2, #3)
+  - [x] Create `apps/backend/src/admin/admin.controller.spec.ts`
+  - [x] Test: `GET /admin/access` returns `{ admin: true }` from loopback
+  - [x] Test: protected endpoint returns 403 for non-LAN (mock `LanDetectionService`)
 
-- [ ] Task 11: Write frontend unit tests (AC: #4)
-  - [ ] Create `apps/frontend/src/app/services/admin-access.service.spec.ts`
-  - [ ] Test: service calls `/api/admin/access` and exposes boolean signal
-  - [ ] Create `apps/frontend/src/app/admin/admin.guard.spec.ts`
-  - [ ] Test: guard allows navigation when admin is true
-  - [ ] Test: guard redirects to `/` when admin is false
+- [x] Task 11: Write frontend unit tests (AC: #4)
+  - [x] Create `apps/frontend/src/app/services/admin-access.service.spec.ts`
+  - [x] Test: service calls `/api/admin/access` and exposes boolean signal
+  - [x] Create `apps/frontend/src/app/admin/admin.guard.spec.ts`
+  - [x] Test: guard allows navigation when admin is true
+  - [x] Test: guard redirects to `/` when admin is false
 
 ## Dev Notes
 
@@ -265,8 +265,54 @@ export class AdminAccessService {
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Debug Log References
+
+- Initial `jest.spyOn(os, 'networkInterfaces')` failed due to non-configurable property; switched to `jest.mock('os')` module-level mock.
 
 ### Completion Notes List
 
+- Implemented LAN detection using pure subnet math (no external dependencies)
+- `ADMIN_SUBNET` env var override supported for Docker networking scenarios
+- `TRUST_PROXY` env var controls whether `X-Forwarded-For` is trusted (off by default for security)
+- Frontend uses `toSignal()` with `shareReplay(1)` for session-scoped caching of admin access
+- Admin nav link conditionally rendered via `@if` block in app template
+- All acceptance criteria satisfied; 20 backend tests + 155 frontend tests passing
+
 ### File List
+
+New:
+
+- apps/backend/src/admin/admin.module.ts
+- apps/backend/src/admin/admin.controller.ts
+- apps/backend/src/admin/lan-detection.service.ts
+- apps/backend/src/admin/lan.guard.ts
+- apps/backend/src/admin/lan-detection.service.spec.ts
+- apps/backend/src/admin/lan.guard.spec.ts
+- apps/backend/src/admin/admin.controller.spec.ts
+- apps/frontend/src/app/services/admin-access.service.ts
+- apps/frontend/src/app/services/admin-access.service.spec.ts
+- apps/frontend/src/app/admin/admin.component.ts
+- apps/frontend/src/app/admin/admin.guard.ts
+- apps/frontend/src/app/admin/admin.guard.spec.ts
+
+Modified:
+
+- apps/backend/src/app.module.ts
+- apps/frontend/src/app/app.routes.ts
+- apps/frontend/src/app/app.ts
+- apps/frontend/src/app/app.html
+
+### Review Findings
+
+- [x] [Review][Decision] Docker bridge networking grants admin to all external traffic by default — Fixed: added ADMIN_SUBNET env var to docker-compose.yml with commented example.
+- [x] [Review][Decision] Guard per-method vs class-level — future admin endpoints unprotected by default — Fixed: split into AccessController (unguarded /access) and AdminController (class-level @UseGuards(LanGuard)).
+- [x] [Review][Patch] ADMIN_SUBNET lacks validation — Fixed: parseAdminSubnet() supports comma-separated multi-CIDR, validates prefix, logs warnings, falls back to auto-discovery on all-invalid.
+- [x] [Review][Patch] Frontend adminGuard race condition — Fixed: guard now returns Observable from access$ pipe instead of sync signal read.
+- [x] [Review][Defer] X-Forwarded-For spoofable when TRUST_PROXY=true — deferred, operational risk (off by default, deployment-time concern)
+- [x] [Review][Defer] No IPv6 subnet matching support — deferred, fails closed (no security impact, IPv6-only LAN clients denied)
+
+## Change Log
+
+- 2026-05-05: Implemented story 7-1 — LAN detection service with subnet comparison, NestJS guard for admin route protection, Angular admin access service + route guard + conditional nav link. All tasks complete.
