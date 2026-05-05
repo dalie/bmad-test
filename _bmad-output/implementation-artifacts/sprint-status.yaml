@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-30
-last_updated: 2026-05-04
+last_updated: 2026-05-05
 
 project: bmad
 project_key: NOKEY
@@ -92,7 +92,7 @@ development_status:
   # Epic 6: Watch Progress & Resume
   epic-6: in-progress
   6-1-persist-watch-progress-in-localstorage: done
-  6-2-resume-playback-from-last-position: backlog
+  6-2-resume-playback-from-last-position: ready-for-dev
   6-3-auto-mark-titles-as-watched: backlog
   epic-6-retrospective: optional
 
