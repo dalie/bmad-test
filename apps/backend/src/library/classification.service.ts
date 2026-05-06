@@ -1,13 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { DatabaseService } from '../database/database.service';
-import { ProbeResult } from './probe.service';
-import { TranscodeService } from './transcode.service';
-import { SubtitleService } from './subtitle.service';
+import { DatabaseService } from "../database/database.service";
+import { ProbeResult } from "./probe.service";
+import { TranscodeService } from "./transcode.service";
+import { SubtitleService } from "./subtitle.service";
 
 const WEB_COMPATIBLE_VIDEO_CODECS = new Set([
   "h264",
   "h265",
-  "hevc",
   "vp8",
   "vp9",
   "av1",
@@ -117,7 +116,9 @@ export class ClassificationService {
 
     classifyTx();
     if (tier === 1) {
-      this.logger.log(`Classified ${file.filename} → Tier 1 (ready, no transcode needed)`);
+      this.logger.log(
+        `Classified ${file.filename} → Tier 1 (ready, no transcode needed)`,
+      );
     } else {
       this.logger.log(`Classified ${file.filename} → Tier ${tier}`);
     }
