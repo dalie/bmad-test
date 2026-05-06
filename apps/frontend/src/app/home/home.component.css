@@ -78,11 +78,16 @@
   display: block;
 }
 
-/* Shown when poster_url is null — solid surface bg */
+/* Shown when poster_url is null — solid surface bg with question mark */
 .poster-grid__image--fallback {
   width: 100%;
   height: 100%;
   background-color: var(--color-surface-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  color: var(--color-text-muted);
 }
 
 /* Title below poster — truncate to one line */

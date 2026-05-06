@@ -7,7 +7,7 @@
         @if (m.poster_url) {
           <img class="detail-poster" [src]="m.poster_url" [alt]="m.title" loading="lazy" />
         } @else {
-          <div class="detail-poster detail-poster--fallback"></div>
+          <div class="detail-poster detail-poster--fallback">?</div>
         }
       </div>
 
@@ -51,7 +51,7 @@
             mediaId: m.id,
             title: m.title,
             year: m.year,
-            posterUrl: m.poster_url
+            posterUrl: m.poster_url,
           }"
           >Play</a
         >

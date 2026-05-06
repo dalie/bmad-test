@@ -40,6 +40,11 @@
   width: 100%;
   height: 100%;
   background-color: var(--color-surface-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  color: var(--color-text-muted);
 }
 
 /* Title — --font-size-xl per UX-DR4 */

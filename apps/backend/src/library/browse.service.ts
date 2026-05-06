@@ -96,6 +96,17 @@ export class BrowseService {
 
   constructor(private readonly database: DatabaseService) {}
 
+  /**
+   * Convert a filename to a readable title:
+   * strip extension, replace non-alphanumeric with spaces, capitalize words.
+   */
+  private readableTitle(filename: string): string {
+    const withoutExt = filename.replace(/\.[^.]+$/, "");
+    const spaced = withoutExt.replace(/[^a-zA-Z0-9]+/g, " ").trim();
+    if (!spaced) return filename.replace(/\.[^.]+$/, "");
+    return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
   private getImageBaseUrl(): string | null {
     const db = this.database.getDatabase();
     const row = db
@@ -178,7 +189,7 @@ export class BrowseService {
       tier: number | null;
     }[];
 
-    return rows.map((row) => ({
+    const matched = rows.map((row) => ({
       id: row.id,
       title: row.title,
       year: this.extractYear(row.release_date),
@@ -189,6 +200,37 @@ export class BrowseService {
       transcode_tier: row.tier,
       playback_ready: true,
     }));
+
+    // Include unmatched movie files
+    const unmatchedRows = db
+      .prepare(
+        `SELECT mf.id, mf.filename, mf.created_at AS added_at
+         FROM media_files mf
+         JOIN media_sources ms ON ms.id = mf.source_id
+         WHERE mf.status = 'match_failed' AND ms.type = 'movies'
+         ORDER BY mf.filename ASC`,
+      )
+      .all() as {
+      id: number;
+      filename: string;
+      added_at: string;
+    }[];
+
+    const unmatched = unmatchedRows.map((row) => ({
+      id: row.id,
+      title: this.readableTitle(row.filename),
+      year: null,
+      poster_url: null,
+      runtime: null,
+      rating: null,
+      added_at: row.added_at,
+      transcode_tier: null,
+      playback_ready: false,
+    }));
+
+    return [...matched, ...unmatched].sort((a, b) =>
+      a.title.localeCompare(b.title),
+    );
   }
 
   getShows(): ShowListItem[] {
@@ -221,7 +263,7 @@ export class BrowseService {
       season_count: number;
     }[];
 
-    return rows.map((row) => ({
+    const matched = rows.map((row) => ({
       id: row.id,
       title: row.title,
       year: this.extractYear(row.release_date),
@@ -230,6 +272,35 @@ export class BrowseService {
       season_count: row.season_count,
       added_at: row.added_at,
     }));
+
+    // Include unmatched TV files
+    const unmatchedRows = db
+      .prepare(
+        `SELECT mf.id, mf.filename, mf.created_at AS added_at
+         FROM media_files mf
+         JOIN media_sources ms ON ms.id = mf.source_id
+         WHERE mf.status = 'match_failed' AND ms.type = 'tv'
+         ORDER BY mf.filename ASC`,
+      )
+      .all() as {
+      id: number;
+      filename: string;
+      added_at: string;
+    }[];
+
+    const unmatched = unmatchedRows.map((row) => ({
+      id: row.id,
+      title: this.readableTitle(row.filename),
+      year: null,
+      poster_url: null,
+      rating: null,
+      season_count: 0,
+      added_at: row.added_at,
+    }));
+
+    return [...matched, ...unmatched].sort((a, b) =>
+      a.title.localeCompare(b.title),
+    );
   }
 
   getMovieById(id: number): MovieDetail | null {
@@ -264,7 +335,37 @@ export class BrowseService {
         }
       | undefined;
 
-    if (!row) return null;
+    if (!row) {
+      // Check if this is an unmatched file
+      const unmatchedRow = db
+        .prepare(
+          `SELECT mf.id, mf.filename, mf.probe_data
+           FROM media_files mf
+           JOIN media_sources ms ON ms.id = mf.source_id
+           WHERE mf.id = ? AND mf.status = 'match_failed' AND ms.type = 'movies'`,
+        )
+        .get(id) as
+        | { id: number; filename: string; probe_data: string | null }
+        | undefined;
+
+      if (!unmatchedRow) return null;
+
+      return {
+        id: unmatchedRow.id,
+        title: this.readableTitle(unmatchedRow.filename),
+        description: "This media could not be matched to any known title.",
+        year: null,
+        poster_url: null,
+        runtime: this.getDuration(unmatchedRow.probe_data),
+        rating: null,
+        content_rating: null,
+        audio_tracks: this.getAudioTracks(unmatchedRow.probe_data),
+        subtitle_tracks: [],
+        file_id: unmatchedRow.id,
+        tier: null,
+        transcode_output_path: null,
+      };
+    }
 
     const subtitleRows = db
       .prepare(
@@ -328,7 +429,29 @@ export class BrowseService {
         }
       | undefined;
 
-    if (!header) return null;
+    if (!header) {
+      // Check if this is an unmatched TV file (id is media_file id for unmatched)
+      const unmatchedRow = db
+        .prepare(
+          `SELECT mf.id, mf.filename
+           FROM media_files mf
+           JOIN media_sources ms ON ms.id = mf.source_id
+           WHERE mf.id = ? AND mf.status = 'match_failed' AND ms.type = 'tv'`,
+        )
+        .get(tmdbId) as { id: number; filename: string } | undefined;
+
+      if (!unmatchedRow) return null;
+
+      return {
+        id: unmatchedRow.id,
+        title: this.readableTitle(unmatchedRow.filename),
+        description: "This media could not be matched to any known title.",
+        year: null,
+        poster_url: null,
+        rating: null,
+        seasons: [],
+      };
+    }
 
     const episodeRows = db
       .prepare(
@@ -469,7 +592,7 @@ export class BrowseService {
       added_at: string;
     }[];
 
-    return rows.map((row) => ({
+    const matched = rows.map((row) => ({
       id: row.id,
       title: row.title,
       year: this.extractYear(row.release_date),
@@ -480,5 +603,45 @@ export class BrowseService {
       latest_season: null,
       latest_episode: null,
     }));
+
+    // Include unmatched files matching search term
+    const unmatchedRows = db
+      .prepare(
+        `SELECT mf.id, mf.filename, mf.created_at AS added_at,
+                ms.type AS source_type
+         FROM media_files mf
+         JOIN media_sources ms ON ms.id = mf.source_id
+         WHERE mf.status = 'match_failed'
+         ORDER BY mf.filename ASC`,
+      )
+      .all() as {
+      id: number;
+      filename: string;
+      added_at: string;
+      source_type: string;
+    }[];
+
+    const searchLower = q.toLowerCase();
+    const unmatched = unmatchedRows
+      .map((row) => {
+        const title = this.readableTitle(row.filename);
+        return { ...row, title };
+      })
+      .filter((row) => row.title.toLowerCase().includes(searchLower))
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        year: null,
+        poster_url: null,
+        rating: null,
+        media_type: row.source_type === "movies" ? "movie" : "tv",
+        added_at: row.added_at,
+        latest_season: null,
+        latest_episode: null,
+      }));
+
+    return [...matched, ...unmatched].sort((a, b) =>
+      a.title.localeCompare(b.title),
+    );
   }
 }

@@ -7,7 +7,7 @@
         @if (s.poster_url) {
           <img class="detail-poster" [src]="s.poster_url" [alt]="s.title" loading="lazy" />
         } @else {
-          <div class="detail-poster detail-poster--fallback"></div>
+          <div class="detail-poster detail-poster--fallback">?</div>
         }
       </div>
 
