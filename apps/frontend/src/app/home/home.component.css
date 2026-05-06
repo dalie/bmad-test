@@ -1,3 +1,19 @@
+.admin-nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+}
+
+.admin-nav a {
+  color: var(--color-text-muted, #aaa);
+  font-size: var(--font-size-sm, 0.875rem);
+  text-decoration: none;
+}
+
+.admin-nav a:hover {
+  color: var(--color-text, #fff);
+}
+
 .library-section {
   margin-block: var(--space-xl);
 }

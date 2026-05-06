@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { LibraryService } from '../services/library.service';
+import { AdminAccessService } from '../services/admin-access.service';
 import {
   WatchProgressService,
   WatchProgressEntry,
@@ -42,6 +43,8 @@ export interface ContinueWatchingItem extends LibraryItem {
 export class HomeComponent {
   private readonly libraryService = inject(LibraryService);
   private readonly watchProgressService = inject(WatchProgressService);
+  private readonly adminAccess = inject(AdminAccessService);
+  readonly isAdmin = this.adminAccess.isAdmin;
 
   readonly searchQuery = signal('');
 

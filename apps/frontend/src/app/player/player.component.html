@@ -1,5 +1,5 @@
 <main class="player-container">
-  <button type="button" class="back-link" (click)="location.back()">← Back</button>
+  <button type="button" class="back-link" [class.controls-hidden]="!controlsVisible()" (click)="location.back()">← Back</button>
 
   @if (isTier2) {
     <video #videoEl class="player-video" [src]="videoSrc" muted autoplay controls preload="auto">
@@ -27,7 +27,7 @@
   }
 
   @if (subtitleTracks().length > 0) {
-    <div class="subtitle-controls" #subtitleControls>
+    <div class="subtitle-controls" [class.controls-hidden]="!controlsVisible()" #subtitleControls>
       <button
         type="button"
         class="cc-button"
@@ -68,7 +68,7 @@
   }
 
   @if (audioTracks().length > 1) {
-    <div class="audio-controls" #audioControls>
+    <div class="audio-controls" [class.controls-hidden]="!controlsVisible()" #audioControls>
       <button
         type="button"
         class="audio-button"

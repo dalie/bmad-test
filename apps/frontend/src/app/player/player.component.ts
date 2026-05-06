@@ -108,6 +108,9 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   activeAudioIndex = signal<number | null>(null);
   audioMenuOpen = signal<boolean>(false);
 
+  controlsVisible = signal<boolean>(true);
+  private controlsTimer: ReturnType<typeof setTimeout> | null = null;
+
   @ViewChild('videoEl') videoElRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('audioEl') audioElRef!: ElementRef<HTMLAudioElement>;
   @ViewChild('subtitleControls') subtitleControlsRef?: ElementRef<HTMLElement>;
@@ -232,6 +235,10 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     if (this.progressInterval !== null) {
       clearInterval(this.progressInterval);
       this.progressInterval = null;
+    }
+    if (this.controlsTimer !== null) {
+      clearTimeout(this.controlsTimer);
+      this.controlsTimer = null;
     }
     for (const t of this.pendingRestoreTimers) clearTimeout(t);
     this.pendingRestoreTimers = [];
@@ -607,6 +614,19 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
           : (currentIndex - 1 + items.length) % items.length;
       (items[next] as HTMLElement).focus();
     }
+  }
+
+  @HostListener('mousemove')
+  @HostListener('click')
+  @HostListener('touchstart')
+  onMouseActivity(): void {
+    this.controlsVisible.set(true);
+    if (this.controlsTimer !== null) clearTimeout(this.controlsTimer);
+    if (this.subtitleMenuOpen() || this.audioMenuOpen()) return;
+    this.controlsTimer = setTimeout(() => {
+      this.controlsVisible.set(false);
+      this.controlsTimer = null;
+    }, 3000);
   }
 
   @HostListener('document:click', ['$event'])
