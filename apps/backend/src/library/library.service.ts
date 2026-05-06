@@ -287,9 +287,13 @@ export class LibraryService {
       } while (this.matchingQueued);
 
       // Trigger classification after all matching passes complete (non-blocking)
-      this.classificationService.executeClassification().catch((err) =>
-        this.logger.error(`Classification failed: ${err instanceof Error ? err.message : String(err)}`),
-      );
+      this.classificationService
+        .executeClassification()
+        .catch((err) =>
+          this.logger.error(
+            `Classification failed: ${err instanceof Error ? err.message : String(err)}`,
+          ),
+        );
     } finally {
       this.matching = false;
     }
