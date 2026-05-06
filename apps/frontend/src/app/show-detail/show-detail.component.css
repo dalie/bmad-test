@@ -95,6 +95,23 @@
   padding-block: var(--space-sm);
   border-block-end: 1px solid var(--color-surface-raised);
   min-height: 44px; /* WCAG touch target (UX-DR11) */
+  position: relative;
+  flex-wrap: wrap;
+}
+
+/* Watched episode — dimmed */
+.episode--watched {
+  opacity: 0.4;
+}
+
+/* In-progress bar — bottom of episode row */
+.episode__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background-color: var(--color-progress);
+  border-radius: 1px;
 }
 
 .episode__number {

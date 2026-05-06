@@ -38,7 +38,10 @@
           <h2 class="season__header">Season {{ season.season_number }}</h2>
           <ol class="episode-list">
             @for (ep of season.episodes; track ep.file_id) {
-              <li class="episode">
+              <li
+                class="episode"
+                [class.episode--watched]="isEpisodeWatched(season.season_number, ep.episode_number)"
+              >
                 <span class="episode__number">{{ ep.episode_number }}.</span>
                 <span class="episode__title">{{ ep.name || 'Episode ' + ep.episode_number }}</span>
                 @let dur = formatDuration(ep.duration);
@@ -56,11 +59,19 @@
                     episode: ep.episode_number,
                     title: s.title,
                     year: s.year,
-                    posterUrl: s.poster_url
+                    posterUrl: s.poster_url,
                   }"
-                  [attr.aria-label]="'Play ' + (ep.name || 'Episode ' + ep.episode_number)"
-                  >Play</a
+                  [attr.aria-label]="
+                    getEpisodeLabel(season.season_number, ep.episode_number) +
+                    ' ' +
+                    (ep.name || 'Episode ' + ep.episode_number)
+                  "
+                  >{{ getEpisodeLabel(season.season_number, ep.episode_number) }}</a
                 >
+                @let progress = getEpisodeProgress(season.season_number, ep.episode_number);
+                @if (progress > 0) {
+                  <div class="episode__progress" [style.width.%]="progress"></div>
+                }
               </li>
             }
           </ol>
