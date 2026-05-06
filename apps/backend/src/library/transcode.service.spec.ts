@@ -259,6 +259,101 @@ describe("TranscodeService", () => {
 
   // ── Only Tier 2 jobs are processed ───────────────────────────────────────
 
+  describe("multi-track sidecar generation", () => {
+    function setProbeData(fileId: number, audioTrackCount: number) {
+      const audioTracks = Array.from({ length: audioTrackCount }, (_, i) => ({
+        index: i,
+        codec: i === 0 ? "ac3" : "dts",
+        channels: 6,
+        language: "eng",
+      }));
+      const probeData = JSON.stringify({
+        format: { container: "matroska", duration: 7200, bitrate: 5000000 },
+        video: { codec: "h264", width: 1920, height: 1080 },
+        audioTracks,
+        subtitleTracks: [],
+      });
+      db.prepare("UPDATE media_files SET probe_data = ? WHERE id = ?").run(
+        probeData,
+        fileId,
+      );
+    }
+
+    it("generates sidecars for all audio tracks when multiple exist", async () => {
+      mockFfmpegSuccess();
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "multi-audio.mkv", 2);
+      setProbeData(fileId, 3);
+      const jobId = insertTranscodeJob(fileId, 2);
+
+      await service.executeAudioSidecarQueue();
+
+      const job = getJob(jobId);
+      expect(job.status).toBe("completed");
+      expect(job.output_path).toBe(path.join(SIDECAR_DIR, `${fileId}.m4a`));
+
+      // FFmpeg called 3 times: primary (0:a:0), track_1 (0:a:1), track_2 (0:a:2)
+      expect(mockExecFile).toHaveBeenCalledTimes(3);
+
+      // Verify stream mapping arguments
+      const calls = mockExecFile.mock.calls;
+      expect(calls[0][1]).toContain("0:a:0");
+      expect(calls[1][1]).toContain("0:a:1");
+      expect(calls[2][1]).toContain("0:a:2");
+
+      // Verify output paths
+      expect(calls[0][1]).toContain(path.join(SIDECAR_DIR, `${fileId}.m4a`));
+      expect(calls[1][1]).toContain(
+        path.join(SIDECAR_DIR, `${fileId}_track_1.m4a`),
+      );
+      expect(calls[2][1]).toContain(
+        path.join(SIDECAR_DIR, `${fileId}_track_2.m4a`),
+      );
+    });
+
+    it("generates only primary sidecar when file has a single audio track", async () => {
+      mockFfmpegSuccess();
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "single-audio.mkv", 2);
+      setProbeData(fileId, 1);
+      const jobId = insertTranscodeJob(fileId, 2);
+
+      await service.executeAudioSidecarQueue();
+
+      const job = getJob(jobId);
+      expect(job.status).toBe("completed");
+      expect(mockExecFile).toHaveBeenCalledTimes(1);
+      expect(mockExecFile.mock.calls[0][1]).toContain("0:a:0");
+    });
+
+    it("marks job failed if any track FFmpeg call fails", async () => {
+      const sourceId = insertSource();
+      const fileId = insertClassifiedFile(sourceId, "multi-fail.mkv", 2);
+      setProbeData(fileId, 3);
+      const jobId = insertTranscodeJob(fileId, 2);
+
+      // Primary succeeds, track_1 fails
+      mockExecFile
+        .mockImplementationOnce((...args: any[]) => {
+          const callback = args[args.length - 1];
+          callback(null, "", "");
+        })
+        .mockImplementationOnce((...args: any[]) => {
+          const callback = args[args.length - 1];
+          callback(new Error("track 2 decode error"), "", "");
+        });
+
+      await service.executeAudioSidecarQueue();
+
+      const job = getJob(jobId);
+      expect(job.status).toBe("failed");
+      expect(job.error_details).toContain("track 2 decode error");
+      expect(getFile(fileId).status).toBe("classified");
+    });
+  });
+
+  // ── Only Tier 2 jobs are processed ───────────────────────────────────────
+
   describe("tier filtering", () => {
     it("only processes Tier 2 jobs — ignores Tier 3 queued jobs", async () => {
       mockFfmpegSuccess();

@@ -68,7 +68,7 @@ export class TranscodeService {
   }): Promise<void> {
     const cachePath = this.config.get<string>("CACHE_PATH") || "/mnt/cache";
     const outputDir = path.join(cachePath, "sidecars");
-    const outputPath = path.join(outputDir, `${job.file_id}.m4a`);
+    const primaryOutputPath = path.join(outputDir, `${job.file_id}.m4a`);
 
     const db = this.database.getDatabase();
     db.prepare(
@@ -77,12 +77,35 @@ export class TranscodeService {
 
     try {
       fs.mkdirSync(outputDir, { recursive: true });
-      await this.runFfmpegAudioExtract(job.file_path, outputPath);
+
+      // Fetch probe_data to determine how many audio tracks exist
+      const mediaRow = db
+        .prepare("SELECT probe_data FROM media_files WHERE id = ?")
+        .get(job.file_id) as { probe_data: string } | undefined;
+
+      const probeData = mediaRow?.probe_data
+        ? JSON.parse(mediaRow.probe_data)
+        : null;
+      const audioTracks: unknown[] = Array.isArray(probeData?.audioTracks)
+        ? probeData.audioTracks
+        : [];
+
+      // Generate primary sidecar (track 0)
+      await this.runFfmpegAudioExtract(job.file_path, primaryOutputPath, 0);
+
+      // Generate sidecars for additional tracks (position 1+)
+      for (let i = 1; i < audioTracks.length; i++) {
+        const trackOutputPath = path.join(
+          outputDir,
+          `${job.file_id}_track_${i}.m4a`,
+        );
+        await this.runFfmpegAudioExtract(job.file_path, trackOutputPath, i);
+      }
 
       const completeTx = db.transaction(() => {
         db.prepare(
           "UPDATE transcode_jobs SET status = 'completed', output_path = ?, updated_at = datetime('now') WHERE id = ?",
-        ).run(outputPath, job.id);
+        ).run(primaryOutputPath, job.id);
         db.prepare(
           "UPDATE media_files SET status = 'ready', updated_at = datetime('now') WHERE id = ?",
         ).run(job.file_id);
@@ -90,7 +113,7 @@ export class TranscodeService {
       completeTx();
 
       this.logger.log(
-        `Audio sidecar generated for file_id ${job.file_id}: ${outputPath}`,
+        `Audio sidecars generated for file_id ${job.file_id}: ${audioTracks.length} track(s)`,
       );
     } catch (err: unknown) {
       const errorMessage =
@@ -108,6 +131,7 @@ export class TranscodeService {
   private async runFfmpegAudioExtract(
     inputPath: string,
     outputPath: string,
+    audioStreamIndex: number = 0,
   ): Promise<void> {
     await execFileAsync("ffmpeg", [
       "-v",
@@ -116,7 +140,7 @@ export class TranscodeService {
       inputPath,
       "-vn", // no video in output
       "-map",
-      "0:a:0", // primary audio stream only
+      `0:a:${audioStreamIndex}`, // audio stream by position
       "-c:a",
       "aac", // built-in FFmpeg AAC encoder (NOT libfdk_aac)
       "-b:a",
