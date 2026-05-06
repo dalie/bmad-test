@@ -17,4 +17,4 @@ route: "one-shot"
 ## Suggested Review Order
 
 1. [apps/backend/src/library/library.service.ts](../../apps/backend/src/library/library.service.ts#L496-L505) — the fix: inline `classifyFile()` call with error handling, replacing the redundant DB re-query
-2. [_bmad-output/implementation-artifacts/deferred-work.md](deferred-work.md) — deferred item from adversarial review
+2. [\_bmad-output/implementation-artifacts/deferred-work.md](deferred-work.md) — deferred item from adversarial review
