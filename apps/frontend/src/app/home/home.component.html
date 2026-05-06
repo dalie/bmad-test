@@ -37,6 +37,13 @@
               <div class="poster-grid__progress" [style.width.%]="item.progressPercent"></div>
             </div>
             <p class="poster-grid__title">{{ item.title }}</p>
+            @if (item.seasonNum != null && item.episodeNum != null) {
+              <p class="poster-grid__episode">
+                S{{ item.seasonNum.toString().padStart(2, '0') }} E{{
+                  item.episodeNum.toString().padStart(2, '0')
+                }}
+              </p>
+            }
           </a>
         }
       </div>
@@ -71,6 +78,13 @@
             }
           </div>
           <p class="poster-grid__title">{{ item.title }}</p>
+          @if (item.seasonNum != null && item.episodeNum != null) {
+            <p class="poster-grid__episode">
+              S{{ item.seasonNum.toString().padStart(2, '0') }} E{{
+                item.episodeNum.toString().padStart(2, '0')
+              }}
+            </p>
+          }
         </a>
       }
     </div>

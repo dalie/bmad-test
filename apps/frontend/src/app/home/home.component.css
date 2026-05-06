@@ -108,3 +108,11 @@
 .poster-grid__image-wrap--watched .poster-grid__image--fallback {
   opacity: 0.4;
 }
+
+/* Season/episode label below title for TV items */
+.poster-grid__episode {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, #aaa);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}

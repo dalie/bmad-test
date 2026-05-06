@@ -21,6 +21,8 @@ export interface LibraryItem {
   year: number | null;
   posterUrl: string | null;
   mediaType: 'movie' | 'tv';
+  seasonNum?: number;
+  episodeNum?: number;
 }
 
 export interface ContinueWatchingItem extends LibraryItem {
@@ -74,6 +76,8 @@ export class HomeComponent {
           year: item.year,
           posterUrl: item.poster_url,
           mediaType: item.media_type as 'movie' | 'tv',
+          seasonNum: item.latest_season ?? undefined,
+          episodeNum: item.latest_episode ?? undefined,
         })),
       ),
       catchError(() => of([] as LibraryItem[])),

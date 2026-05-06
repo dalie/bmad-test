@@ -189,6 +189,8 @@ describe("BrowseController", () => {
           rating: 7.0,
           media_type: "movie",
           added_at: "2022-01-01",
+          latest_season: null,
+          latest_episode: null,
         },
       ];
       browseService.search.mockReturnValue(mockResults);

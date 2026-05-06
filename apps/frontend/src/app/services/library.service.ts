@@ -15,7 +15,7 @@ export interface MovieListItem {
 }
 
 export interface ShowListItem {
-  id: number;           // metadata.tmdb_id — NOT media_files.id
+  id: number; // metadata.tmdb_id — NOT media_files.id
   title: string;
   year: number | null;
   poster_url: string | null;
@@ -25,13 +25,15 @@ export interface ShowListItem {
 }
 
 export interface RecentItem {
-  id: number;           // media_files.id for movies, tmdb_id for TV
+  id: number; // media_files.id for movies, tmdb_id for TV
   title: string;
   year: number | null;
   poster_url: string | null;
   rating: number | null;
   media_type: 'movie' | 'tv';
   added_at: string;
+  latest_season: number | null;
+  latest_episode: number | null;
 }
 
 export interface AudioTrack {
@@ -69,8 +71,8 @@ export interface MovieDetail {
 export interface EpisodeItem {
   episode_number: number;
   name: string | null;
-  duration: number | null;   // seconds (float) from probe_data.format.duration; may be 0 (sentinel for unknown)
-  file_id: number;           // media_files.id — used for Play route
+  duration: number | null; // seconds (float) from probe_data.format.duration; may be 0 (sentinel for unknown)
+  file_id: number; // media_files.id — used for Play route
   tier: number | null;
 }
 
@@ -80,13 +82,13 @@ export interface SeasonInfo {
 }
 
 export interface ShowDetail {
-  id: number;                // tmdb_id — NOT media_files.id
+  id: number; // tmdb_id — NOT media_files.id
   title: string;
   description: string | null;
   year: number | null;
   poster_url: string | null;
   rating: number | null;
-  seasons: SeasonInfo[];     // ordered latest-first (DESC season_number) by backend SQL
+  seasons: SeasonInfo[]; // ordered latest-first (DESC season_number) by backend SQL
 }
 
 @Injectable({ providedIn: 'root' })

@@ -86,6 +86,8 @@ export interface RecentItem {
   rating: number | null;
   media_type: string;
   added_at: string;
+  latest_season: number | null;
+  latest_episode: number | null;
 }
 
 @Injectable()
@@ -388,7 +390,21 @@ export class BrowseService {
         `SELECT
           CASE WHEN m.media_type = 'movie' THEN mf.id ELSE m.tmdb_id END AS id,
           m.title, m.release_date, m.poster_path, m.vote_average AS rating,
-          m.media_type, MAX(mf.created_at) AS added_at
+          m.media_type, MAX(mf.created_at) AS added_at,
+          CASE WHEN m.media_type = 'tv' THEN (
+            SELECT te.season_number FROM tv_episodes te
+            JOIN metadata m2 ON m2.id = te.metadata_id
+            JOIN media_files mf2 ON mf2.id = m2.media_file_id
+            WHERE m2.tmdb_id = m.tmdb_id AND mf2.status IN ('ready', 'completed')
+            ORDER BY mf2.created_at DESC LIMIT 1
+          ) END AS latest_season,
+          CASE WHEN m.media_type = 'tv' THEN (
+            SELECT te.episode_number FROM tv_episodes te
+            JOIN metadata m2 ON m2.id = te.metadata_id
+            JOIN media_files mf2 ON mf2.id = m2.media_file_id
+            WHERE m2.tmdb_id = m.tmdb_id AND mf2.status IN ('ready', 'completed')
+            ORDER BY mf2.created_at DESC LIMIT 1
+          ) END AS latest_episode
          FROM media_files mf
          JOIN metadata m ON m.media_file_id = mf.id
          WHERE mf.status IN ('ready', 'completed')
@@ -406,6 +422,8 @@ export class BrowseService {
       rating: number | null;
       media_type: string;
       added_at: string;
+      latest_season: number | null;
+      latest_episode: number | null;
     }[];
 
     return rows.map((row) => ({
@@ -416,6 +434,8 @@ export class BrowseService {
       rating: row.rating,
       media_type: row.media_type,
       added_at: row.added_at,
+      latest_season: row.latest_season,
+      latest_episode: row.latest_episode,
     }));
   }
 
@@ -457,6 +477,8 @@ export class BrowseService {
       rating: row.rating,
       media_type: row.media_type,
       added_at: row.added_at,
+      latest_season: null,
+      latest_episode: null,
     }));
   }
 }
