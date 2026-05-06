@@ -473,8 +473,8 @@ describe('PlayerComponent', () => {
 
   describe('Audio track selection', () => {
     const AUDIO_TRACKS: AudioTrackInfo[] = [
-      { index: 0, language: 'jpn', codec: 'ac3', channels: 6 },
-      { index: 1, language: 'eng', codec: 'ac3', channels: 2 },
+      { index: 1, language: 'jpn', codec: 'ac3', channels: 6 },
+      { index: 2, language: 'eng', codec: 'ac3', channels: 2 },
     ];
 
     it('should hide AUDIO button when 0 audio tracks available', () => {
@@ -543,7 +543,7 @@ describe('PlayerComponent', () => {
       const fixture = setup('42', undefined, [], AUDIO_TRACKS);
       const component = fixture.componentInstance;
       component.selectAudioTrack(AUDIO_TRACKS[1]);
-      expect(component.activeAudioIndex()).toBe(1);
+      expect(component.activeAudioIndex()).toBe(2);
     });
 
     it('should close dropdown on Escape key', () => {
@@ -625,7 +625,7 @@ describe('PlayerComponent', () => {
         expect(audio.src).not.toBe(savedSrc);
       });
 
-      it('should use base sidecar URL (no trackIndex param) for track 0 in Tier 2 mode', () => {
+      it('should use base sidecar URL (no trackIndex param) for primary track in Tier 2 mode', () => {
         const fixture = setup('42', '2', [], AUDIO_TRACKS);
         const component = fixture.componentInstance;
         const audio = fixture.nativeElement.querySelector('audio') as HTMLAudioElement;
@@ -666,7 +666,7 @@ describe('PlayerComponent', () => {
         Object.defineProperty(video, 'audioTracks', { value: undefined, configurable: true });
 
         expect(() => component.selectAudioTrack(AUDIO_TRACKS[0])).not.toThrow();
-        expect(component.activeAudioIndex()).toBe(0);
+        expect(component.activeAudioIndex()).toBe(1);
       });
 
       it('should enable selected native track and disable others when API is available', () => {

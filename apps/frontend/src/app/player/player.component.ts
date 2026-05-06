@@ -476,11 +476,13 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
       const savedTime = video.currentTime;
       const wasPlaying = !video.paused;
 
-      // For track 0 omit trackIndex param (backward compatible)
+      // Use array position (not absolute stream index) to match backend sidecar naming convention
+      const position = this.audioTracks().findIndex((t) => t.index === track.index);
+      if (position === -1) return;
       const trackUrl =
-        track.index === 0
+        position === 0
           ? `/api/media/stream/${this.fileId}/audio`
-          : `/api/media/stream/${this.fileId}/audio?trackIndex=${track.index}`;
+          : `/api/media/stream/${this.fileId}/audio?trackIndex=${position}`;
 
       // If sync was disabled by a prior audio error, re-enable for the new track attempt
       if (this.syncDisabled) {
