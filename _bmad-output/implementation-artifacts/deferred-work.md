@@ -1,3 +1,7 @@
+## Deferred from: spec-fix-manual-match-not-in-library-2 (2026-05-06)
+
+- Fire-and-forget `executeClassification()` after manual match has no caller-visible failure reporting — if the async classification + transcode pipeline fails, the HTTP response was already sent as success. Pre-existing pattern.
+
 ## Deferred from: spec-fix-manual-match-not-in-library (2026-05-05)
 
 - `executeClassification()` has no queue/retry mechanism — if classification is already in progress when triggered (concurrent manual matches or manual + auto-match overlap), the second invocation skips silently. Files remain in `'matched'` status until the next classification trigger. Pre-existing limitation affecting both auto-match and manual-match paths.

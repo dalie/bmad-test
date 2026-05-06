@@ -493,7 +493,17 @@ export class LibraryService {
       mediaType,
     );
 
-    // Trigger classification so the file progresses to 'ready' and appears in library
+    // Classify this specific file inline (synchronous) to avoid the mutex in
+    // executeClassification() which silently drops the call when already running.
+    try {
+      this.classificationService.classifyFile(file);
+    } catch (err) {
+      this.logger.error(
+        `Inline classification failed for file ${fileId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    // Trigger full classification to process any pending transcode queues (non-blocking)
     this.classificationService
       .executeClassification()
       .catch((err) =>
