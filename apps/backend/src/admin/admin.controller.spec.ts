@@ -9,7 +9,8 @@ import {
 } from "./admin-jobs.service";
 import { LanDetectionService } from "./lan-detection.service";
 import { LanGuard } from "./lan.guard";
-import { ForbiddenException } from "@nestjs/common";
+import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { LibraryService, ScanRecord } from "../library/library.service";
 
 const mockStats: AdminStats = {
   library: { totalTitles: 20, movieCount: 15, tvShowCount: 5 },
@@ -72,6 +73,7 @@ describe("AdminController", () => {
   let controller: AdminController;
   let adminStatsService: jest.Mocked<AdminStatsService>;
   let adminJobsService: jest.Mocked<AdminJobsService>;
+  let libraryService: jest.Mocked<LibraryService>;
 
   beforeEach(async () => {
     const lanDetectionService = {
@@ -116,12 +118,18 @@ describe("AdminController", () => {
       retryJob: jest.fn().mockReturnValue({ success: true }),
     } as any;
 
+    libraryService = {
+      startScan: jest.fn().mockReturnValue("scan-uuid-123"),
+      getScanStatus: jest.fn(),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminController],
       providers: [
         { provide: LanDetectionService, useValue: lanDetectionService },
         { provide: AdminStatsService, useValue: adminStatsService },
         { provide: AdminJobsService, useValue: adminJobsService },
+        { provide: LibraryService, useValue: libraryService },
         LanGuard,
       ],
     }).compile();
@@ -170,6 +178,44 @@ describe("AdminController", () => {
       const result = controller.retryJob(1);
       expect(result).toEqual({ success: true });
       expect(adminJobsService.retryJob).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe("POST /admin/rescan", () => {
+    it("should call libraryService.startScan(true) and return scanId", () => {
+      const result = controller.triggerRescan();
+      expect(result).toEqual({ scanId: "scan-uuid-123" });
+      expect(libraryService.startScan).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe("GET /admin/rescan/:scanId", () => {
+    it("should return scan record when found", () => {
+      const mockRecord: ScanRecord = {
+        id: "scan-uuid-123",
+        status: "in_progress",
+        startedAt: "2026-05-05T10:00:00.000Z",
+        completedAt: null,
+        discovered: 15,
+        processed: 7,
+        failed: 0,
+        errors: [],
+      };
+      libraryService.getScanStatus.mockReturnValue(mockRecord);
+
+      const result = controller.getScanStatus("scan-uuid-123");
+      expect(result).toEqual(mockRecord);
+      expect(libraryService.getScanStatus).toHaveBeenCalledWith(
+        "scan-uuid-123",
+      );
+    });
+
+    it("should throw NotFoundException when scanId not found", () => {
+      libraryService.getScanStatus.mockReturnValue(undefined);
+
+      expect(() => controller.getScanStatus("nonexistent-id")).toThrow(
+        NotFoundException,
+      );
     });
   });
 

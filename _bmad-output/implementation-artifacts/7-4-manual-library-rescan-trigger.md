@@ -1,6 +1,6 @@
 # Story 7.4: Manual Library Rescan Trigger
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -17,59 +17,59 @@ so that I can force the system to re-check media folders when needed.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Import `LibraryModule` into `AdminModule` (AC: #1)
-  - [ ] UPDATE `apps/backend/src/admin/admin.module.ts` — add `LibraryModule` to `imports` array
-  - [ ] This gives `AdminController` access to `LibraryService` (exported by `LibraryModule`)
+- [x] Task 1: Import `LibraryModule` into `AdminModule` (AC: #1)
+  - [x] UPDATE `apps/backend/src/admin/admin.module.ts` — add `LibraryModule` to `imports` array
+  - [x] This gives `AdminController` access to `LibraryService` (exported by `LibraryModule`)
 
-- [ ] Task 2: Add rescan and status endpoints to `AdminController` (AC: #1, #2, #3)
-  - [ ] UPDATE `apps/backend/src/admin/admin.controller.ts`
-  - [ ] Inject `LibraryService` into `AdminController` constructor
-  - [ ] Add `POST /admin/rescan` — calls `this.libraryService.startScan(true)`, returns `{ scanId: string }`
-  - [ ] Add `GET /admin/rescan/:scanId` — calls `this.libraryService.getScanStatus(scanId)`, returns `ScanRecord | null`
-  - [ ] Both endpoints are automatically guarded by class-level `@UseGuards(LanGuard)`
-  - [ ] The `startScan()` method is already async/non-blocking (runs scan in background, returns immediately with scanId)
+- [x] Task 2: Add rescan and status endpoints to `AdminController` (AC: #1, #2, #3)
+  - [x] UPDATE `apps/backend/src/admin/admin.controller.ts`
+  - [x] Inject `LibraryService` into `AdminController` constructor
+  - [x] Add `POST /admin/rescan` — calls `this.libraryService.startScan(true)`, returns `{ scanId: string }`
+  - [x] Add `GET /admin/rescan/:scanId` — calls `this.libraryService.getScanStatus(scanId)`, returns `ScanRecord | null`
+  - [x] Both endpoints are automatically guarded by class-level `@UseGuards(LanGuard)`
+  - [x] The `startScan()` method is already async/non-blocking (runs scan in background, returns immediately with scanId)
 
-- [ ] Task 3: Create frontend `AdminRescanService` (AC: #1, #3)
-  - [ ] Create `apps/frontend/src/app/admin/admin-rescan.service.ts`
-  - [ ] `@Injectable({ providedIn: 'root' })`
-  - [ ] Inject `HttpClient` via `inject(HttpClient)`
-  - [ ] Implement `triggerRescan(): Observable<{ scanId: string }>` — `POST /api/admin/rescan`
-  - [ ] Implement `getScanStatus(scanId: string): Observable<ScanStatus>` — `GET /api/admin/rescan/${scanId}`
-  - [ ] Define `ScanStatus` interface matching backend `ScanRecord`
+- [x] Task 3: Create frontend `AdminRescanService` (AC: #1, #3)
+  - [x] Create `apps/frontend/src/app/admin/admin-rescan.service.ts`
+  - [x] `@Injectable({ providedIn: 'root' })`
+  - [x] Inject `HttpClient` via `inject(HttpClient)`
+  - [x] Implement `triggerRescan(): Observable<{ scanId: string }>` — `POST /api/admin/rescan`
+  - [x] Implement `getScanStatus(scanId: string): Observable<ScanStatus>` — `GET /api/admin/rescan/${scanId}`
+  - [x] Define `ScanStatus` interface matching backend `ScanRecord`
 
-- [ ] Task 4: Create `RescanComponent` (AC: #1, #2, #3, #4)
-  - [ ] Create `apps/frontend/src/app/admin/rescan.component.ts`
-  - [ ] Standalone component, `ChangeDetectionStrategy.OnPush`
-  - [ ] Inject `AdminRescanService` via `inject()`
-  - [ ] "Rescan Library" button triggers `triggerRescan()`, stores returned `scanId`
-  - [ ] While scan is in progress, poll `getScanStatus(scanId)` every 2 seconds using `interval()` + `switchMap()`
-  - [ ] Display scan progress: status, files discovered, files processed, failed count
-  - [ ] Disable "Rescan Library" button while scan is `in_progress`
-  - [ ] Show completion state (success with counts, or failed with error summary)
-  - [ ] Stop polling when status is `completed` or `failed`
-  - [ ] Use project CSS variables, minimal styling (UX-DR14)
+- [x] Task 4: Create `RescanComponent` (AC: #1, #2, #3, #4)
+  - [x] Create `apps/frontend/src/app/admin/rescan.component.ts`
+  - [x] Standalone component, `ChangeDetectionStrategy.OnPush`
+  - [x] Inject `AdminRescanService` via `inject()`
+  - [x] "Rescan Library" button triggers `triggerRescan()`, stores returned `scanId`
+  - [x] While scan is in progress, poll `getScanStatus(scanId)` every 2 seconds using `interval()` + `switchMap()`
+  - [x] Display scan progress: status, files discovered, files processed, failed count
+  - [x] Disable "Rescan Library" button while scan is `in_progress`
+  - [x] Show completion state (success with counts, or failed with error summary)
+  - [x] Stop polling when status is `completed` or `failed`
+  - [x] Use project CSS variables, minimal styling (UX-DR14)
 
-- [ ] Task 5: Integrate `RescanComponent` into `AdminComponent` (AC: #1)
-  - [ ] UPDATE `apps/frontend/src/app/admin/admin.component.ts`
-  - [ ] Import `RescanComponent` in standalone `imports` array
-  - [ ] Add `<app-rescan />` in template (between stats and pipeline monitor sections)
+- [x] Task 5: Integrate `RescanComponent` into `AdminComponent` (AC: #1)
+  - [x] UPDATE `apps/frontend/src/app/admin/admin.component.ts`
+  - [x] Import `RescanComponent` in standalone `imports` array
+  - [x] Add `<app-rescan />` in template (between stats and pipeline monitor sections)
 
-- [ ] Task 6: Write backend unit tests (AC: #1, #2, #3)
-  - [ ] UPDATE `apps/backend/src/admin/admin.controller.spec.ts`
-  - [ ] Test: `POST /admin/rescan` calls `libraryService.startScan(true)` and returns `{ scanId }`
-  - [ ] Test: `POST /admin/rescan` returns 403 for non-LAN clients
-  - [ ] Test: `GET /admin/rescan/:scanId` returns scan record when found
-  - [ ] Test: `GET /admin/rescan/:scanId` returns 404 when scanId not found
+- [x] Task 6: Write backend unit tests (AC: #1, #2, #3)
+  - [x] UPDATE `apps/backend/src/admin/admin.controller.spec.ts`
+  - [x] Test: `POST /admin/rescan` calls `libraryService.startScan(true)` and returns `{ scanId }`
+  - [x] Test: `POST /admin/rescan` returns 403 for non-LAN clients (covered by existing LanGuard integration test)
+  - [x] Test: `GET /admin/rescan/:scanId` returns scan record when found
+  - [x] Test: `GET /admin/rescan/:scanId` returns 404 when scanId not found
 
-- [ ] Task 7: Write frontend unit tests (AC: #1, #3)
-  - [ ] Create `apps/frontend/src/app/admin/rescan.component.spec.ts`
-  - [ ] Test: "Rescan Library" button triggers service call
-  - [ ] Test: button is disabled during active scan
-  - [ ] Test: progress display shows discovered/processed counts
-  - [ ] Test: polling stops on completion
-  - [ ] Create `apps/frontend/src/app/admin/admin-rescan.service.spec.ts`
-  - [ ] Test: `triggerRescan()` calls correct endpoint
-  - [ ] Test: `getScanStatus()` calls correct endpoint with scanId
+- [x] Task 7: Write frontend unit tests (AC: #1, #3)
+  - [x] Create `apps/frontend/src/app/admin/rescan.component.spec.ts`
+  - [x] Test: "Rescan Library" button triggers service call
+  - [x] Test: button is disabled during active scan
+  - [x] Test: progress display shows discovered/processed counts
+  - [x] Test: polling stops on completion
+  - [x] Create `apps/frontend/src/app/admin/admin-rescan.service.spec.ts`
+  - [x] Test: `triggerRescan()` calls correct endpoint
+  - [x] Test: `getScanStatus()` calls correct endpoint with scanId
 
 ## Dev Notes
 
@@ -222,8 +222,32 @@ Scan records are stored in-memory (`Map<string, ScanRecord>`) and are lost on se
 
 ### Agent Model Used
 
+Claude Opus 4.6 (GitHub Copilot)
+
 ### Debug Log References
+
+- Backend tests: 12/12 pass (admin.controller.spec.ts)
+- Frontend tests: 7/7 pass (rescan.component.spec.ts: 5, admin-rescan.service.spec.ts: 2)
+- Pre-existing failures not related to this story: classification.service.spec.ts (2), needs-attention.component.spec.ts (4)
+- TypeScript compilation: clean (backend tsc --noEmit, frontend ng build)
 
 ### Completion Notes List
 
+- Task 1: Added `LibraryModule` import to `AdminModule` — gives `AdminController` access to `LibraryService`
+- Task 2: Added `POST /admin/rescan` and `GET /admin/rescan/:scanId` endpoints. Rescan triggers `libraryService.startScan(true)` (non-blocking). Status endpoint throws `NotFoundException` for unknown scan IDs.
+- Task 3: Created `AdminRescanService` following existing service patterns (`inject(HttpClient)`, `providedIn: 'root'`)
+- Task 4: Created `RescanComponent` — standalone, OnPush, signals for state, `interval(2000)` polling with `takeWhile` + `takeUntilDestroyed` for cleanup
+- Task 5: Integrated `RescanComponent` into `AdminComponent` between stats section and pipeline monitor
+- Task 6: Added 3 backend unit tests (startScan call, scan record return, 404 for missing scan). LAN guard coverage via existing integration test.
+- Task 7: Created frontend tests using vitest fake timers (`vi.useFakeTimers()`) since Angular's `fakeAsync` requires zone.js unavailable in this vitest setup
+
 ### File List
+
+- `apps/backend/src/admin/admin.module.ts` — MODIFIED (added LibraryModule import)
+- `apps/backend/src/admin/admin.controller.ts` — MODIFIED (added LibraryService injection, rescan + status endpoints)
+- `apps/backend/src/admin/admin.controller.spec.ts` — MODIFIED (added LibraryService mock + 3 rescan tests)
+- `apps/frontend/src/app/admin/admin-rescan.service.ts` — NEW
+- `apps/frontend/src/app/admin/admin-rescan.service.spec.ts` — NEW
+- `apps/frontend/src/app/admin/rescan.component.ts` — NEW
+- `apps/frontend/src/app/admin/rescan.component.spec.ts` — NEW
+- `apps/frontend/src/app/admin/admin.component.ts` — MODIFIED (added RescanComponent import + template placement)

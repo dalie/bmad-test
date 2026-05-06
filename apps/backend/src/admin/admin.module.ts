@@ -5,9 +5,10 @@ import { AccessController, AdminController } from "./admin.controller";
 import { LanDetectionService } from "./lan-detection.service";
 import { LanGuard } from "./lan.guard";
 import { DatabaseModule } from "../database/database.module";
+import { LibraryModule } from "../library/library.module";
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, LibraryModule],
   controllers: [AccessController, AdminController],
   providers: [
     LanDetectionService,

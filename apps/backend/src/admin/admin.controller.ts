@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
@@ -16,6 +17,7 @@ import {
 } from "./admin-jobs.service";
 import { LanDetectionService } from "./lan-detection.service";
 import { LanGuard } from "./lan.guard";
+import { LibraryService, ScanRecord } from "../library/library.service";
 
 @Controller("admin")
 export class AccessController {
@@ -33,6 +35,7 @@ export class AdminController {
   constructor(
     private readonly adminStatsService: AdminStatsService,
     private readonly adminJobsService: AdminJobsService,
+    private readonly libraryService: LibraryService,
   ) {}
 
   @Get("stats")
@@ -58,5 +61,20 @@ export class AdminController {
   @Post("jobs/:id/retry")
   retryJob(@Param("id", ParseIntPipe) id: number): { success: boolean } {
     return this.adminJobsService.retryJob(id);
+  }
+
+  @Post("rescan")
+  triggerRescan(): { scanId: string } {
+    const scanId = this.libraryService.startScan(true);
+    return { scanId };
+  }
+
+  @Get("rescan/:scanId")
+  getScanStatus(@Param("scanId") scanId: string): ScanRecord {
+    const record = this.libraryService.getScanStatus(scanId);
+    if (!record) {
+      throw new NotFoundException(`Scan ${scanId} not found`);
+    }
+    return record;
   }
 }
