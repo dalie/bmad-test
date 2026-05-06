@@ -225,7 +225,7 @@ export class BrowseService {
       rating: null,
       added_at: row.added_at,
       transcode_tier: null,
-      playback_ready: false,
+      playback_ready: true,
     }));
 
     return [...matched, ...unmatched].sort((a, b) =>

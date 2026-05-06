@@ -50,18 +50,20 @@ export class MediaService {
     const tier = row.tier ?? 1;
     let filePath: string;
 
+    const streamableStatuses = ["ready", "match_failed"];
+
     if (tier === 3) {
       if (row.transcode_status !== "completed" || !row.transcode_output_path) {
         throw new NotFoundException(`Media file not ready`);
       }
       filePath = row.transcode_output_path;
     } else if (tier === 2) {
-      if (row.status !== "ready") {
+      if (!streamableStatuses.includes(row.status)) {
         throw new NotFoundException(`Media file not ready`);
       }
       filePath = row.path;
     } else {
-      if (row.status !== "ready") {
+      if (!streamableStatuses.includes(row.status)) {
         throw new NotFoundException(`Media file not ready`);
       }
       filePath = row.path;
@@ -116,7 +118,12 @@ export class MediaService {
 
   getAudioTracksForFile(
     fileId: number,
-  ): Array<{ index: number; language: string | null; codec: string; channels: number }> {
+  ): Array<{
+    index: number;
+    language: string | null;
+    codec: string;
+    channels: number;
+  }> {
     const db = this.database.getDatabase();
     const row = db
       .prepare(`SELECT probe_data FROM media_files WHERE id = ?`)
@@ -130,12 +137,17 @@ export class MediaService {
 
     try {
       const probe = JSON.parse(row.probe_data) as {
-        audioTracks?: Array<{ index: number; codec: string; channels: number; language?: string }>;
+        audioTracks?: Array<{
+          index: number;
+          codec: string;
+          channels: number;
+          language?: string;
+        }>;
       };
       return (probe.audioTracks ?? []).map((t) => ({
         index: t.index,
         language: t.language ?? null,
-        codec: t.codec ?? 'unknown',
+        codec: t.codec ?? "unknown",
         channels: t.channels ?? 0,
       }));
     } catch {

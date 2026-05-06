@@ -1,3 +1,7 @@
+## Deferred from: spec-fix-unmatched-media-streaming (2026-05-06)
+
+- No unit test added for `match_failed` status in `getFileInfo()` — existing test file covers ready/error paths but the new `match_failed` streaming path is untested.
+
 ## Deferred from: spec-fix-manual-match-not-in-library-2 (2026-05-06)
 
 - Fire-and-forget `executeClassification()` after manual match has no caller-visible failure reporting — if the async classification + transcode pipeline fails, the HTTP response was already sent as success. Pre-existing pattern.
