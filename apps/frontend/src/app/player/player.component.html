@@ -1,5 +1,12 @@
 <main class="player-container">
-  <button type="button" class="back-link" [class.controls-hidden]="!controlsVisible()" (click)="location.back()">← Back</button>
+  <button
+    type="button"
+    class="back-link"
+    [class.controls-hidden]="!controlsVisible()"
+    (click)="location.back()"
+  >
+    ← Back
+  </button>
 
   @if (isTier2) {
     <video #videoEl class="player-video" [src]="videoSrc" muted autoplay controls preload="auto">
