@@ -1,3 +1,8 @@
+## Deferred from: spec-fix-manual-match-not-in-library (2026-05-05)
+
+- `executeClassification()` has no queue/retry mechanism — if classification is already in progress when triggered (concurrent manual matches or manual + auto-match overlap), the second invocation skips silently. Files remain in `'matched'` status until the next classification trigger. Pre-existing limitation affecting both auto-match and manual-match paths.
+- Full DB scan on every classification trigger — `executeClassification()` queries ALL files with `status = 'matched'`, not just the newly matched file. Inefficient for single-file manual matches but functionally correct. Pre-existing pattern.
+
 ## Deferred from: spec-fix-watcher-sync-marks-existing-files-missing (2026-05-05)
 
 - Watcher doesn't recover `missing` files: If a file was marked `missing` by a full scan (temporarily unavailable) and reappears with same size/mtime, neither path resets it to `discovered`. Only a size/mtime change triggers re-discovery.

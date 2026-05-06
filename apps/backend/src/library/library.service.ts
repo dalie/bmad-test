@@ -487,6 +487,21 @@ export class LibraryService {
 
     const mediaType = source.type === "tv" ? "tv" : "movie";
 
-    return this.matchingService.applyManualMatch(file, tmdbId, mediaType);
+    const result = await this.matchingService.applyManualMatch(
+      file,
+      tmdbId,
+      mediaType,
+    );
+
+    // Trigger classification so the file progresses to 'ready' and appears in library
+    this.classificationService
+      .executeClassification()
+      .catch((err) =>
+        this.logger.error(
+          `Classification failed after manual match (file ${fileId}): ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+
+    return result;
   }
 }
