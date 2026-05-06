@@ -178,6 +178,56 @@ export class LibraryService {
     tx();
   }
 
+  insertNewFiles(sourceId: number, scannedFiles: ScannedFile[]) {
+    const db = this.db.getDatabase();
+
+    const tx = db.transaction(() => {
+      const getFileStmt = db.prepare(
+        "SELECT * FROM media_files WHERE source_id = ? AND path = ?",
+      );
+
+      const insertStmt = db.prepare(`
+                INSERT OR IGNORE INTO media_files (path, filename, source_id, status, size, mtime)
+                VALUES (?, ?, ?, 'discovered', ?, ?)
+            `);
+
+      const flagModifiedStmt = db.prepare(`
+                UPDATE media_files
+                SET status = 'discovered', size = ?, mtime = ?, updated_at = datetime('now')
+                WHERE id = ?
+            `);
+
+      const resetFailedStmt = db.prepare(`
+                UPDATE media_files
+                SET status = 'discovered', updated_at = datetime('now')
+                WHERE id = ? AND status = 'probe_failed'
+            `);
+
+      for (const scanned of scannedFiles) {
+        const existing = getFileStmt.get(sourceId, scanned.path) as any;
+        if (existing) {
+          const newSize = scanned.stats.size;
+          const newMtime = scanned.stats.mtimeMs;
+          if (existing.size !== newSize || existing.mtime !== newMtime) {
+            flagModifiedStmt.run(newSize, newMtime, existing.id);
+          } else if (existing.status === "probe_failed") {
+            resetFailedStmt.run(existing.id);
+          }
+        } else {
+          insertStmt.run(
+            scanned.path,
+            scanned.filename,
+            sourceId,
+            scanned.stats.size,
+            scanned.stats.mtimeMs,
+          );
+        }
+      }
+    });
+
+    tx();
+  }
+
   async executeProbing(): Promise<void> {
     if (this.probing) {
       this.logger.log("Probing already in progress, skipping");

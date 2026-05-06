@@ -1,3 +1,7 @@
+## Deferred from: spec-fix-watcher-sync-marks-existing-files-missing (2026-05-05)
+
+- Watcher doesn't recover `missing` files: If a file was marked `missing` by a full scan (temporarily unavailable) and reappears with same size/mtime, neither path resets it to `discovered`. Only a size/mtime change triggers re-discovery.
+
 ## Deferred from: code review of 7-3-import-and-transcode-monitoring-with-error-details (2026-05-05)
 
 - No pagination/limit on `getFailedJobs()` backend query — both transcode_jobs and scan_errors are queried with no LIMIT clause; unbounded result set risk if historical failures accumulate.

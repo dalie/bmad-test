@@ -221,7 +221,7 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(
         `Processing ${files.length} new file(s) from source ${sourceId}`,
       );
-      this.libraryService.syncFiles(sourceId, files);
+      this.libraryService.insertNewFiles(sourceId, files);
       this.libraryService.executeProbing().catch((err) => {
         this.logger.error(`Probing after watch event failed: ${err.message}`);
       });
