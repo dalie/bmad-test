@@ -458,7 +458,9 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
     const exists = tracks.some((t) => t.id === saved.subtitleTrackId);
     if (!exists) return;
     // Defer until Angular renders the <track> elements
-    this.pendingRestoreTimers.push(setTimeout(() => this.selectSubtitle(saved.subtitleTrackId!), 0));
+    this.pendingRestoreTimers.push(
+      setTimeout(() => this.selectSubtitle(saved.subtitleTrackId!), 0),
+    );
   }
 
   getTrackLabel(track: SubtitleTrackInfo): string {
