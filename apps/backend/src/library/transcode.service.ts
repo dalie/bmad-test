@@ -116,8 +116,7 @@ export class TranscodeService {
         `Audio sidecars generated for file_id ${job.file_id}: ${audioTracks.length} track(s)`,
       );
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : String(err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
       db.prepare(
         "UPDATE transcode_jobs SET status = 'failed', error_details = ?, updated_at = datetime('now') WHERE id = ?",
       ).run(errorMessage, job.id);

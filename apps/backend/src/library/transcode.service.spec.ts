@@ -71,7 +71,8 @@ describe("TranscodeService", () => {
     sourceCounter++;
     return db
       .prepare("INSERT INTO media_sources (path, type) VALUES (?, ?)")
-      .run(`/media/movies-${sourceCounter}`, "movies").lastInsertRowid as number;
+      .run(`/media/movies-${sourceCounter}`, "movies")
+      .lastInsertRowid as number;
   }
 
   function insertClassifiedFile(
@@ -87,7 +88,11 @@ describe("TranscodeService", () => {
       .lastInsertRowid as number;
   }
 
-  function insertTranscodeJob(fileId: number, tier: number, status = "queued"): number {
+  function insertTranscodeJob(
+    fileId: number,
+    tier: number,
+    status = "queued",
+  ): number {
     return db
       .prepare(
         "INSERT INTO transcode_jobs (file_id, tier, status) VALUES (?, ?, ?)",
