@@ -329,14 +329,12 @@ export class NeedsAttentionComponent {
     const type = file.source_type === 'movies' ? 'movie' : 'tv';
 
     this.http
-      .get<{ results: TmdbSearchResult[] }>(
-        `/api/tmdb/search?query=${encodeURIComponent(query)}&type=${type}`,
-      )
-      .pipe(catchError(() => of({ results: [] })))
-      .subscribe((resp) => {
+      .get<TmdbSearchResult[]>(`/api/tmdb/search?query=${encodeURIComponent(query)}&type=${type}`)
+      .pipe(catchError(() => of([] as TmdbSearchResult[])))
+      .subscribe((results) => {
         this.searchResultsMap.update((m) => ({
           ...m,
-          [fileId]: resp.results || [],
+          [fileId]: results,
         }));
       });
   }

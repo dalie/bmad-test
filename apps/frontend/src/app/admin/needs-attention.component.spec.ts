@@ -81,11 +81,9 @@ describe('NeedsAttentionComponent', () => {
 
     const searchReq = httpTesting.expectOne('/api/tmdb/search?query=Mystery%20Movie&type=movie');
     expect(searchReq.request.method).toBe('GET');
-    searchReq.flush({
-      results: [
-        { id: 100, title: 'Mystery Movie', release_date: '2025', overview: '', poster_path: null },
-      ],
-    });
+    searchReq.flush([
+      { id: 100, title: 'Mystery Movie', release_date: '2025', overview: '', poster_path: null },
+    ]);
 
     fixture.detectChanges();
     expect(component.getSearchResults(5).length).toBe(1);
