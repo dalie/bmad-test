@@ -121,18 +121,23 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
   private syncDisabled = false;
   private listeners: Array<[HTMLElement, string, EventListener]> = [];
   private progressInterval: ReturnType<typeof setInterval> | null = null;
+  private pendingRestoreTimers: ReturnType<typeof setTimeout>[] = [];
   private readonly progressContext: ProgressContext | null = this.buildProgressContext();
 
   constructor() {
     if (this.fileId) {
       this.http.get<SubtitleTrackInfo[]>(`/api/media/${this.fileId}/subtitles`).subscribe({
-        next: (tracks) => this.subtitleTracks.set(tracks),
+        next: (tracks) => {
+          this.subtitleTracks.set(tracks);
+          this.restoreSubtitlePreference(tracks);
+        },
         error: () => this.subtitleTracks.set([]),
       });
       this.http.get<AudioTrackInfo[]>(`/api/media/${this.fileId}/audio-tracks`).subscribe({
         next: (tracks) => {
           this.audioTracks.set(tracks);
           if (tracks.length > 0) this.activeAudioIndex.set(tracks[0].index);
+          this.restoreAudioPreference(tracks);
         },
         error: () => this.audioTracks.set([]),
       });
@@ -228,6 +233,8 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
       clearInterval(this.progressInterval);
       this.progressInterval = null;
     }
+    for (const t of this.pendingRestoreTimers) clearTimeout(t);
+    this.pendingRestoreTimers = [];
     this.cancelSync();
     for (const [el, event, handler] of this.listeners) {
       el.removeEventListener(event, handler);
@@ -410,9 +417,48 @@ export class PlayerComponent implements AfterViewInit, OnDestroy {
       tier: ctx.tier,
       seasonNum: ctx.seasonNum,
       episodeNum: ctx.episodeNum,
+      audioTrackIndex: this.activeAudioIndex() ?? undefined,
+      subtitleTrackId: this.activeSubtitleId() ?? undefined,
     };
 
     this.watchProgressService.saveEntry(storageKey, entry);
+  }
+
+  private getSavedEntry(): WatchProgressEntry | null {
+    if (!this.progressContext) return null;
+    const ctx = this.progressContext;
+    if (ctx.mediaType === 'tv' && (ctx.seasonNum == null || ctx.episodeNum == null)) return null;
+
+    const storageKey =
+      ctx.mediaType === 'movie'
+        ? `movie:${ctx.id}`
+        : `tv:${ctx.id}:s${ctx.seasonNum}:e${ctx.episodeNum}`;
+
+    const record = this.watchProgressService.readAll();
+    return record[storageKey] ?? null;
+  }
+
+  private restoreAudioPreference(tracks: AudioTrackInfo[]): void {
+    const saved = this.getSavedEntry();
+    if (saved?.audioTrackIndex == null) return;
+    const track = tracks.find((t) => t.index === saved.audioTrackIndex);
+    if (!track) return;
+    // Signal is already set to tracks[0].index above; override if saved differs
+    if (track.index !== tracks[0]?.index) {
+      // For Tier 2 this triggers src change; for Tier 1/3 it sets native audioTracks
+      this.pendingRestoreTimers.push(setTimeout(() => this.selectAudioTrack(track), 0));
+    } else {
+      this.activeAudioIndex.set(track.index);
+    }
+  }
+
+  private restoreSubtitlePreference(tracks: SubtitleTrackInfo[]): void {
+    const saved = this.getSavedEntry();
+    if (saved?.subtitleTrackId == null) return;
+    const exists = tracks.some((t) => t.id === saved.subtitleTrackId);
+    if (!exists) return;
+    // Defer until Angular renders the <track> elements
+    this.pendingRestoreTimers.push(setTimeout(() => this.selectSubtitle(saved.subtitleTrackId!), 0));
   }
 
   getTrackLabel(track: SubtitleTrackInfo): string {

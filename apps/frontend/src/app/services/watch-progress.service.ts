@@ -16,6 +16,8 @@ export interface WatchProgressEntry {
   tier: number | null;
   seasonNum?: number;
   episodeNum?: number;
+  audioTrackIndex?: number;
+  subtitleTrackId?: number;
 }
 
 export type WatchProgressRecord = Record<string, WatchProgressEntry>;

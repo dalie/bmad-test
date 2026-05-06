@@ -1468,4 +1468,313 @@ describe('PlayerComponent', () => {
       expect(watchSvc.saveEntry).not.toHaveBeenCalled();
     });
   });
+
+  describe('Track preference persistence', () => {
+    const movieQueryParams = {
+      mediaType: 'movie',
+      mediaId: '42',
+      title: 'Test Movie',
+      year: '2024',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+    };
+
+    function setupVideoState(
+      fixture: ReturnType<typeof setup>,
+      currentTime: number,
+      duration: number,
+    ): HTMLVideoElement {
+      const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+      Object.defineProperty(video, 'currentTime', {
+        value: currentTime,
+        writable: true,
+        configurable: true,
+      });
+      Object.defineProperty(video, 'duration', {
+        value: duration,
+        writable: true,
+        configurable: true,
+      });
+      return video;
+    }
+
+    it('should include audioTrackIndex in saved progress entry', () => {
+      const audioTracks = [
+        { index: 0, language: 'eng', codec: 'aac', channels: 2 },
+        { index: 1, language: 'fra', codec: 'aac', channels: 2 },
+      ];
+      const fixture = setup('42', '1', [], audioTracks, movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, 3600);
+
+      // Simulate user selecting audio track index 1
+      component.activeAudioIndex.set(1);
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ audioTrackIndex: 1 }),
+      );
+    });
+
+    it('should include subtitleTrackId in saved progress entry', () => {
+      const subtitleTracks = [
+        { id: 5, language: 'eng' },
+        { id: 6, language: 'fra' },
+      ];
+      const fixture = setup('42', '1', subtitleTracks, [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, 3600);
+
+      // Simulate user selecting subtitle track 5
+      component.activeSubtitleId.set(5);
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ subtitleTrackId: 5 }),
+      );
+    });
+
+    it('should save undefined for track fields when no track is selected', () => {
+      const fixture = setup('42', '1', [], [], movieQueryParams);
+      const component = fixture.componentInstance as any;
+      const watchSvc = TestBed.inject(WatchProgressService) as any;
+      setupVideoState(fixture, 120, 3600);
+
+      component.activeAudioIndex.set(null);
+      component.activeSubtitleId.set(null);
+      component.saveProgress();
+
+      expect(watchSvc.saveEntry).toHaveBeenCalledWith(
+        'movie:42',
+        expect.objectContaining({ audioTrackIndex: undefined, subtitleTrackId: undefined }),
+      );
+    });
+
+    it('should restore saved audio track on init when track exists', async () => {
+      const audioTracks = [
+        { index: 0, language: 'eng', codec: 'aac', channels: 2 },
+        { index: 1, language: 'fra', codec: 'aac', channels: 2 },
+      ];
+      const watchProgressMock = {
+        saveEntry: vi.fn(),
+        readAll: vi.fn().mockReturnValue({
+          'movie:42': {
+            position: 120,
+            duration: 3600,
+            watched: false,
+            updatedAt: Date.now(),
+            mediaType: 'movie',
+            id: 42,
+            title: 'Test Movie',
+            year: 2024,
+            posterUrl: null,
+            fileId: 42,
+            tier: 1,
+            audioTrackIndex: 1,
+          },
+        }),
+      };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [PlayerComponent],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: ActivatedRoute,
+            useValue: makeActivatedRouteStub('42', '1', movieQueryParams),
+          },
+          { provide: Location, useValue: { back: vi.fn() } },
+          { provide: WatchProgressService, useValue: watchProgressMock },
+        ],
+      });
+
+      httpTesting = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(PlayerComponent);
+      fixture.detectChanges();
+
+      httpTesting.expectOne('/api/media/42/subtitles').flush([]);
+      httpTesting.expectOne('/api/media/42/audio-tracks').flush(audioTracks);
+      fixture.detectChanges();
+
+      // Wait for setTimeout in restoreAudioPreference
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const component = fixture.componentInstance;
+      expect(component.activeAudioIndex()).toBe(1);
+      httpTesting.verify();
+    });
+
+    it('should restore saved subtitle track on init when track exists', async () => {
+      const subtitleTracks = [
+        { id: 5, language: 'eng' },
+        { id: 6, language: 'fra' },
+      ];
+      const watchProgressMock = {
+        saveEntry: vi.fn(),
+        readAll: vi.fn().mockReturnValue({
+          'movie:42': {
+            position: 120,
+            duration: 3600,
+            watched: false,
+            updatedAt: Date.now(),
+            mediaType: 'movie',
+            id: 42,
+            title: 'Test Movie',
+            year: 2024,
+            posterUrl: null,
+            fileId: 42,
+            tier: 1,
+            subtitleTrackId: 6,
+          },
+        }),
+      };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [PlayerComponent],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: ActivatedRoute,
+            useValue: makeActivatedRouteStub('42', '1', movieQueryParams),
+          },
+          { provide: Location, useValue: { back: vi.fn() } },
+          { provide: WatchProgressService, useValue: watchProgressMock },
+        ],
+      });
+
+      httpTesting = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(PlayerComponent);
+      fixture.detectChanges();
+
+      httpTesting.expectOne('/api/media/42/subtitles').flush(subtitleTracks);
+      httpTesting.expectOne('/api/media/42/audio-tracks').flush([]);
+      fixture.detectChanges();
+
+      // Wait for setTimeout in restoreSubtitlePreference
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const component = fixture.componentInstance;
+      expect(component.activeSubtitleId()).toBe(6);
+      httpTesting.verify();
+    });
+
+    it('should fall back to default when saved audio track no longer exists', () => {
+      const audioTracks = [
+        { index: 0, language: 'eng', codec: 'aac', channels: 2 },
+        { index: 1, language: 'fra', codec: 'aac', channels: 2 },
+      ];
+      const watchProgressMock = {
+        saveEntry: vi.fn(),
+        readAll: vi.fn().mockReturnValue({
+          'movie:42': {
+            position: 120,
+            duration: 3600,
+            watched: false,
+            updatedAt: Date.now(),
+            mediaType: 'movie',
+            id: 42,
+            title: 'Test Movie',
+            year: 2024,
+            posterUrl: null,
+            fileId: 42,
+            tier: 1,
+            audioTrackIndex: 99, // Does not exist
+          },
+        }),
+      };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [PlayerComponent],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: ActivatedRoute,
+            useValue: makeActivatedRouteStub('42', '1', movieQueryParams),
+          },
+          { provide: Location, useValue: { back: vi.fn() } },
+          { provide: WatchProgressService, useValue: watchProgressMock },
+        ],
+      });
+
+      httpTesting = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(PlayerComponent);
+      fixture.detectChanges();
+
+      httpTesting.expectOne('/api/media/42/subtitles').flush([]);
+      httpTesting.expectOne('/api/media/42/audio-tracks').flush(audioTracks);
+      fixture.detectChanges();
+
+      // Falls back to first track (index 0)
+      const component = fixture.componentInstance;
+      expect(component.activeAudioIndex()).toBe(0);
+      httpTesting.verify();
+    });
+
+    it('should fall back to null when saved subtitle track no longer exists', () => {
+      const subtitleTracks = [
+        { id: 5, language: 'eng' },
+        { id: 6, language: 'fra' },
+      ];
+      const watchProgressMock = {
+        saveEntry: vi.fn(),
+        readAll: vi.fn().mockReturnValue({
+          'movie:42': {
+            position: 120,
+            duration: 3600,
+            watched: false,
+            updatedAt: Date.now(),
+            mediaType: 'movie',
+            id: 42,
+            title: 'Test Movie',
+            year: 2024,
+            posterUrl: null,
+            fileId: 42,
+            tier: 1,
+            subtitleTrackId: 99, // Does not exist
+          },
+        }),
+      };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [PlayerComponent],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: ActivatedRoute,
+            useValue: makeActivatedRouteStub('42', '1', movieQueryParams),
+          },
+          { provide: Location, useValue: { back: vi.fn() } },
+          { provide: WatchProgressService, useValue: watchProgressMock },
+        ],
+      });
+
+      httpTesting = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(PlayerComponent);
+      fixture.detectChanges();
+
+      httpTesting.expectOne('/api/media/42/subtitles').flush(subtitleTracks);
+      httpTesting.expectOne('/api/media/42/audio-tracks').flush([]);
+      fixture.detectChanges();
+
+      // Falls back to null (off)
+      const component = fixture.componentInstance;
+      expect(component.activeSubtitleId()).toBeNull();
+      httpTesting.verify();
+    });
+  });
 });
