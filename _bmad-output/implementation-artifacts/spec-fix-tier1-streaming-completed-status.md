@@ -1,9 +1,9 @@
 ---
-title: 'Fix Tier 1 Streaming for Completed Status'
-type: 'bugfix'
-created: '2026-05-06'
-status: 'done'
-route: 'one-shot'
+title: "Fix Tier 1 Streaming for Completed Status"
+type: "bugfix"
+created: "2026-05-06"
+status: "done"
+route: "one-shot"
 context: []
 ---
 

@@ -241,12 +241,7 @@ describe("MediaService", () => {
         "ready",
         2,
       );
-      insertTranscodeJob(
-        fileId,
-        2,
-        "completed",
-        "/mnt/cache/sidecars/42.m4a",
-      );
+      insertTranscodeJob(fileId, 2, "completed", "/mnt/cache/sidecars/42.m4a");
 
       const result = service.getAudioSidecarPath(fileId, 0);
 
@@ -261,12 +256,7 @@ describe("MediaService", () => {
         "ready",
         2,
       );
-      insertTranscodeJob(
-        fileId,
-        2,
-        "completed",
-        "/mnt/cache/sidecars/42.m4a",
-      );
+      insertTranscodeJob(fileId, 2, "completed", "/mnt/cache/sidecars/42.m4a");
 
       const result = service.getAudioSidecarPath(fileId, 1);
 
@@ -430,23 +420,41 @@ describe("MediaService", () => {
 
     it("should return audio tracks from probe_data", () => {
       const sourceId = insertSource();
-      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/multi.mkv", {
-        audioTracks: [
-          { index: 0, codec: "ac3", channels: 6, language: "jpn" },
-          { index: 1, codec: "ac3", channels: 2, language: "eng" },
-        ],
-      });
+      const fileId = insertMediaFileWithProbe(
+        sourceId,
+        "/media/movies/multi.mkv",
+        {
+          audioTracks: [
+            { index: 0, codec: "ac3", channels: 6, language: "jpn" },
+            { index: 1, codec: "ac3", channels: 2, language: "eng" },
+          ],
+        },
+      );
 
       const result = service.getAudioTracksForFile(fileId);
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({ index: 0, language: "jpn", codec: "ac3", channels: 6 });
-      expect(result[1]).toEqual({ index: 1, language: "eng", codec: "ac3", channels: 2 });
+      expect(result[0]).toEqual({
+        index: 0,
+        language: "jpn",
+        codec: "ac3",
+        channels: 6,
+      });
+      expect(result[1]).toEqual({
+        index: 1,
+        language: "eng",
+        codec: "ac3",
+        channels: 2,
+      });
     });
 
     it("should return empty array when probe_data is null", () => {
       const sourceId = insertSource();
-      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/movie.mkv", null);
+      const fileId = insertMediaFileWithProbe(
+        sourceId,
+        "/media/movies/movie.mkv",
+        null,
+      );
 
       const result = service.getAudioTracksForFile(fileId);
 
@@ -455,9 +463,13 @@ describe("MediaService", () => {
 
     it("should return empty array when audioTracks is missing from probe_data", () => {
       const sourceId = insertSource();
-      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/movie.mkv", {
-        format: { container: "mkv", duration: 100, bitrate: 5000 },
-      });
+      const fileId = insertMediaFileWithProbe(
+        sourceId,
+        "/media/movies/movie.mkv",
+        {
+          format: { container: "mkv", duration: 100, bitrate: 5000 },
+        },
+      );
 
       const result = service.getAudioTracksForFile(fileId);
 
@@ -466,9 +478,13 @@ describe("MediaService", () => {
 
     it("should return null for language when language field is missing", () => {
       const sourceId = insertSource();
-      const fileId = insertMediaFileWithProbe(sourceId, "/media/movies/movie.mkv", {
-        audioTracks: [{ index: 0, codec: "aac", channels: 2 }],
-      });
+      const fileId = insertMediaFileWithProbe(
+        sourceId,
+        "/media/movies/movie.mkv",
+        {
+          audioTracks: [{ index: 0, codec: "aac", channels: 2 }],
+        },
+      );
 
       const result = service.getAudioTracksForFile(fileId);
 
@@ -477,7 +493,9 @@ describe("MediaService", () => {
     });
 
     it("should throw NotFoundException for non-existent fileId", () => {
-      expect(() => service.getAudioTracksForFile(999)).toThrow(NotFoundException);
+      expect(() => service.getAudioTracksForFile(999)).toThrow(
+        NotFoundException,
+      );
     });
 
     it("should return empty array when probe_data is invalid JSON", () => {
@@ -487,8 +505,14 @@ describe("MediaService", () => {
         .prepare(
           "INSERT INTO media_files (path, filename, source_id, status, tier, probe_data) VALUES (?, ?, ?, ?, ?, ?)",
         )
-        .run("/media/movies/bad.mkv", filename, sourceId, "ready", 1, "not-valid-json")
-        .lastInsertRowid as number;
+        .run(
+          "/media/movies/bad.mkv",
+          filename,
+          sourceId,
+          "ready",
+          1,
+          "not-valid-json",
+        ).lastInsertRowid as number;
 
       const result = service.getAudioTracksForFile(fileId);
 

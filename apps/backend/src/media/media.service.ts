@@ -116,9 +116,7 @@ export class MediaService {
     return sidecarPath;
   }
 
-  getAudioTracksForFile(
-    fileId: number,
-  ): Array<{
+  getAudioTracksForFile(fileId: number): Array<{
     index: number;
     language: string | null;
     codec: string;
