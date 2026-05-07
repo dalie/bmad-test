@@ -6,11 +6,13 @@
   "license": "ISC",
   "author": "",
   "workspaces": [
+    "packages/shared",
     "apps/backend",
     "apps/frontend"
   ],
   "scripts": {
-    "build": "npm run build:frontend && npm run build:backend",
+    "build": "npm run build:shared && npm run build:frontend && npm run build:backend",
+    "build:shared": "npm run build --workspace=packages/shared",
     "build:frontend": "npm run build --workspace=apps/frontend",
     "build:backend": "npm run build --workspace=apps/backend",
     "start": "npm run build:frontend && npm run start:prod --workspace=apps/backend",
