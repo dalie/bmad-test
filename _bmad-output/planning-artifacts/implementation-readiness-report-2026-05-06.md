@@ -20,12 +20,12 @@ documents:
 
 ## Document Inventory
 
-| Document Type | File | Size | Last Modified |
-|---|---|---|---|
-| PRD | prd.md | 18,901 bytes | May 6 |
-| Architecture | architecture.md | 7,389 bytes | May 1 |
-| Epics & Stories | epics.md | 44,746 bytes | May 6 |
-| UX Design | ux-design-specification.md | 33,654 bytes | May 1 |
+| Document Type   | File                       | Size         | Last Modified |
+| --------------- | -------------------------- | ------------ | ------------- |
+| PRD             | prd.md                     | 18,901 bytes | May 6         |
+| Architecture    | architecture.md            | 7,389 bytes  | May 1         |
+| Epics & Stories | epics.md                   | 44,746 bytes | May 6         |
+| UX Design       | ux-design-specification.md | 33,654 bytes | May 1         |
 
 **Status:** All required documents found. No duplicates. No conflicts.
 
@@ -34,6 +34,7 @@ documents:
 ### PRD Summary
 
 The current PRD describes a **pure structural refactoring** of the existing Cineplex Rigaud media server. It has a **zero-functional-change guarantee** — no features added, no features removed, no database schema changes, no end-user behavior changes. The goal is to improve codebase clarity via:
+
 1. A shared TypeScript library (npm workspaces) as the single source of truth for data contracts
 2. Service-by-service simplification pass decomposing dense logic into cohesive units
 
@@ -94,27 +95,27 @@ The epics document contains requirements and stories for the **original media se
 
 ### Coverage Matrix
 
-| PRD FR | Requirement | Epic Coverage | Status |
-|---|---|---|---|
-| FR1 | Create npm workspace shared library package | NOT FOUND | ❌ MISSING |
-| FR2 | Import shared types into both apps | NOT FOUND | ❌ MISSING |
-| FR3 | Build both apps with shared library dependency | NOT FOUND | ❌ MISSING |
-| FR4 | Type changes flag affected consumers via compilation | NOT FOUND | ❌ MISSING |
-| FR5 | Migrate duplicated backend DTOs to shared lib | NOT FOUND | ❌ MISSING |
-| FR6 | Decompose backend service methods | NOT FOUND | ❌ MISSING |
-| FR7 | Backend services understandable without tracing | NOT FOUND | ❌ MISSING |
-| FR8 | Modify API response shapes where inconsistencies found | NOT FOUND | ❌ MISSING |
-| FR9 | Verify each backend service preserves behavior | NOT FOUND | ❌ MISSING |
-| FR10 | Replace frontend type definitions with shared lib imports | NOT FOUND | ❌ MISSING |
-| FR11 | Simplify frontend service logic | NOT FOUND | ❌ MISSING |
-| FR12 | Frontend services understandable at a glance | NOT FOUND | ❌ MISSING |
-| FR13 | Verify each frontend service preserves UI behavior | NOT FOUND | ❌ MISSING |
-| FR14 | Configure both tsconfig.json for shared package | NOT FOUND | ❌ MISSING |
-| FR15 | Full monorepo build compiles without errors | NOT FOUND | ❌ MISSING |
-| FR16 | Add shared lib without modifying Docker config | NOT FOUND | ❌ MISSING |
-| FR17 | AI-assisted review of each service | NOT FOUND | ❌ MISSING |
-| FR18 | Sign off each service as complete | NOT FOUND | ❌ MISSING |
-| FR19 | Confirm zero duplicated types remain | NOT FOUND | ❌ MISSING |
+| PRD FR | Requirement                                               | Epic Coverage | Status     |
+| ------ | --------------------------------------------------------- | ------------- | ---------- |
+| FR1    | Create npm workspace shared library package               | NOT FOUND     | ❌ MISSING |
+| FR2    | Import shared types into both apps                        | NOT FOUND     | ❌ MISSING |
+| FR3    | Build both apps with shared library dependency            | NOT FOUND     | ❌ MISSING |
+| FR4    | Type changes flag affected consumers via compilation      | NOT FOUND     | ❌ MISSING |
+| FR5    | Migrate duplicated backend DTOs to shared lib             | NOT FOUND     | ❌ MISSING |
+| FR6    | Decompose backend service methods                         | NOT FOUND     | ❌ MISSING |
+| FR7    | Backend services understandable without tracing           | NOT FOUND     | ❌ MISSING |
+| FR8    | Modify API response shapes where inconsistencies found    | NOT FOUND     | ❌ MISSING |
+| FR9    | Verify each backend service preserves behavior            | NOT FOUND     | ❌ MISSING |
+| FR10   | Replace frontend type definitions with shared lib imports | NOT FOUND     | ❌ MISSING |
+| FR11   | Simplify frontend service logic                           | NOT FOUND     | ❌ MISSING |
+| FR12   | Frontend services understandable at a glance              | NOT FOUND     | ❌ MISSING |
+| FR13   | Verify each frontend service preserves UI behavior        | NOT FOUND     | ❌ MISSING |
+| FR14   | Configure both tsconfig.json for shared package           | NOT FOUND     | ❌ MISSING |
+| FR15   | Full monorepo build compiles without errors               | NOT FOUND     | ❌ MISSING |
+| FR16   | Add shared lib without modifying Docker config            | NOT FOUND     | ❌ MISSING |
+| FR17   | AI-assisted review of each service                        | NOT FOUND     | ❌ MISSING |
+| FR18   | Sign off each service as complete                         | NOT FOUND     | ❌ MISSING |
+| FR19   | Confirm zero duplicated types remain                      | NOT FOUND     | ❌ MISSING |
 
 ### Coverage Statistics
 
@@ -135,6 +136,7 @@ Found: `ux-design-specification.md`
 ### Alignment Assessment
 
 The UX document describes the original media server's user interface (poster grids, detail pages, playback controls, admin panel). However, the current PRD explicitly states:
+
 - "Zero-functional-change guarantee"
 - "No features are added, no features are removed"
 - "No end-user behavior changes"
@@ -151,6 +153,7 @@ The UX document describes the original media server's user interface (poster gri
 ### 🔴 CRITICAL: Architecture Document Misalignment
 
 The architecture document describes decisions for the **original media server build**:
+
 - Infrastructure & Docker deployment
 - Angular frontend architecture
 - REST API design
@@ -158,6 +161,7 @@ The architecture document describes decisions for the **original media server bu
 - Data architecture (raw SQLite, no ORM)
 
 The current refactoring PRD requires architecture decisions about:
+
 - Shared TypeScript library package structure
 - npm workspace configuration for the shared lib
 - tsconfig resolution strategy for workspace packages
