@@ -6,151 +6,125 @@ stepsCompleted:
   - step-04-ux-alignment
   - step-05-epic-quality-review
   - step-06-final-assessment
+documents:
+  prd: prd.md
+  architecture: architecture.md
+  epics: epics.md
+  ux: ux-design-specification.md
 ---
 
 # Implementation Readiness Assessment Report
 
 **Date:** 2026-05-06
-**Project:** bmad
+**Project:** Cineplex Rigaud Refactoring
+
+## Document Inventory
+
+| Document Type | File | Size | Last Modified |
+|---|---|---|---|
+| PRD | prd.md | 18,901 bytes | May 6 |
+| Architecture | architecture.md | 7,389 bytes | May 1 |
+| Epics & Stories | epics.md | 44,746 bytes | May 6 |
+| UX Design | ux-design-specification.md | 33,654 bytes | May 1 |
+
+**Status:** All required documents found. No duplicates. No conflicts.
 
 ## PRD Analysis
 
+### PRD Summary
+
+The current PRD describes a **pure structural refactoring** of the existing Cineplex Rigaud media server. It has a **zero-functional-change guarantee** — no features added, no features removed, no database schema changes, no end-user behavior changes. The goal is to improve codebase clarity via:
+1. A shared TypeScript library (npm workspaces) as the single source of truth for data contracts
+2. Service-by-service simplification pass decomposing dense logic into cohesive units
+
 ### Functional Requirements
 
-FR1: Admin can configure one or more media source folders for the system to monitor
-FR2: System can detect new, modified, and removed video files in monitored folders
-FR3: System can parse video filenames to extract title, year, season, and episode information
-FR4: System can match detected files against TMDB for metadata (title, description, poster, ratings, episode info)
-FR5: Admin can manually search TMDB and assign a match when automatic matching fails
-FR6: Admin can view a list of files that failed automatic TMDB matching ("Needs Attention" queue)
-FR7: System can detect and catalog embedded subtitle tracks and sidecar subtitle files (.srt, .ass, etc.)
-FR8: System can probe video files to determine video codec, audio codec, and container format
-FR9: System can classify each file into the appropriate transcode tier (Tier 1: serve original, Tier 2: audio sidecar, Tier 3: full transcode)
-FR10: System can extract and transcode incompatible audio tracks to AAC sidecar files without modifying the source file
-FR11: System can perform full video transcode to MP4 with faststart for files with non-web-compatible video codecs
-FR12: System can convert embedded and sidecar subtitles to WebVTT format
-FR13: System can process the transcode queue unattended in the background
-FR14: Admin can view transcode pipeline status (queued, processing, completed, failed)
-FR15: Viewer can browse the library as a poster grid of movies
-FR16: Viewer can browse the library as a poster grid of TV shows
-FR17: Viewer can view detail information for a movie (title, description, poster, year, rating, runtime)
-FR18: Viewer can view detail information for a TV show including season and episode listings
-FR19: Viewer can see watch progress indicators on titles they've partially watched
-FR20: Viewer can see watched status on titles they've completed
-FR21: Viewer can search the library by title
-FR22: Viewer can play any video file in the library with sub-1000ms time to first frame
-FR23: Viewer can seek to any point in a video with instant response
-FR24: System can serve video content via HTTP range requests with no server-side processing at play time
-FR25: System can synchronize playback of a muted video element with a separate audio sidecar element (dual-element sync)
-FR26: Viewer can select from available subtitle tracks during playback
-FR27: Viewer can select from available audio tracks during playback (when multiple exist)
-FR28: Viewer can pause, resume, and control playback volume
-FR29: Viewer can enter and exit fullscreen playback
-FR30: System can persist watch progress per-title in the browser's localStorage
-FR31: Viewer can resume playback from their last watched position
-FR32: System can mark a title as "watched" when playback reaches near the end
-FR33: System can detect whether the client is on the same local network as the server
-FR34: Admin can access the admin panel only when viewing from the server's LAN
-FR35: Admin can view library statistics (total titles, movies, TV shows, transcode status breakdown)
-FR36: Admin can trigger a manual library rescan
-FR37: Admin can view import and transcode error details for failed files
-FR38: Admin can deploy the application as a single Docker container
-FR39: Admin can configure media source folders via Docker volume mounts
-FR40: System can serve the frontend SPA and backend API from the same container
-Total FRs: 40
+FR1: Developer can create a new npm workspace package for shared TypeScript types, interfaces, and enums
+FR2: Developer can import shared types from the library into both backend (NestJS) and frontend (Angular)
+FR3: Developer can build both applications successfully with the shared library as a workspace dependency
+FR4: Developer can add/modify/remove a shared type and have TypeScript compilation flag all affected consumers
+FR5: Developer can identify all duplicated backend DTO/interface definitions and migrate them to the shared library
+FR6: Developer can decompose multi-concern backend service methods into focused, single-responsibility units
+FR7: Developer can review any backend service and understand its inputs, outputs, and side-effects without tracing nested logic
+FR8: Developer can modify API response shapes where inconsistencies are discovered during review
+FR9: Developer can verify each refactored backend service preserves its existing behavior through manual spot-checking
+FR10: Developer can replace all duplicated frontend interface/type definitions with imports from the shared library
+FR11: Developer can simplify frontend service logic for clean, readable API-to-observable data flow
+FR12: Developer can review any frontend service and understand its data sourcing, transformation, and caching strategy at a glance
+FR13: Developer can verify each refactored frontend service preserves its existing UI behavior through manual spot-checking
+FR14: Developer can configure both tsconfig.json files to resolve the shared workspace package without path alias conflicts
+FR15: Developer can run the full monorepo build and have all three packages compile without errors
+FR16: Developer can add the shared library without modifying the existing Docker deployment configuration (unless required)
+FR17: Developer can conduct an AI-assisted review of each service to validate simplification quality
+FR18: Developer can sign off each service as "complete" after review and regression spot-check
+FR19: Developer can confirm zero duplicated type definitions remain across the frontend and backend after all migrations
+Total FRs: 19
 
 ### Non-Functional Requirements
 
-NFR1: Time to first frame must be < 1000ms for any title in the library
-NFR2: Seeking must complete within the browser's native range-request response time (no server-side delay)
-NFR3: Server CPU usage during playback must be < 5% per concurrent viewer (static file serving only)
-NFR4: Library browsing page load must feel instant (< 1s perceived) using lazy loading
-NFR5: API metadata responses must return within 200ms
-NFR6: SPA page-to-page navigation must complete in < 100ms (client-side routing)
-NFR7: Poster grid must scroll smoothly with virtualized rendering and lazy image loading
-NFR8: Dual-element audio sync drift must stay within 50ms correction threshold during normal playback, seek, pause, and resume
-NFR9: Source media files must never be modified — read-only filesystem access only
-NFR10: Admin panel routes must only be accessible from the server's local network subnet
-NFR11: No user credentials, tokens, or sensitive data stored anywhere in the system
-NFR12: TMDB API key must not be exposed to the frontend client
-NFR13: Import pipeline must recover gracefully from individual file failures without halting the entire scan
-NFR14: Failed TMDB matches must be queued for manual resolution, not silently dropped
-NFR15: Failed transcodes must be logged with error details and retryable
-NFR16: Folder watcher must handle partially written files (in-progress downloads) without crashing or producing corrupt output
-NFR17: Playback must work independently of import pipeline status — watching is never blocked by processing
-NFR18: System must handle TMDB API rate limits gracefully (backoff/retry, not crash)
-NFR19: System must handle TMDB API unavailability gracefully — library browsing and playback work without TMDB connectivity
-NFR20: FFmpeg must be bundled in the Docker image — no external dependency installation required
-NFR21: TMDB image base URL must be cached and refreshed periodically per API documentation
-Total NFRs: 21
+NFR1: Every refactored service must be reviewable without scrolling through more than one screen of method logic (single-responsibility methods)
+NFR2: The shared library must contain zero runtime code — only type definitions, interfaces, and enums
+NFR3: No circular dependencies may exist between the shared library and either application package
+NFR4: Full monorepo build must complete without errors after every individual service migration
+NFR5: The shared library must compile independently without importing from either application
+NFR6: TypeScript strict mode must remain enabled across all packages — no loosening compiler options
+NFR7: End-user-facing behavior must remain identical after refactoring — verified by manual spot-check
+NFR8: Database schema and data must remain 100% untouched
+NFR9: Docker deployment configuration must continue to work without modification (unless shared lib requires build step changes)
+Total NFRs: 9
 
 ### Additional Requirements
 
-- Constraints/Assumptions: Solo developer project; primary users are an elderly, non-technical viewer and a technical admin.
-- Technical Requirements: Docker container (single image for frontend + backend), browser support strictly targets latest 2 versions of Chrome and Firefox; edge/safari left out.
-- Hardware Floor Constraint: Must run comfortably on a first-gen Ryzen 5 system or Raspberry Pi during playback.
-- Business Constraints: No revenue/adoption targets; personal project only. No user profiles with passwords.
+- Constraints: Solo developer with AI-assisted code review
+- Execution Order: (1) Shared library setup → (2) Backend services → (3) Frontend services
+- Nice-to-Have: Consistent naming conventions, barrel exports, dead code removal
+- Out of Scope: OpenAPI/Swagger, database modifications, new features, UI/UX changes, automated tests, tech stack changes, performance optimization
 
 ### PRD Completeness Assessment
 
-The PRD is highly detailed, complete, and exceptionally clear. Its primary strength lies in its explicit delineation between MVP and post-MVP requirements, combined with clear architectural expectations (import-time transcodes vs. playback-time processing). All 40 functional requirements and 21 non-functional requirements are well-defined, testable, and aligned cleanly with four specific user journeys. Performance targets and bounds are stated explicitly.
+The PRD is well-structured and clear for a refactoring initiative. Requirements are specific and testable. The zero-functional-change constraint is explicitly stated and reinforced throughout. Execution order and risk mitigations are clearly documented.
 
 ## Epic Coverage Validation
 
+### 🔴 CRITICAL: Complete Requirements Mismatch
+
+The epics document contains requirements and stories for the **original media server build** (40 FRs, 21 NFRs, 7 epics covering scanning, transcoding, playback, admin). The current PRD describes a **structural refactoring** with 19 completely different FRs focused on shared types, service decomposition, and DTO elimination.
+
+**None of the current PRD's functional requirements appear in the epics document.**
+
 ### Coverage Matrix
 
-| FR Number | PRD Requirement                      | Epic Coverage | Status    |
-| --------- | ------------------------------------ | ------------- | --------- |
-| FR1       | Configure media source folders       | Epic 2        | ✓ Covered |
-| FR2       | Detect new/modified/removed files    | Epic 2        | ✓ Covered |
-| FR3       | Parse filenames for metadata         | Epic 2        | ✓ Covered |
-| FR4       | TMDB metadata matching               | Epic 2        | ✓ Covered |
-| FR5       | Manual TMDB match fallback           | Epic 2        | ✓ Covered |
-| FR6       | Needs Attention queue                | Epic 2        | ✓ Covered |
-| FR7       | Subtitle track cataloging            | Epic 2        | ✓ Covered |
-| FR8       | Video file probing                   | Epic 2        | ✓ Covered |
-| FR9       | Transcode tier classification        | Epic 3        | ✓ Covered |
-| FR10      | AAC audio sidecar extraction         | Epic 3        | ✓ Covered |
-| FR11      | Full video transcode                 | Epic 3        | ✓ Covered |
-| FR12      | Subtitle conversion to WebVTT        | Epic 3        | ✓ Covered |
-| FR13      | Unattended queue processing          | Epic 3        | ✓ Covered |
-| FR14      | Pipeline status visibility           | Epic 3        | ✓ Covered |
-| FR15      | Movie poster grid                    | Epic 4        | ✓ Covered |
-| FR16      | TV show poster grid                  | Epic 4        | ✓ Covered |
-| FR17      | Movie detail page                    | Epic 4        | ✓ Covered |
-| FR18      | TV show detail with seasons/episodes | Epic 4        | ✓ Covered |
-| FR19      | Watch progress indicators            | Epic 4        | ✓ Covered |
-| FR20      | Watched status                       | Epic 4        | ✓ Covered |
-| FR21      | Library search                       | Epic 4        | ✓ Covered |
-| FR22      | Sub-1000ms playback start            | Epic 5        | ✓ Covered |
-| FR23      | Instant seeking                      | Epic 5        | ✓ Covered |
-| FR24      | HTTP range request serving           | Epic 5        | ✓ Covered |
-| FR25      | Dual-element audio sync              | Epic 5        | ✓ Covered |
-| FR26      | Subtitle track selection             | Epic 5        | ✓ Covered |
-| FR27      | Audio track selection                | Epic 5        | ✓ Covered |
-| FR28      | Playback controls                    | Epic 5        | ✓ Covered |
-| FR29      | Fullscreen toggle                    | Epic 5        | ✓ Covered |
-| FR30      | localStorage watch progress          | Epic 6        | ✓ Covered |
-| FR31      | Resume from last position            | Epic 6        | ✓ Covered |
-| FR32      | Auto-mark as watched                 | Epic 6        | ✓ Covered |
-| FR33      | LAN detection                        | Epic 7        | ✓ Covered |
-| FR34      | LAN-only admin access                | Epic 7        | ✓ Covered |
-| FR35      | Library statistics                   | Epic 7        | ✓ Covered |
-| FR36      | Manual rescan trigger                | Epic 7        | ✓ Covered |
-| FR37      | Error detail viewing                 | Epic 7        | ✓ Covered |
-| FR38      | Docker deployment                    | Epic 1        | ✓ Covered |
-| FR39      | Volume mount config                  | Epic 1        | ✓ Covered |
-| FR40      | Single-container serving             | Epic 1        | ✓ Covered |
-
-### Missing Requirements
-
-None. All functional requirements are successfully covered by the defined epics.
+| PRD FR | Requirement | Epic Coverage | Status |
+|---|---|---|---|
+| FR1 | Create npm workspace shared library package | NOT FOUND | ❌ MISSING |
+| FR2 | Import shared types into both apps | NOT FOUND | ❌ MISSING |
+| FR3 | Build both apps with shared library dependency | NOT FOUND | ❌ MISSING |
+| FR4 | Type changes flag affected consumers via compilation | NOT FOUND | ❌ MISSING |
+| FR5 | Migrate duplicated backend DTOs to shared lib | NOT FOUND | ❌ MISSING |
+| FR6 | Decompose backend service methods | NOT FOUND | ❌ MISSING |
+| FR7 | Backend services understandable without tracing | NOT FOUND | ❌ MISSING |
+| FR8 | Modify API response shapes where inconsistencies found | NOT FOUND | ❌ MISSING |
+| FR9 | Verify each backend service preserves behavior | NOT FOUND | ❌ MISSING |
+| FR10 | Replace frontend type definitions with shared lib imports | NOT FOUND | ❌ MISSING |
+| FR11 | Simplify frontend service logic | NOT FOUND | ❌ MISSING |
+| FR12 | Frontend services understandable at a glance | NOT FOUND | ❌ MISSING |
+| FR13 | Verify each frontend service preserves UI behavior | NOT FOUND | ❌ MISSING |
+| FR14 | Configure both tsconfig.json for shared package | NOT FOUND | ❌ MISSING |
+| FR15 | Full monorepo build compiles without errors | NOT FOUND | ❌ MISSING |
+| FR16 | Add shared lib without modifying Docker config | NOT FOUND | ❌ MISSING |
+| FR17 | AI-assisted review of each service | NOT FOUND | ❌ MISSING |
+| FR18 | Sign off each service as complete | NOT FOUND | ❌ MISSING |
+| FR19 | Confirm zero duplicated types remain | NOT FOUND | ❌ MISSING |
 
 ### Coverage Statistics
 
-- Total PRD FRs: 40
-- FRs covered in epics: 40
-- Coverage percentage: 100%
+- Total PRD FRs: 19
+- FRs covered in epics: 0
+- Coverage percentage: **0%**
+
+### Root Cause
+
+The PRD was rewritten from the original "build the media server" specification to a "refactor the existing media server" specification. The epics document was never updated to reflect this change. The epics still reference the original 40 FRs and 7 epics for building from scratch — work that appears to have already been completed (implementation artifacts exist for stories 1-1 through 7-4).
 
 ## UX Alignment Assessment
 
@@ -158,67 +132,79 @@ None. All functional requirements are successfully covered by the defined epics.
 
 Found: `ux-design-specification.md`
 
-### Alignment Issues
+### Alignment Assessment
 
-None. UX perfectly aligns with the PRD and Architecture:
+The UX document describes the original media server's user interface (poster grids, detail pages, playback controls, admin panel). However, the current PRD explicitly states:
+- "Zero-functional-change guarantee"
+- "No features are added, no features are removed"
+- "No end-user behavior changes"
+- "Out of Scope: Any database schema modifications, new features or UI/UX changes"
 
-- The UX relies on the Angular SPA architecture defined in the Architecture and Epic breakdown.
-- The dual-element audio sync UX interactions are fully backed by the Angular frontend constraints in the architecture.
-- The UI navigation (poster grid the only navigation, detail pages, zero overlays/modals) precisely satisfies FR15-FR18 and the performance-driven constraint to be instantly fast (NFR4, NFR6).
-- Progress tracking via localStorage (FR30) aligns identically with the UX design constraint for "ambient resume".
-- Admin/Viewer separation via LAN visibility perfectly satisfies FR33, FR34.
+**Conclusion:** The UX document is irrelevant to this refactoring initiative — no UX work is required. The existing UX spec remains valid as documentation of the current (unchanged) user experience, but it should not drive any implementation work for this PRD.
 
 ### Warnings
 
-No issues found.
+- The UX document references the original build PRD, not the refactoring PRD. This is acceptable since no UX changes are planned.
+
+## Architecture Alignment Assessment
+
+### 🔴 CRITICAL: Architecture Document Misalignment
+
+The architecture document describes decisions for the **original media server build**:
+- Infrastructure & Docker deployment
+- Angular frontend architecture
+- REST API design
+- Authentication (LAN-only, no auth)
+- Data architecture (raw SQLite, no ORM)
+
+The current refactoring PRD requires architecture decisions about:
+- Shared TypeScript library package structure
+- npm workspace configuration for the shared lib
+- tsconfig resolution strategy for workspace packages
+- Service decomposition patterns and conventions
+- Type migration strategy (which types move, naming conventions)
+- Build pipeline changes to accommodate the shared package
+
+**None of the refactoring-specific architectural decisions are documented.**
 
 ## Epic Quality Review
 
-### Best Practices Compliance Checklist
+### 🔴 CRITICAL: Cannot Assess — Wrong Epics
 
-- [x] Epic delivers user value
-- [x] Epic can function independently
-- [x] Stories appropriately sized
-- [x] No forward dependencies
-- [x] Database tables created when needed
-- [x] Clear acceptance criteria
-- [x] Traceability to FRs maintained
+The epic quality review cannot be meaningfully completed because the epics document describes an entirely different project than the current PRD. The existing epics are for the original media server build (already implemented). No epics exist for the refactoring work.
 
-### Quality Assessment Documentation
+### What Refactoring Epics Should Cover
 
-#### 🔴 Critical Violations
+Based on the PRD's execution order, appropriate epics would be:
 
-None found. Epics are structured excellently in a vertical slice approach (from project scaffolding, to library ingestion, background transcodes, frontend browsing, playback, and finally admin capabilities). Forward dependencies are strictly avoided.
-
-#### 🟠 Major Issues
-
-None found. Given/When/Then usage is consistent and testable. Table creation is appropriately staged (e.g., `transcode_jobs` table is created in Story 3.1 when transcodes are introduced; `media_files` is created in 2.1 when folder scanning requires it).
-
-#### 🟡 Minor Concerns
-
-- **Epic 1 (Project Foundation & Docker Deployment)**: While Epic 1 is technically an infrastructure/technical milestone, it strictly satisfies the "Starter Template Requirement" standard and delivers the "Dude's Setup Day" user journey.
-- **Story 2.4 (Filename Parsing and TMDB Metadata Matching)**: The story states "metadata is stored in a metadata table", but does not explicitly instruct the creation of this table like Story 3.1 does. It is implicitly assumed.
-
-### Recommendations
-
-- Ensure the developer creates the `metadata` table and relationship keys distinctly within Story 2.4 during implementation.
-- Otherwise, the epics are fully ready for implementation with exceptionally high quality.
+1. **Epic 1: Shared Library Setup** — Create npm workspace package, establish type structure, configure both apps to consume it (FR1-FR4, FR14-FR16)
+2. **Epic 2: Backend Service Refactoring** — Migrate DTOs, decompose services, verify behavior preservation (FR5-FR9, FR17-FR18)
+3. **Epic 3: Frontend Service Refactoring** — Replace duplicated types, simplify services, verify UI behavior (FR10-FR13, FR17-FR19)
 
 ## Summary and Recommendations
 
 ### Overall Readiness Status
 
-**READY**
+**🔴 NOT READY**
 
 ### Critical Issues Requiring Immediate Action
 
-None. The planning artifacts are comprehensively aligned and fully ready for development.
+1. **Epics document is for the wrong project** — The epics describe building the original media server (40 FRs, 7 epics). The current PRD describes refactoring it (19 FRs). Coverage is 0%. New epics must be created from scratch.
+
+2. **Architecture document is for the wrong project** — The architecture covers original build decisions (Docker, Angular, REST, SQLite). The refactoring needs decisions about shared library structure, workspace configuration, service decomposition patterns, and migration strategy.
+
+3. **Complete document drift** — The PRD was rewritten but the supporting artifacts (architecture, epics) were not updated. These documents are now internally inconsistent.
 
 ### Recommended Next Steps
 
-1. In Epic 2 (Story 2.4), explicitly acknowledge the creation of the `metadata` table as part of the implementation.
-2. Proceed to Phase 4 (Implementation) by running `bmad-create-story` for Epic 1 Story 1.1, or `bmad-dev-story` if stories have been scaffolded.
+1. **Create new epics** — Run `bmad-create-epics-and-stories` against the current refactoring PRD to generate epics covering shared library setup, backend service refactoring, and frontend service refactoring.
+
+2. **Create new architecture document** — Run `bmad-create-architecture` to document decisions specific to the refactoring: shared library package structure, tsconfig workspace resolution, service decomposition conventions, and type naming standards.
+
+3. **Decide on UX document** — Either remove the UX document from scope (since no UX changes are planned) or keep it as reference documentation for the current state. No new UX work is needed.
+
+4. **Consider retaining old epics** — The existing epics document is valuable as a record of the original build. Consider renaming it (e.g., `epics-original-build.md`) before creating new refactoring epics.
 
 ### Final Note
 
-This assessment identified 1 minor implicit gap across all categories. The documentation is extremely robust, providing highly traceable and detailed user journeys aligned perfectly to architecture, UX design, and independently completable implementation epics.
+This assessment identified **3 critical issues** across all categories. The fundamental problem is that the PRD was rewritten from a "build" specification to a "refactor" specification, but the architecture and epics documents were never updated to match. Implementation cannot proceed until new epics and architecture decisions are created that align with the refactoring PRD's 19 functional requirements.

@@ -15,384 +15,267 @@ stepsCompleted:
   - step-11-polish
   - step-12-complete
 inputDocuments:
-  - product-brief-bmad.md
-  - product-brief-bmad-distillate.md
-workflowType: 'prd'
-releaseMode: phased
+  - product-brief-cineplex-rigaud-refactor.md
+  - product-brief-cineplex-rigaud-refactor-distillate.md
+documentCounts:
+  briefs: 2
+  research: 0
+  projectDocs: 0
+  projectContext: 0
+workflowType: "prd"
+releaseMode: single-release
 classification:
   projectType: web_app
   domain: general
   complexity: low
-  projectContext: greenfield
+  projectContext: brownfield
 ---
 
-# Product Requirements Document - Cineplex Rigaud
+# Product Requirements Document - Cineplex Rigaud Refactoring
 
 **Author:** Dude
-**Date:** 2026-04-28
+**Date:** 2026-05-06
 
 ## Executive Summary
 
-Cineplex Rigaud is a self-hosted media server that inverts the architecture of every existing solution. Instead of transcoding video on-the-fly when someone hits play — burning CPU, causing seek latency, and degrading under concurrent viewers — it processes only what's necessary at import time, then serves static files directly via HTTP range requests. The result: instant playback, instant seeking, near-zero server load, and hardware requirements low enough to run on a Raspberry Pi.
+Cineplex Rigaud is a mature, self-hosted media server built on NestJS (backend), Angular (frontend), and SQLite. The platform is feature-complete and actively used, but its internal architecture has accumulated structural debt: data transfer objects (DTOs) are physically duplicated across the frontend and backend boundaries, and service modules have grown dense enough that tracing data flow from SQL query to HTTP response to UI observable requires significant cognitive effort.
 
-The product serves two distinct personas. The **admin** is a technically-minded homelabber who maintains a video library (often actively seeding) and wants to share it with family without becoming permanent tech support. The **viewer** is a non-technical family member or friend who opens a browser, picks a movie, and watches — no accounts, no apps, no configuration. Watch progress persists in the browser's localStorage; each device is its own profile.
+This initiative is a pure structural refactoring with a zero-functional-change guarantee. No features are added, no features are removed, no database schemas are altered, and no end-user behavior changes. The goal is to make the codebase dramatically easier to understand, extend, and maintain by a solo developer operating across the full stack.
 
-The smart transcode pipeline handles three tiers: files with web-compatible audio play as-is (zero processing), files with incompatible audio (AC3, DTS, TrueHD) get a small AAC sidecar (~2-3% storage overhead) while the original stays untouched, and the rare non-web video codec triggers a full transcode. Source files are never modified — critical for libraries that are actively seeding.
+Two structural interventions drive the refactor: (1) a shared TypeScript library via npm workspaces that becomes the single source of truth for all data contracts between backend and frontend, eliminating type drift entirely; and (2) a service-by-service simplification pass that decomposes dense business logic into highly cohesive, "understandable at a glance" units with clear inputs, outputs, and side-effects.
 
 ### What Makes This Special
 
-Every self-hosted media server — Plex, Jellyfin, Emby — made the same architectural bet: defer transcoding to play time. That single decision cascades into CPU saturation, 1-5 second seek latency, hardware requirements (~2000 PassMark per 1080p stream), and buffering under concurrent viewers. Cineplex Rigaud's core insight is that this is the wrong moment to burn resources. Process once at import when nobody's waiting, then serve static files forever. The server's entire job at play time is responding to HTTP range requests.
+This is not a feature initiative disguised as a refactor. The strict zero-change policy on user-facing behavior and database schemas forces architectural discipline — every decision must improve clarity without hiding behind "while we're in there" scope creep. The shared library approach also creates an organic path toward OpenAPI/Swagger generation, positioning the codebase for potential external API consumers without requiring additional work today.
 
-This is now viable because modern browsers (Chrome, Firefox) play MKV containers with H.264/H.265 natively — the container isn't the blocker, incompatible audio codecs are. That narrow gap is what the sidecar approach exploits: transcode only the audio track, leave everything else alone.
+The core insight: duplicated types and dense services aren't static debt — they compound. Every future feature built on top of the current structure pays a tax in debugging time, regression risk, and onboarding friction. This refactor pays down that compounding cost once, reducing the marginal cost of every subsequent change.
 
 ## Project Classification
 
-- **Project Type:** Web application — browser-based UI with backend API
-- **Domain:** Media/entertainment (general)
-- **Complexity:** Low — standard web technologies, no regulatory requirements
-- **Project Context:** Greenfield — new product, no existing codebase
+- **Project Type:** Web application — browser-based SPA with backend API
+- **Domain:** General (personal media server, no regulatory requirements)
+- **Complexity:** Low — well-understood technologies, standard refactoring patterns
+- **Project Context:** Brownfield — mature existing codebase undergoing structural improvement
 
 ## Success Criteria
 
 ### User Success
 
-- **Instant playback:** Sub-1000ms from "hit play" to first frame rendering, for any title in the library
-- **Instant seeking:** Seeking to any point in a video completes without visible buffering or re-loading
-- **Zero-guidance UI:** An elderly, non-technical user can browse the library, find a movie, play it, and resume where they left off — without any instruction or explanation
-- **Watch progress persistence:** Resume position tracked per-device via localStorage, survives browser restarts
-- **Subtitle access:** Embedded and sidecar subtitles available as selectable tracks during playback
+- **At-a-glance comprehension:** Any service file (frontend or backend) can be understood in terms of its inputs, outputs, and side-effects without tracing through nested logic or cross-referencing distant files.
+- **Single source of truth:** When checking a DTO shape, there is exactly one place to look — the shared library. No mental overhead wondering if frontend and backend are in sync.
+- **Confident modification:** Adding or changing an endpoint requires touching only the relevant service + the shared type — no "did I forget to update the other copy?" anxiety.
 
 ### Business Success
 
-- Personal project — no revenue or adoption targets
-- Success = the admin (you) and your family/friends actively use it as the primary way to watch your library
-- Plex is no longer needed
-- Nobody calls you for tech support
+- Personal project — no revenue or adoption targets.
+- Success = every service file across both apps has been reviewed, simplified, and signed off by the developer (with AI-assisted review).
+- The codebase feels maintainable and inviting to work in again rather than something to dread opening.
 
 ### Technical Success
 
-- **Playback server load:** Near-zero CPU during playback — static file serving only (HTTP range requests)
-- **Concurrent viewers:** Multiple simultaneous viewers with no performance degradation
-- **Hardware floor:** Runs comfortably on a first-gen Ryzen 5 system during both import processing and playback
-- **Source file integrity:** Source files are never read-written, never modified, never moved — read-only access only
-- **Import pipeline:** No time constraint — unattended processing is acceptable. A full 500-title library scan can take hours as long as it completes reliably
-- **Audio sidecar overhead:** ~2-3% of library storage size for AAC sidecars
+- **Zero regressions:** All existing feature behavior preserved, verified through manual spot-checking of core user flows (browsing, playback, admin functions).
+- **DTO elimination:** Zero duplicated type/interface/DTO files remaining across `apps/frontend` and `apps/backend` — all moved to the shared library.
+- **Service clarity:** Backend and frontend services refactored to be highly cohesive with clear, minimal responsibilities. Dense multi-concern methods decomposed.
+- **Build integrity:** The monorepo builds cleanly with the new shared workspace package. No circular dependencies introduced.
 
 ### Measurable Outcomes
 
-| Metric | Target |
-|---|---|
-| Time to first frame | < 1000ms |
-| Seek completion | Instant (native browser range request) |
-| Server CPU during playback | < 5% per concurrent viewer |
-| Import failure rate | < 1% of titles (with clear error reporting for failures) |
-| UI task completion (elderly user) | Browse → Play without assistance |
-| Source file modification | Zero — verified by checksum |
+| Metric                         | Target                                      |
+| ------------------------------ | ------------------------------------------- |
+| Duplicated DTO/interface files | 0 (all in shared lib)                       |
+| Services reviewed & signed off | 100% (frontend + backend)                   |
+| Regressions introduced         | 0 (manual spot-check verification)          |
+| Shared library package         | Builds independently, consumed by both apps |
+| Database schema changes        | 0                                           |
+| End-user behavior changes      | 0                                           |
 
 ## User Journeys
 
-### Journey 1: Marie's Movie Night (Viewer — Happy Path)
+### Journey 1: Dude Traces a Bug Report (Debugging with Clarity)
 
-**Marie, 72, retired.** Her son set up Cineplex Rigaud on his home server and texted her a bookmark link. She's on her iPad in the living room.
+**Dude, solo developer, receives a report** that a movie's metadata isn't rendering correctly on the detail page. He opens the codebase.
 
-She opens the link and sees a clean grid of movie posters — recognizable, inviting, like browsing a video store. She spots a movie her friend mentioned last week, taps the poster, reads the description. She taps Play. The movie starts immediately — no loading spinner, no buffering. Midway through, she pauses to make tea. The next evening she opens the same bookmark — the movie shows her progress bar. She taps it, resumes exactly where she stopped. She finishes the movie, it's marked as watched. She browses for the next one.
+**Before refactor:** He traces from the Angular component → service → API call → backend controller → service → SQL query. Along the way, he checks the frontend DTO interface, then cross-references the backend DTO — they're defined separately. He spots a field name mismatch introduced weeks ago when he updated one side but forgot the other. Twenty minutes of detective work for a one-character fix.
 
-She never created an account. She never configured anything. She never called her son.
+**After refactor:** He opens the shared type definition — single source of truth. He checks the backend service (now a focused, single-responsibility unit) and immediately sees where the SQL mapping diverges from the contract. Found in under two minutes.
 
-**Reveals:** Library browsing, poster grid UI, instant playback, localStorage watch progress, resume functionality, watched status tracking, responsive design (iPad).
+**Reveals:** Shared type library eliminates cross-boundary debugging. Simplified services make data flow traceable at a glance.
 
-### Journey 2: Marc's Foreign Film (Viewer — Subtitles & Edge Cases)
+### Journey 2: Dude Adds a New Field (Confident Modification)
 
-**Marc, 35, cinephile, watches on his desktop.** He picks a Japanese film from the library, hits play — instant start. The audio is Japanese. He clicks the subtitle selector overlay during playback, sees "English" and "French" tracks extracted from the original file, picks English. WebVTT subtitles appear immediately. Later he tries an older title that had a non-web video codec — the server already transcoded it to MP4 at import time. Marc doesn't notice any difference. Playback is instant, seeking is instant. The system handled it silently.
+**Dude wants to add a "date added" field** to the library poster grid so recently added titles appear first.
 
-**Reveals:** Subtitle track selection during playback, WebVTT extraction pipeline, transparent Tier 2/3 transcode handling, desktop responsive layout.
+**Before refactor:** He updates the backend DTO, modifies the SQL query mapping, then navigates to the frontend, finds the duplicated interface file, adds the field there too, updates the service, and the component. He's never fully confident both sides are in sync until he manually tests it.
 
-### Journey 3: Sophie's Saturday Cartoons (Viewer — Age-Filtered Profile) [Post-MVP]
+**After refactor:** He adds the field to the shared type. TypeScript compilation immediately tells him every file in both apps that needs updating. He modifies the backend query, and the frontend already imports the correct shape. The compiler is his safety net — no forgotten copies.
 
-**Sophie, 8, uses the family laptop.** Her dad set up a profile called "Sophie" with an age preference. When she opens Cineplex Rigaud and selects her profile, she only sees movies and shows rated G and PG — the R-rated horror movies and mature TV shows aren't visible. She browses animated movies, picks one, and watches. Her watch progress is separate from her parents'. She doesn't know content is being filtered — it just looks like a library of stuff she'd like.
+**Reveals:** Single shared type = compiler-enforced consistency. Modification confidence without manual cross-checking.
 
-Her dad switches to his own profile on the same laptop and sees the full library, unrestricted. Profiles are just names with an age preference — no passwords, selectable from a simple picker.
+### Journey 3: Dude Reviews a Service (Simplification Payoff)
 
-**Reveals:** Profile selector (name + age preference), TMDB content rating filtering, per-profile watch progress, profile switching without authentication, responsive layout.
+**Dude opens `BrowseService`** to remind himself how library filtering works before extending it.
 
-### Journey 4: Dude's Setup Day (Admin — Initial Setup & Maintenance)
+**Before refactor:** The service is a dense wall — data fetching, transformation, caching logic, and business rules interleaved in long methods. He has to read the whole file and mentally parse which blocks handle which concerns. He keeps a scratch pad of notes just to track state.
 
-**Dude, the homelabber.** He pulls the Docker image, maps his media volume (`/mnt/media/movies`, `/mnt/media/tv`), and starts the container. He opens the web UI from his desktop — since he's on the same LAN as the server, an admin section is visible in the navigation.
+**After refactor:** The service has a clear public API with descriptively named methods. Each method does one thing. Helper functions are extracted with obvious names. He reads the method signatures and immediately understands the service's responsibilities without reading implementation details.
 
-In the admin panel he sees the import pipeline running: 300 files detected, TMDB matching in progress, transcode queue processing. Most files are H.264 + AC3 — the pipeline generates AAC sidecars for each. 12 files fail TMDB matching due to ambiguous filenames — they show up in a "Needs Attention" list where he can manually search TMDB and assign the correct match. The whole process runs unattended over a few hours.
+**Reveals:** Service decomposition enables comprehension without deep-reading. Method naming becomes self-documenting.
 
-A week later he drops 5 new movies into the media folder. The folder watcher detects them, automatically scans, matches, and processes. His family is already watching other content — zero interruption, the new titles just appear in the library.
+### Journey 4: Dude Returns After 6 Months (Future-Self Onboarding)
 
-He checks the admin panel occasionally — sees import status, library stats, any files that need attention. When he's away from home, the admin section isn't visible to viewers on the network.
+**Dude hasn't touched the codebase in months.** A family member asks for a feature. He opens the project.
 
-**Reveals:** Docker deployment, folder watcher, TMDB matching pipeline, manual match fallback, import status dashboard, LAN-only admin visibility, unattended processing, library growth without disruption.
+The shared types directory serves as a living API contract — he can browse the data shapes and immediately remember what the system exchanges. Services read like a table of contents: `ScannerService`, `TranscodeService`, `MetadataService` — each with obvious boundaries. He's productive within minutes rather than spending an afternoon re-learning his own code.
+
+**Reveals:** Structural clarity compounds over time. The refactor's biggest payoff is for future-you, not present-you.
 
 ### Journey Requirements Summary
 
-| Journey | Capabilities Revealed | Scope |
-|---|---|---|
-| Marie's Movie Night | Library browsing, poster grid, instant playback, watch progress (localStorage), resume, responsive (tablet/mobile) | **MVP** |
-| Marc's Foreign Film | Subtitle selection, WebVTT pipeline, transparent multi-tier transcode, responsive (desktop) | **MVP** |
-| Sophie's Cartoons | Profile selector, age-based content filtering (TMDB ratings), per-profile watch progress | **Post-MVP** |
-| Dude's Setup Day | Docker deployment, folder watcher, TMDB matching + manual fallback, import pipeline dashboard, LAN-only admin UI | **MVP** |
-
-## Innovation & Novel Patterns
-
-### Detected Innovation Areas
-
-**Architectural Inversion: Import-Time Processing, Zero-Runtime Compute**
-
-Every self-hosted media server (Plex, Jellyfin, Emby) defers transcoding to play time. Cineplex Rigaud inverts this entirely — all processing happens at import, and the server becomes a static file server during playback. This is not an optimization of the existing model; it's a different architecture.
-
-**Audio-Only Sidecar Strategy**
-
-Rather than remuxing or duplicating entire files, Cineplex Rigaud exploits a narrow compatibility gap: modern browsers play MKV/H.264/H.265 natively, but can't decode AC3/DTS/TrueHD audio. The sidecar approach extracts and transcodes only the audio track (~2-3% storage overhead), leaving source files untouched. This is a novel solution to a well-understood problem.
-
-**Dual-Element Synced Playback**
-
-Using `<video muted>` + `<audio>` with JavaScript sync is an unconventional browser playback approach that enables the sidecar strategy without requiring MediaSource Extensions or HLS segmentation.
-
-### Market Context & Competitive Landscape
-
-- **Plex:** On-the-fly transcode, cloud dependency, paywall, feature bloat
-- **Jellyfin:** On-the-fly transcode (same core architecture as Plex), manual hardware acceleration config, volunteer-driven polish
-- **Emby:** Closed-source, paid tiers, less community momentum
-- **None** offer pre-processing or zero-runtime-compute architecture — this is unoccupied territory
-
-### Validation Approach
-
-1. **Dual-element audio sync** — Needs early prototyping to validate drift tolerance. Key question: does seek/pause/resume introduce sync gaps beyond the ~50ms correction threshold?
-2. **H.265 browser support matrix** — Partial browser support means some files may not play as-is. Needs testing across Chrome, Firefox, Edge, Safari on actual target devices.
-3. **Filename parsing robustness** — Torrent naming conventions vary widely. The TMDB matching pipeline needs validation against a real library to measure match rate.
+| Journey              | Capabilities Revealed                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| Bug Trace            | Shared types eliminate cross-boundary debugging; service clarity enables fast root-cause identification |
+| Add New Field        | Compiler-enforced type safety across the stack; single source of truth for data contracts               |
+| Review Service       | Service decomposition; single-responsibility methods; self-documenting structure                        |
+| Return After Absence | Structural clarity as documentation; browsable type directory; obvious service boundaries               |
 
 ## Web Application Specific Requirements
 
 ### Project-Type Overview
 
-Cineplex Rigaud is a single-page application (SPA) with a backend API. The frontend is a media browsing and playback interface; the backend handles library scanning, metadata, transcode orchestration, and static file serving. The architecture is designed for perceived speed at every interaction — page transitions, browsing, and playback should all feel instant.
-
-### Browser Support Matrix
-
-| Browser | Support Level | Notes |
-|---|---|---|
-| Chrome (latest 2 versions) | **Primary** | Full MKV/H.264/H.265 playback, full feature support |
-| Firefox (latest 2 versions) | **Primary** | Full MKV/H.264 playback, H.265 requires hardware decoder (137+, Windows) |
-| Edge | **Not targeted** | Chromium-based, likely works but not tested |
-| Safari | **Not targeted** | Different codec landscape, not a priority |
-
-### Responsive Design
-
-- **Responsive layout** — works on desktop, tablet, and mobile screen sizes
-- **Touch-friendly** — large tap targets for poster grid, playback controls, and navigation
-- **Browser zoom compatible** — UI must remain functional and readable at 150%+ zoom
-- **No minimum resolution** — layout adapts gracefully from phone to ultrawide
-
-### Performance Targets
-
-| Metric | Target | Technique |
-|---|---|---|
-| Initial page load (library) | < 1s perceived | Route-based code splitting, lazy loading |
-| Page-to-page navigation | Instant (< 100ms) | SPA client-side routing, prefetching |
-| Poster grid rendering | Instant scroll | Virtualized list/grid, lazy image loading, thumbnail CDN-style caching |
-| Image loading | Progressive | Serve low-res blurred placeholders, swap to full poster on load |
-| Time to first frame (playback) | < 1000ms | HTTP range requests, no server processing |
-| API responses (metadata) | < 200ms | Server-side caching, pre-computed library indexes |
-
-**Snappiness techniques to employ:**
-- Optimistic UI updates where applicable
-- Prefetch next-likely content (e.g., when hovering a poster, prefetch metadata)
-- Image sprite sheets or pre-sized thumbnails to avoid layout shift
-- Route preloading for common navigation paths
-- Minimal JavaScript bundle — code split aggressively
-
-### SEO Strategy
-
-Not applicable — private self-hosted server, no public indexing needed. No SSR required.
-
-### Accessibility
-
-- No formal WCAG target
-- UI must be usable with browser zoom (up to 200%)
-- Large, readable text and clear visual hierarchy
-- High-contrast poster grid with legible titles
-- Playback controls large enough for touch and imprecise input
+This is a structural refactoring of an existing single-page application (Angular frontend) with a RESTful backend API (NestJS). The refactor does not alter the application's runtime architecture — it reorganizes internal code structure and introduces a shared workspace package for type definitions. HTTP response shapes may be adjusted where inconsistencies or unnecessary complexity are discovered during service review.
 
 ### Technical Architecture Considerations
 
-- **Frontend:** SPA framework (Angular preferred, architecture decision to confirm). Client-side routing, no SSR.
-- **Backend API:** RESTful endpoints for library browsing, metadata, search, import status. Serves media files via HTTP range requests.
-- **State management:** localStorage for watch progress. No server-side session state.
-- **Admin UI:** Same SPA, admin routes visible only when client IP is on the server's LAN subnet.
-- **Deployment:** Docker container — single image bundles frontend + backend.
+- **Monorepo structure:** npm workspaces managing `apps/backend`, `apps/frontend`, and a new shared library package
+- **Shared library:** TypeScript-only package (types, interfaces, enums) — no runtime dependencies, no bundled code that executes
+- **Build pipeline:** The shared library must be consumable by both the Angular CLI build (frontend) and the NestJS TypeScript compilation (backend). Build configuration changes may be required to resolve workspace package imports.
+- **API contract flexibility:** HTTP response shapes may be modified where the refactor reveals unnecessary complexity, inconsistency, or redundancy. Both frontend and backend are updated together since both are owned by the same developer.
+- **No browser impact:** No changes to compiled frontend output, bundle size, or browser compatibility.
 
 ### Implementation Considerations
 
-- Frontend and backend can be developed and tested independently
-- Frontend builds to static assets served by the backend
-- No WebSocket/real-time requirements in V1 — polling or manual refresh for library updates
-- Audio sidecar sync logic lives entirely in the frontend (JavaScript `requestAnimationFrame` loop)
-- Subtitle rendering via native `<track>` element with WebVTT files
+- Services are refactored one at a time — the system must remain functional throughout the refactor (no "big bang" migration)
+- Each service migration is independently reviewable and verifiable
+- When an API response shape changes, the corresponding frontend service/component is updated in the same pass
+- The shared library can be introduced first as a standalone package, then types migrated incrementally
+- Angular and NestJS both resolve TypeScript path aliases — the shared package must work with both `tsconfig` setups
+- No changes to routing, state management patterns, or component architecture
 
-## Project Scoping & Phased Development
+## Project Scoping
 
-### MVP Strategy & Philosophy
+### Strategy & Philosophy
 
-**MVP Approach:** Problem-solving MVP — the minimum that proves the core architectural bet (import-time processing + static file serving) delivers on the promise of instant playback and instant seeking.
+**Approach:** Single-release structural refactor executed in three sequential phases of work (not separate releases — the system remains functional throughout, but work proceeds in dependency order).
 
-**Resource Requirements:** Solo developer. All design, implementation, and testing. This means:
-- Prioritize validating risky assumptions early (dual-element sync, TMDB matching)
-- Build vertically — get one movie playing end-to-end before building the full library UI
-- Accept rough edges in admin UX; polish viewer UX since that's the product surface
+**Resource Requirements:** Solo developer with AI-assisted code review. Each service reviewed and signed off before moving to the next.
 
-### MVP Feature Set (Phase 1)
+### Execution Order
 
-**Core User Journeys Supported:**
-- Marie's Movie Night (viewer happy path)
-- Marc's Foreign Film (subtitles, edge cases)
-- Dude's Setup Day (admin setup and maintenance)
+1. **Shared library setup** — Create the npm workspace package, establish the type/interface structure, configure both apps to consume it
+2. **Backend services** — Migrate DTOs to shared lib, simplify service logic, decompose dense methods. One service at a time, verified before moving on.
+3. **Frontend services** — Replace duplicated interfaces with shared lib imports, simplify observable data flow patterns, clean up service logic.
+
+### Complete Feature Set
 
 **Must-Have Capabilities:**
-- Folder scanning and video file detection
-- TMDB metadata matching (movies and TV shows) with manual fallback for ambiguous filenames
-- Smart transcode pipeline: Tier 1 (serve original), Tier 2 (AAC audio sidecar), Tier 3 (full transcode)
-- Dual-element synced playback (`<video muted>` + `<audio>`) with `requestAnimationFrame` sync loop
-- Subtitle extraction (embedded + sidecar) served as WebVTT
-- Web UI: poster grid browse, movie/show detail, video player with subtitle/audio track selection
-- Watch progress via localStorage (per-device, per-browser)
-- Backend API: library endpoints, metadata, media serving via HTTP range requests
-- Admin panel (LAN-only visibility): import status, TMDB matching queue, manual match UI
-- Folder watcher for new content detection
-- Docker deployment (single container: frontend + backend)
-- Responsive layout (mobile, tablet, desktop)
 
-### Post-MVP Features (Phase 2)
+- npm workspace shared library package created and configured
+- All duplicated DTO/interface/type definitions migrated to shared lib
+- Backend services decomposed into single-responsibility, readable units
+- Frontend services simplified with clean API-to-observable data flow
+- Both `tsconfig` setups correctly resolving the shared package
+- Every service reviewed and signed off by the developer
+- Manual regression spot-check after each service migration
+- API response shapes cleaned up where inconsistencies are found (frontend updated in same pass)
 
-- YouTube search integration + yt-dlp downloading
-- TorrentDay RSS feed → .torrent file download to pickup folder
-- Server-side profiles (unsecured — name + age preference, switchable, no passwords)
-- Age-based content filtering using TMDB ratings
-- Per-profile watch progress (server-side)
-- Smart collections / auto-categorization
-- Richer metadata (cast pages, recommendations, related titles)
+**Nice-to-Have (if discovered during review):**
 
-### Vision Features (Phase 3+)
-
-- Adaptive multi-rendition support for remote/bandwidth-constrained viewers
-- Community-contributed UI themes
-- Additional content acquisition sources
-- NFO file parsing as TMDB matching fallback
+- Consistent naming conventions across all shared types
+- Barrel exports for clean import paths
+- Removal of dead code discovered during service review
 
 ### Risk Mitigation Strategy
 
 **Technical Risks:**
 
-| Risk | Severity | Mitigation |
-|---|---|---|
-| Dual-element audio sync drift | High | Prototype sync early — build a standalone test page before full UI. If drift exceeds tolerance, fall back to remuxed MP4 for affected files |
-| H.265 browser support gaps | Medium | Client-side codec detection; flag unsupported files for full transcode at import |
-| TMDB filename matching rate | Medium | Start with common torrent naming patterns; manual match UI covers failures; measure match rate against real library |
-| Solo developer bottleneck | Medium | Build vertically (one working flow end-to-end), avoid premature polish, focus on core playback first |
-
-**Market Risks:**
-- Minimal — personal project, no market validation needed. Success = you and your family use it.
+| Risk                                                 | Severity | Mitigation                                                                                           |
+| ---------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| Build configuration breaks when adding shared lib    | Medium   | Set up shared lib with a minimal type first; verify both apps compile before migrating anything else |
+| Service simplification accidentally changes behavior | Medium   | Manual spot-check after each service; incremental approach (one service at a time)                   |
+| Circular dependency between shared lib and apps      | Low      | Shared lib contains only types/interfaces — no runtime imports from apps                             |
+| API response shape changes break frontend            | Low      | Frontend updated in the same pass as the corresponding backend change                                |
 
 **Resource Risks:**
-- Solo developer — if energy/time drops, the MVP is scoped tightly enough to be usable even if post-MVP features never ship. A working library browser with instant playback is valuable on its own.
+
+- Solo developer — if energy drops, the shared library + partial backend migration is still valuable on its own. Each completed service is independently beneficial.
+
+### Out of Scope
+
+- OpenAPI/Swagger generation
+- Any database schema modifications
+- New features or UI/UX changes
+- Automated E2E test creation
+- Tech stack changes (remains NestJS/Angular/SQLite)
+- Performance optimization (unless incidental to simplification)
+
+### Future Opportunity (Post-Refactor)
+
+- OpenAPI generation leveraging the shared type library
+- Automated test coverage for critical paths
+- External API consumer support
 
 ## Functional Requirements
 
-### Library Management
+### Shared Type Library
 
-- **FR1:** Admin can configure one or more media source folders for the system to monitor
-- **FR2:** System can detect new, modified, and removed video files in monitored folders
-- **FR3:** System can parse video filenames to extract title, year, season, and episode information
-- **FR4:** System can match detected files against TMDB for metadata (title, description, poster, ratings, episode info)
-- **FR5:** Admin can manually search TMDB and assign a match when automatic matching fails
-- **FR6:** Admin can view a list of files that failed automatic TMDB matching ("Needs Attention" queue)
-- **FR7:** System can detect and catalog embedded subtitle tracks and sidecar subtitle files (.srt, .ass, etc.)
-- **FR8:** System can probe video files to determine video codec, audio codec, and container format
+- **FR1:** Developer can create a new npm workspace package that contains all shared TypeScript types, interfaces, and enums
+- **FR2:** Developer can import shared types from the library into both the backend (NestJS) and frontend (Angular) applications
+- **FR3:** Developer can build both applications successfully with the shared library as a workspace dependency
+- **FR4:** Developer can add, modify, or remove a shared type and have TypeScript compilation flag all affected consumers in both apps
 
-### Transcode Pipeline
+### Backend Service Refactoring
 
-- **FR9:** System can classify each file into the appropriate transcode tier (Tier 1: serve original, Tier 2: audio sidecar, Tier 3: full transcode)
-- **FR10:** System can extract and transcode incompatible audio tracks to AAC sidecar files without modifying the source file
-- **FR11:** System can perform full video transcode to MP4 with faststart for files with non-web-compatible video codecs
-- **FR12:** System can convert embedded and sidecar subtitles to WebVTT format
-- **FR13:** System can process the transcode queue unattended in the background
-- **FR14:** Admin can view transcode pipeline status (queued, processing, completed, failed)
+- **FR5:** Developer can identify all duplicated DTO/interface definitions in the backend and migrate them to the shared library
+- **FR6:** Developer can decompose multi-concern backend service methods into focused, single-responsibility units
+- **FR7:** Developer can review any backend service and understand its inputs, outputs, and side-effects without tracing nested logic
+- **FR8:** Developer can modify API response shapes where inconsistencies are discovered during review
+- **FR9:** Developer can verify that each refactored backend service preserves its existing behavior through manual spot-checking
 
-### Media Browsing
+### Frontend Service Refactoring
 
-- **FR15:** Viewer can browse the library as a poster grid of movies
-- **FR16:** Viewer can browse the library as a poster grid of TV shows
-- **FR17:** Viewer can view detail information for a movie (title, description, poster, year, rating, runtime)
-- **FR18:** Viewer can view detail information for a TV show including season and episode listings
-- **FR19:** Viewer can see watch progress indicators on titles they've partially watched
-- **FR20:** Viewer can see watched status on titles they've completed
-- **FR21:** Viewer can search the library by title
+- **FR10:** Developer can replace all duplicated frontend interface/type definitions with imports from the shared library
+- **FR11:** Developer can simplify frontend service logic for clean, readable API-to-observable data flow
+- **FR12:** Developer can review any frontend service and understand its data sourcing, transformation, and caching strategy at a glance
+- **FR13:** Developer can verify that each refactored frontend service preserves its existing UI behavior through manual spot-checking
 
-### Video Playback
+### Build & Configuration
 
-- **FR22:** Viewer can play any video file in the library with sub-1000ms time to first frame
-- **FR23:** Viewer can seek to any point in a video with instant response
-- **FR24:** System can serve video content via HTTP range requests with no server-side processing at play time
-- **FR25:** System can synchronize playback of a muted video element with a separate audio sidecar element (dual-element sync)
-- **FR26:** Viewer can select from available subtitle tracks during playback
-- **FR27:** Viewer can select from available audio tracks during playback (when multiple exist)
-- **FR28:** Viewer can pause, resume, and control playback volume
-- **FR29:** Viewer can enter and exit fullscreen playback
+- **FR14:** Developer can configure both `tsconfig.json` files to resolve the shared workspace package without path alias conflicts
+- **FR15:** Developer can run the full monorepo build and have all three packages (shared, backend, frontend) compile without errors
+- **FR16:** Developer can add the shared library without modifying the existing Docker deployment configuration (unless required)
 
-### Watch Progress
+### Review & Verification
 
-- **FR30:** System can persist watch progress per-title in the browser's localStorage
-- **FR31:** Viewer can resume playback from their last watched position
-- **FR32:** System can mark a title as "watched" when playback reaches near the end
-
-### Admin Panel
-
-- **FR33:** System can detect whether the client is on the same local network as the server
-- **FR34:** Admin can access the admin panel only when viewing from the server's LAN
-- **FR35:** Admin can view library statistics (total titles, movies, TV shows, transcode status breakdown)
-- **FR36:** Admin can trigger a manual library rescan
-- **FR37:** Admin can view import and transcode error details for failed files
-
-### Deployment
-
-- **FR38:** Admin can deploy the application as a single Docker container
-- **FR39:** Admin can configure media source folders via Docker volume mounts
-- **FR40:** System can serve the frontend SPA and backend API from the same container
+- **FR17:** Developer can conduct an AI-assisted review of each service to validate simplification quality
+- **FR18:** Developer can sign off each service as "complete" after review and regression spot-check
+- **FR19:** Developer can confirm zero duplicated type definitions remain across the frontend and backend after all migrations
 
 ## Non-Functional Requirements
 
-### Performance
+### Code Quality
 
-- **NFR1:** Time to first frame must be < 1000ms for any title in the library
-- **NFR2:** Seeking must complete within the browser's native range-request response time (no server-side delay)
-- **NFR3:** Server CPU usage during playback must be < 5% per concurrent viewer (static file serving only)
-- **NFR4:** Library browsing page load must feel instant (< 1s perceived) using lazy loading
-- **NFR5:** API metadata responses must return within 200ms
-- **NFR6:** SPA page-to-page navigation must complete in < 100ms (client-side routing)
-- **NFR7:** Poster grid must scroll smoothly with virtualized rendering and lazy image loading
-- **NFR8:** Dual-element audio sync drift must stay within 50ms correction threshold during normal playback, seek, pause, and resume
+- **NFR1:** Every refactored service must be reviewable and comprehensible without scrolling through more than one screen of method logic (single-responsibility methods)
+- **NFR2:** The shared library must contain zero runtime code — only type definitions, interfaces, and enums (no side-effects on import)
+- **NFR3:** No circular dependencies may exist between the shared library and either application package
 
-### Security
+### Build Integrity
 
-- **NFR9:** Source media files must never be modified — read-only filesystem access only
-- **NFR10:** Admin panel routes must only be accessible from the server's local network subnet
-- **NFR11:** No user credentials, tokens, or sensitive data stored anywhere in the system
-- **NFR12:** TMDB API key must not be exposed to the frontend client
+- **NFR4:** The full monorepo build (`npm run build` for all packages) must complete without errors after every individual service migration
+- **NFR5:** The shared library must compile independently without importing from either application
+- **NFR6:** TypeScript strict mode must remain enabled across all packages — no loosening of compiler options to accommodate the refactor
 
-### Reliability
+### Behavioral Preservation
 
-- **NFR13:** Import pipeline must recover gracefully from individual file failures without halting the entire scan
-- **NFR14:** Failed TMDB matches must be queued for manual resolution, not silently dropped
-- **NFR15:** Failed transcodes must be logged with error details and retryable
-- **NFR16:** Folder watcher must handle partially written files (in-progress downloads) without crashing or producing corrupt output
-- **NFR17:** Playback must work independently of import pipeline status — watching is never blocked by processing
-
-### Integration
-
-- **NFR18:** System must handle TMDB API rate limits gracefully (backoff/retry, not crash)
-- **NFR19:** System must handle TMDB API unavailability gracefully — library browsing and playback work without TMDB connectivity
-- **NFR20:** FFmpeg must be bundled in the Docker image — no external dependency installation required
-- **NFR21:** TMDB image base URL must be cached and refreshed periodically per API documentation
+- **NFR7:** End-user-facing behavior (browsing, playback, admin functions) must remain identical after refactoring — verified by manual spot-check
+- **NFR8:** Database schema and data must remain 100% untouched — no migrations, no alterations
+- **NFR9:** Docker deployment configuration must continue to work without modification (unless shared lib requires build step changes)
