@@ -50,7 +50,7 @@ export class MediaService {
     const tier = row.tier ?? 1;
     let filePath: string;
 
-    const streamableStatuses = ["ready", "match_failed"];
+    const streamableStatuses = ["ready", "match_failed", "completed"];
 
     if (tier === 3) {
       if (row.transcode_status !== "completed" || !row.transcode_output_path) {

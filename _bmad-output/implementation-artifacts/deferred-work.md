@@ -1,3 +1,8 @@
+## Deferred from: spec-fix-tier1-streaming-completed-status (2026-05-06)
+
+- Subtitle service blanket-updates ALL tier 1 `ready` files to `completed` status (`WHERE tier = 1 AND status = 'ready'`), including files with no subtitles. The update should be scoped to files that actually had subtitle work queued, or the status transition should be reconsidered.
+- `media_files.status` lifecycle is undocumented — values (`discovered`, `probed`, `probe_failed`, `matched`, `match_failed`, `classified`, `ready`, `completed`) and transitions are scattered across multiple services with no central enum or state machine documentation.
+
 ## Deferred from: spec-fix-unmatched-media-streaming (2026-05-06)
 
 - No unit test added for `match_failed` status in `getFileInfo()` — existing test file covers ready/error paths but the new `match_failed` streaming path is untested.

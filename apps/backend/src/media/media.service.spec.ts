@@ -154,6 +154,23 @@ describe("MediaService", () => {
       expect(() => service.getFileInfo(999)).toThrow(NotFoundException);
     });
 
+    it("should resolve Tier 1 file with completed status", () => {
+      const sourceId = insertSource();
+      const fileId = insertMediaFile(
+        sourceId,
+        "/media/movies/movie.mp4",
+        "completed",
+        1,
+      );
+
+      const result = service.getFileInfo(fileId);
+
+      expect(result.id).toBe(fileId);
+      expect(result.path).toBe("/media/movies/movie.mp4");
+      expect(result.tier).toBe(1);
+      expect(result.contentType).toBe("video/mp4");
+    });
+
     it("should throw NotFoundException for non-ready Tier 1 file", () => {
       const sourceId = insertSource();
       const fileId = insertMediaFile(
