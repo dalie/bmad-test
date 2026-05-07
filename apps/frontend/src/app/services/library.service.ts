@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { shareReplay, tap } from 'rxjs/operators';
 
 export interface MovieListItem {
   id: number;
@@ -95,16 +96,35 @@ export interface ShowDetail {
 export class LibraryService {
   private readonly http = inject(HttpClient);
 
+  private movies$: Observable<MovieListItem[]> | null = null;
+  private shows$: Observable<ShowListItem[]> | null = null;
+  private recent$: Observable<RecentItem[]> | null = null;
+
   getMovies(): Observable<MovieListItem[]> {
-    return this.http.get<MovieListItem[]>('/api/library/movies');
+    if (!this.movies$) {
+      this.movies$ = this.http
+        .get<MovieListItem[]>('/api/library/movies')
+        .pipe(tap({ error: () => (this.movies$ = null) }), shareReplay(1));
+    }
+    return this.movies$;
   }
 
   getShows(): Observable<ShowListItem[]> {
-    return this.http.get<ShowListItem[]>('/api/library/shows');
+    if (!this.shows$) {
+      this.shows$ = this.http
+        .get<ShowListItem[]>('/api/library/shows')
+        .pipe(tap({ error: () => (this.shows$ = null) }), shareReplay(1));
+    }
+    return this.shows$;
   }
 
-  getRecent(limit = 20): Observable<RecentItem[]> {
-    return this.http.get<RecentItem[]>('/api/library/recent', { params: { limit } });
+  getRecent(): Observable<RecentItem[]> {
+    if (!this.recent$) {
+      this.recent$ = this.http
+        .get<RecentItem[]>('/api/library/recent', { params: { limit: 20 } })
+        .pipe(tap({ error: () => (this.recent$ = null) }), shareReplay(1));
+    }
+    return this.recent$;
   }
 
   getMovieById(id: number): Observable<MovieDetail> {

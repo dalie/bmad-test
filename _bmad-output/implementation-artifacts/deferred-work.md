@@ -1,3 +1,8 @@
+## Deferred from: spec-fix-scroll-position-restoration (2026-05-06)
+
+- No cache invalidation strategy for `LibraryService` list endpoints — if content is added/removed, cached responses remain stale until page refresh. Consider adding an `invalidateCache()` method triggered after admin mutations (e.g., library rescan, manual match).
+- Multi-tab stale data — tabs sharing the same service singleton cache independently; no cross-tab invalidation mechanism.
+
 ## Deferred from: spec-fix-tier1-streaming-completed-status (2026-05-06)
 
 - Subtitle service blanket-updates ALL tier 1 `ready` files to `completed` status (`WHERE tier = 1 AND status = 'ready'`), including files with no subtitles. The update should be scoped to files that actually had subtitle work queued, or the status transition should be reconsidered.
