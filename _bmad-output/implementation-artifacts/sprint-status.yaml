@@ -44,13 +44,13 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   # Epic 1: Project Foundation & Docker Deployment
-  epic-1: in-progress
+  epic-1: done
   1-1-scaffold-monorepo-with-nestjs-backend-and-angular-frontend: done
   1-2-docker-deployment-with-media-volume-mounts: done
   epic-1-retrospective: optional
 
   # Epic 2: Library Scanning & Metadata Matching
-  epic-2: in-progress
+  epic-2: done
   2-1-sqlite-database-setup-and-media-source-configuration: done
   2-2-folder-scanning-and-file-detection: done
   2-3-video-file-probing-with-ffmpeg: done
@@ -62,7 +62,7 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Smart Transcode Pipeline
-  epic-3: in-progress
+  epic-3: done
   3-1-transcode-tier-classification: done
   3-2-aac-audio-sidecar-generation-tier-2: done
   3-3-full-video-transcode-tier-3: done
@@ -71,7 +71,7 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Media Browsing & Library UI
-  epic-4: in-progress
+  epic-4: done
   4-1-library-api-endpoints-for-movies-and-tv-shows: done
   4-2-poster-grid-home-page-with-three-sections: done
   4-3-movie-detail-page: done
@@ -81,7 +81,7 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Video Playback & Dual-Element Sync
-  epic-5: in-progress
+  epic-5: done
   5-1-media-file-serving-via-http-range-requests: done
   5-2-video-player-with-standard-playback-controls: done
   5-3-dual-element-audio-sync-for-sidecar-playback: done
@@ -90,14 +90,14 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Watch Progress & Resume
-  epic-6: in-progress
+  epic-6: done
   6-1-persist-watch-progress-in-localstorage: done
   6-2-resume-playback-from-last-position: done
   6-3-auto-mark-titles-as-watched: done
   epic-6-retrospective: optional
 
   # Epic 7: Admin Panel & LAN-Only Access
-  epic-7: in-progress
+  epic-7: done
   7-1-lan-detection-and-admin-route-guard: done
   7-2-admin-dashboard-with-library-statistics: done
   7-3-import-and-transcode-monitoring-with-error-details: done
