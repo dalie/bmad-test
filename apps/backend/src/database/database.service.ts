@@ -60,7 +60,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       CREATE TABLE IF NOT EXISTS media_sources (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         path TEXT NOT NULL UNIQUE,
-        type TEXT NOT NULL CHECK (type IN ('movies', 'tv')),
+        type TEXT NOT NULL CHECK (type IN ('movies', 'tv', 'other')),
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
 
@@ -159,6 +159,39 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       CREATE INDEX IF NOT EXISTS idx_transcode_jobs_file_id ON transcode_jobs(file_id);
       CREATE INDEX IF NOT EXISTS idx_transcode_jobs_status ON transcode_jobs(status);
 
+    `);
+
+    this.migrateMediaSourcesTypeConstraint();
+  }
+
+  /**
+   * For existing databases: recreate media_sources if the CHECK constraint
+   * doesn't include 'other'.
+   */
+  private migrateMediaSourcesTypeConstraint() {
+    const row = this.db
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'media_sources'",
+      )
+      .get() as { sql: string } | undefined;
+
+    if (!row || row.sql.includes("'other'")) return;
+
+    this.logger.log(
+      "Migrating media_sources CHECK constraint to include 'other'",
+    );
+
+    this.db.exec(`
+      CREATE TABLE media_sources_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path TEXT NOT NULL UNIQUE,
+        type TEXT NOT NULL CHECK (type IN ('movies', 'tv', 'other')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO media_sources_new (id, path, type, created_at)
+        SELECT id, path, type, created_at FROM media_sources;
+      DROP TABLE media_sources;
+      ALTER TABLE media_sources_new RENAME TO media_sources;
     `);
   }
 }

@@ -4,7 +4,7 @@ import { DatabaseService } from "../database/database.service";
 
 export interface MediaSource {
   path: string;
-  type: "movies" | "tv";
+  type: "movies" | "tv" | "other";
 }
 
 @Injectable()
@@ -34,12 +34,16 @@ export class ConfigService implements OnModuleInit {
   private seedMediaSources() {
     const moviesPath = this.config.get<string>("MEDIA_MOVIES_PATH")?.trim();
     const tvPath = this.config.get<string>("MEDIA_TV_PATH")?.trim();
+    const otherPath = this.config.get<string>("MEDIA_OTHER_PATH")?.trim();
 
     if (!moviesPath) {
       this.logger.warn("MEDIA_MOVIES_PATH not set — skipping movies source");
     }
     if (!tvPath) {
       this.logger.warn("MEDIA_TV_PATH not set — skipping tv source");
+    }
+    if (!otherPath) {
+      this.logger.warn("MEDIA_OTHER_PATH not set — skipping other source");
     }
 
     try {
@@ -59,6 +63,7 @@ export class ConfigService implements OnModuleInit {
       const sources: MediaSource[] = [];
       if (moviesPath) sources.push({ path: moviesPath, type: "movies" });
       if (tvPath) sources.push({ path: tvPath, type: "tv" });
+      if (otherPath) sources.push({ path: otherPath, type: "other" });
 
       if (sources.length > 0) {
         insertSources(sources);

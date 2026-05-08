@@ -201,19 +201,22 @@ export class BrowseService {
       playback_ready: true,
     }));
 
-    // Include unmatched movie files
+    // Include unmatched movie files and 'other' source files
     const unmatchedRows = db
       .prepare(
-        `SELECT mf.id, mf.filename, mf.created_at AS added_at
+        `SELECT mf.id, mf.filename, mf.created_at AS added_at, mf.tier, mf.probe_data
          FROM media_files mf
          JOIN media_sources ms ON ms.id = mf.source_id
-         WHERE mf.status = 'match_failed' AND ms.type = 'movies'
+         WHERE (mf.status = 'match_failed' AND ms.type = 'movies')
+            OR (ms.type = 'other' AND mf.status IN ('ready', 'completed'))
          ORDER BY mf.filename ASC`,
       )
       .all() as {
       id: number;
       filename: string;
       added_at: string;
+      tier: number | null;
+      probe_data: string | null;
     }[];
 
     const unmatched = unmatchedRows.map((row) => ({
@@ -221,10 +224,10 @@ export class BrowseService {
       title: this.readableTitle(row.filename),
       year: null,
       poster_url: null,
-      runtime: null,
+      runtime: this.getDuration(row.probe_data),
       rating: null,
       added_at: row.added_at,
-      transcode_tier: null,
+      transcode_tier: row.tier,
       playback_ready: true,
     }));
 
@@ -336,34 +339,67 @@ export class BrowseService {
       | undefined;
 
     if (!row) {
-      // Check if this is an unmatched file
+      // Check if this is an unmatched movie file or an 'other' source file
       const unmatchedRow = db
         .prepare(
-          `SELECT mf.id, mf.filename, mf.probe_data
+          `SELECT mf.id, mf.filename, mf.probe_data, mf.tier,
+                  tj.output_path AS transcode_output_path
            FROM media_files mf
            JOIN media_sources ms ON ms.id = mf.source_id
-           WHERE mf.id = ? AND mf.status = 'match_failed' AND ms.type = 'movies'`,
+           LEFT JOIN transcode_jobs tj ON tj.file_id = mf.id AND tj.status = 'completed'
+           WHERE mf.id = ?
+             AND ((mf.status = 'match_failed' AND ms.type = 'movies')
+               OR (ms.type = 'other' AND mf.status IN ('ready', 'completed')))`,
         )
         .get(id) as
-        | { id: number; filename: string; probe_data: string | null }
+        | {
+            id: number;
+            filename: string;
+            probe_data: string | null;
+            tier: number | null;
+            transcode_output_path: string | null;
+          }
         | undefined;
 
       if (!unmatchedRow) return null;
 
+      const subtitleRows = db
+        .prepare(
+          `SELECT id, track_index, type, language, codec, webvtt_path
+           FROM subtitles
+           WHERE media_file_id = ?
+           ORDER BY id ASC`,
+        )
+        .all(id) as {
+        id: number;
+        track_index: number | null;
+        type: string;
+        language: string | null;
+        codec: string | null;
+        webvtt_path: string | null;
+      }[];
+
       return {
         id: unmatchedRow.id,
         title: this.readableTitle(unmatchedRow.filename),
-        description: "This media could not be matched to any known title.",
+        description: null,
         year: null,
         poster_url: null,
         runtime: this.getDuration(unmatchedRow.probe_data),
         rating: null,
         content_rating: null,
         audio_tracks: this.getAudioTracks(unmatchedRow.probe_data),
-        subtitle_tracks: [],
+        subtitle_tracks: subtitleRows.map((s) => ({
+          id: s.id,
+          track_index: s.track_index,
+          type: s.type,
+          language: s.language,
+          codec: s.codec,
+          webvtt_path: s.webvtt_path,
+        })),
         file_id: unmatchedRow.id,
-        tier: null,
-        transcode_output_path: null,
+        tier: unmatchedRow.tier,
+        transcode_output_path: unmatchedRow.transcode_output_path,
       };
     }
 
@@ -604,7 +640,7 @@ export class BrowseService {
       latest_episode: null,
     }));
 
-    // Include unmatched files matching search term
+    // Include unmatched files and 'other' source files matching search term
     const unmatchedRows = db
       .prepare(
         `SELECT mf.id, mf.filename, mf.created_at AS added_at,
@@ -612,6 +648,7 @@ export class BrowseService {
          FROM media_files mf
          JOIN media_sources ms ON ms.id = mf.source_id
          WHERE mf.status = 'match_failed'
+            OR (ms.type = 'other' AND mf.status IN ('ready', 'completed'))
          ORDER BY mf.filename ASC`,
       )
       .all() as {
@@ -634,7 +671,7 @@ export class BrowseService {
         year: null,
         poster_url: null,
         rating: null,
-        media_type: row.source_type === "movies" ? "movie" : "tv",
+        media_type: row.source_type === "tv" ? "tv" : "movie",
         added_at: row.added_at,
         latest_season: null,
         latest_episode: null,

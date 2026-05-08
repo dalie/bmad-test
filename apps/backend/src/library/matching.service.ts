@@ -32,12 +32,23 @@ export class MatchingService {
     try {
       const source = db
         .prepare("SELECT type FROM media_sources WHERE id = ?")
-        .get(file.source_id) as { type: "movies" | "tv" } | undefined;
+        .get(file.source_id) as { type: "movies" | "tv" | "other" } | undefined;
 
       if (!source) {
         this.logger.error(`Source not found for file ${file.filename}`);
         this.setMatchFailed(db, file);
         return "match_failed";
+      }
+
+      // 'other' sources skip TMDB matching entirely
+      if (source.type === "other") {
+        db.prepare(
+          "UPDATE media_files SET status = 'matched', updated_at = datetime('now') WHERE id = ?",
+        ).run(file.id);
+        this.logger.log(
+          `Skipped TMDB matching for other source: ${file.filename}`,
+        );
+        return "matched";
       }
 
       const mediaType = source.type === "movies" ? "movie" : "tv";
