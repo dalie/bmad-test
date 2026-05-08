@@ -1,3 +1,7 @@
+## Deferred from: spec-fix-env-docker-compose-config (2026-05-08)
+
+- Dockerfile `EXPOSE 3000` is hardcoded metadata. If PORT is changed via .env, the EXPOSE value is stale. Consider using a build ARG or removing EXPOSE (it's informational only and doesn't affect runtime).
+
 ## Deferred from: spec-multi-version-movie-playback (2026-05-07)
 
 - Recently Added grid on home page still keys movies by `mf.id` — duplicate entries possible if two files share the same `tmdb_id`. The main library grid is correctly grouped.

@@ -24,6 +24,10 @@ async function bootstrap() {
     });
   }
 
-  await app.listen(3000, "::");
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  if (Number.isNaN(port)) {
+    throw new Error(`Invalid PORT: ${process.env.PORT}`);
+  }
+  await app.listen(port, "::");
 }
 bootstrap();

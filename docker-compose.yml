@@ -3,18 +3,14 @@ services:
     build: .
     container_name: cineplex-rigaud
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     env_file:
       - path: .env
         required: false
-    environment:
-      # Set to your LAN subnet for admin access (required for Docker deployments)
-      # ADMIN_SUBNET: 192.168.1.0/24
-      - ADMIN_SUBNET=${ADMIN_SUBNET:-}
     volumes:
-      - ~/media/movies:/mnt/media/movies:ro
-      - ~/media/tv:/mnt/media/tv:ro
-      - ~/media/other:/mnt/media/other:ro
+      - ${MOVIES_HOST_PATH:-~/media/movies}:/mnt/media/movies:ro
+      - ${TV_HOST_PATH:-~/media/tv}:/mnt/media/tv:ro
+      - ${OTHER_HOST_PATH:-~/media/other}:/mnt/media/other:ro
       - cache:/mnt/cache
     restart: unless-stopped
 
