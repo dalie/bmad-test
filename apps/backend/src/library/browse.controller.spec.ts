@@ -104,6 +104,7 @@ describe("BrowseController", () => {
         file_id: 42,
         tier: 1,
         transcode_output_path: null,
+        versions: [],
       };
       browseService.getMovieById.mockReturnValue(mockDetail);
 

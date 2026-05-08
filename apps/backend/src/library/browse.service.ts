@@ -53,6 +53,15 @@ export interface MovieDetail {
   file_id: number;
   tier: number | null;
   transcode_output_path: string | null;
+  versions: FileVersion[];
+}
+
+export interface FileVersion {
+  file_id: number;
+  label: string;
+  size: number | null;
+  tier: number | null;
+  transcode_output_path: string | null;
 }
 
 export interface EpisodeItem {
@@ -143,6 +152,28 @@ export class BrowseService {
     }
   }
 
+  private getVersionLabel(probeDataJson: string | null, filename: string): string {
+    if (probeDataJson) {
+      try {
+        const probe = JSON.parse(probeDataJson) as {
+          video?: {
+            width?: number;
+            height?: number;
+            codec?: string;
+          };
+        };
+        const vt = probe.video;
+        if (vt?.width && vt?.height) {
+          const codec = vt.codec ? ` ${vt.codec}` : '';
+          return `${vt.width}x${vt.height}${codec}`;
+        }
+      } catch {
+        // fall through to filename
+      }
+    }
+    return filename;
+  }
+
   private getAudioTracks(probeDataJson: string | null): AudioTrack[] {
     if (!probeDataJson) return [];
     try {
@@ -171,11 +202,12 @@ export class BrowseService {
 
     const rows = db
       .prepare(
-        `SELECT mf.id, m.title, m.release_date, m.poster_path, m.runtime,
-                m.vote_average AS rating, mf.created_at AS added_at, mf.tier
+        `SELECT MIN(mf.id) AS id, m.title, m.release_date, m.poster_path, m.runtime,
+                m.vote_average AS rating, MIN(mf.created_at) AS added_at, MIN(mf.tier) AS tier
          FROM media_files mf
          JOIN metadata m ON m.media_file_id = mf.id
          WHERE m.media_type = 'movie' AND mf.status IN ('ready', 'completed')
+         GROUP BY m.tmdb_id
          ORDER BY m.title ASC`,
       )
       .all() as {
@@ -315,6 +347,7 @@ export class BrowseService {
         `SELECT mf.id, mf.path AS file_path, mf.tier, mf.probe_data,
                 m.title, m.overview, m.release_date, m.poster_path,
                 m.runtime, m.vote_average AS rating, m.content_rating,
+                m.tmdb_id,
                 tj.output_path AS transcode_output_path
          FROM media_files mf
          JOIN metadata m ON m.media_file_id = mf.id
@@ -334,6 +367,7 @@ export class BrowseService {
           runtime: number | null;
           rating: number | null;
           content_rating: string | null;
+          tmdb_id: number;
           transcode_output_path: string | null;
         }
       | undefined;
@@ -400,6 +434,7 @@ export class BrowseService {
         file_id: unmatchedRow.id,
         tier: unmatchedRow.tier,
         transcode_output_path: unmatchedRow.transcode_output_path,
+        versions: [],
       };
     }
 
@@ -440,7 +475,40 @@ export class BrowseService {
       file_id: row.id,
       tier: row.tier,
       transcode_output_path: row.transcode_output_path,
+      versions: this.getFileVersions(db, row.tmdb_id),
     };
+  }
+
+  private getFileVersions(
+    db: ReturnType<DatabaseService['getDatabase']>,
+    tmdbId: number,
+  ): FileVersion[] {
+    const versionRows = db
+      .prepare(
+        `SELECT mf.id, mf.filename, mf.size, mf.tier, mf.probe_data,
+                tj.output_path AS transcode_output_path
+         FROM media_files mf
+         JOIN metadata m ON m.media_file_id = mf.id
+         LEFT JOIN transcode_jobs tj ON tj.file_id = mf.id AND tj.status = 'completed'
+         WHERE m.tmdb_id = ? AND m.media_type = 'movie' AND mf.status IN ('ready', 'completed')
+         ORDER BY mf.id ASC`,
+      )
+      .all(tmdbId) as {
+      id: number;
+      filename: string;
+      size: number | null;
+      tier: number | null;
+      probe_data: string | null;
+      transcode_output_path: string | null;
+    }[];
+
+    return versionRows.map((v) => ({
+      file_id: v.id,
+      label: this.getVersionLabel(v.probe_data, v.filename),
+      size: v.size,
+      tier: v.tier,
+      transcode_output_path: v.transcode_output_path,
+    }));
   }
 
   getShowById(tmdbId: number): ShowDetail | null {

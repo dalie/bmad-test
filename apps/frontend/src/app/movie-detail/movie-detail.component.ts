@@ -40,4 +40,14 @@ export class MovieDetailComponent {
     if (rating === null || rating === undefined) return '';
     return rating.toFixed(1);
   }
+
+  formatSize(bytes: number): string {
+    if (bytes < 1_048_576) {
+      return '<1 MB';
+    }
+    if (bytes < 1_073_741_824) {
+      return `${(bytes / 1_048_576).toFixed(0)} MB`;
+    }
+    return `${(bytes / 1_073_741_824).toFixed(1)} GB`;
+  }
 }

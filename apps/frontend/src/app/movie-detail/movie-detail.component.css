@@ -101,3 +101,40 @@
     max-width: 300px;
   }
 }
+
+/* Version list for multi-file movies */
+.version-list {
+  margin-block-start: var(--space-md);
+}
+
+.version-list-heading {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  margin-block-end: var(--space-sm);
+}
+
+.version-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  min-height: 44px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  margin-block-end: var(--space-xs);
+}
+
+.version-item:hover {
+  background-color: var(--color-surface-raised);
+}
+
+.version-label {
+  font-weight: var(--font-weight-bold);
+}
+
+.version-size {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

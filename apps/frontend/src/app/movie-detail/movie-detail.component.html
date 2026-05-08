@@ -42,19 +42,44 @@
           <p class="detail-description">{{ m.description }}</p>
         }
 
-        <a
-          class="play-button"
-          [routerLink]="['/play', m.file_id]"
-          [queryParams]="{
-            tier: m.tier,
-            mediaType: 'movie',
-            mediaId: m.id,
-            title: m.title,
-            year: m.year,
-            posterUrl: m.poster_url,
-          }"
-          >Play</a
-        >
+        @if (m.versions.length > 1) {
+          <div class="version-list">
+            <h2 class="version-list-heading">Versions</h2>
+            @for (v of m.versions; track v.file_id) {
+              <a
+                class="version-item"
+                [routerLink]="['/play', v.file_id]"
+                [queryParams]="{
+                  tier: v.tier,
+                  mediaType: 'movie',
+                  mediaId: m.id,
+                  title: m.title,
+                  year: m.year,
+                  posterUrl: m.poster_url,
+                }"
+              >
+                <span class="version-label">▶ {{ v.label }}</span>
+                @if (v.size) {
+                  <span class="version-size">{{ formatSize(v.size) }}</span>
+                }
+              </a>
+            }
+          </div>
+        } @else {
+          <a
+            class="play-button"
+            [routerLink]="['/play', m.file_id]"
+            [queryParams]="{
+              tier: m.tier,
+              mediaType: 'movie',
+              mediaId: m.id,
+              title: m.title,
+              year: m.year,
+              posterUrl: m.poster_url,
+            }"
+            >Play</a
+          >
+        }
       </div>
     </div>
   } @else {

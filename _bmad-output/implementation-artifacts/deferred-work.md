@@ -1,3 +1,8 @@
+## Deferred from: spec-multi-version-movie-playback (2026-05-07)
+
+- Recently Added grid on home page still keys movies by `mf.id` — duplicate entries possible if two files share the same `tmdb_id`. The main library grid is correctly grouped.
+- No automated test coverage for the multi-version grouping query, version label rendering, or filename-fallback behavior.
+
 ## Deferred from: spec-fix-scroll-position-restoration (2026-05-06)
 
 - No cache invalidation strategy for `LibraryService` list endpoints — if content is added/removed, cached responses remain stale until page refresh. Consider adding an `invalidateCache()` method triggered after admin mutations (e.g., library rescan, manual match).

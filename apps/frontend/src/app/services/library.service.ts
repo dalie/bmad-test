@@ -67,6 +67,15 @@ export interface MovieDetail {
   file_id: number;
   tier: number | null;
   transcode_output_path: string | null;
+  versions: FileVersion[];
+}
+
+export interface FileVersion {
+  file_id: number;
+  label: string;
+  size: number | null;
+  tier: number | null;
+  transcode_output_path: string | null;
 }
 
 export interface EpisodeItem {
