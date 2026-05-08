@@ -7,6 +7,11 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      - MEDIA_MOVIES_PATH=/mnt/media/movies
+      - MEDIA_TV_PATH=/mnt/media/tv
+      - MEDIA_OTHER_PATH=/mnt/media/other
+      - CACHE_PATH=/mnt/cache
     volumes:
       - ${MOVIES_HOST_PATH:-~/media/movies}:/mnt/media/movies:ro
       - ${TV_HOST_PATH:-~/media/tv}:/mnt/media/tv:ro

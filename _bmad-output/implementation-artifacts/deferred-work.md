@@ -1,3 +1,10 @@
+## Deferred from: spec-fix-env-path-conflict-npm-vs-docker (2026-05-08)
+
+- `CACHE_PATH` relative-path handling is inconsistent: `database.service.ts` resolves relative paths via `path.resolve(__dirname, ...)` but `transcode.service.ts` and `subtitle.service.ts` use `path.join(cachePath, ...)` directly, anchoring to CWD. If CWD differs from project root, sidecars/transcodes/subtitles are written to wrong location.
+- Stale `media_sources` rows persist after switching between Docker and local dev. The upsert key is `ON CONFLICT(path)` — different paths create new rows; old rows referencing non-existent paths remain and cause scan errors.
+- Transcode/subtitle `output_path` stored as relative in DB. If process restarts with different CWD, paths no longer resolve to actual files.
+- `CACHE_PATH` fallback in all backend services defaults to `/mnt/cache` (Docker-appropriate) which doesn't exist on bare host. If `.env` omits `CACHE_PATH`, local dev crashes.
+
 ## Deferred from: spec-fix-env-docker-compose-config (2026-05-08)
 
 - Dockerfile `EXPOSE 3000` is hardcoded metadata. If PORT is changed via .env, the EXPOSE value is stale. Consider using a build ARG or removing EXPOSE (it's informational only and doesn't affect runtime).
